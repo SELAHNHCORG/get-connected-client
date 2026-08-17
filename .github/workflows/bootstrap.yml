@@ -1,0 +1,183 @@
+name: Bootstrap Repository
+
+# Run manually via Actions → Bootstrap Repository → Run workflow.
+# Derives all values from the GitHub repository metadata and creates a PR with the
+# rendered template files.
+
+permissions:
+  contents: write
+  pull-requests: write
+
+on:
+  workflow_dispatch:
+    inputs:
+      scorecard:
+        description: "Include OpenSSF Scorecard workflow and badge"
+        type: boolean
+        default: false
+      license:
+        description: "License (MIT, Apache, BSD-3, or None)"
+        type: choice
+        options:
+          - MIT
+          - Apache
+          - BSD-3
+          - None
+        default: MIT
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: true
+
+      - name: Setup Just
+        uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3
+
+      - name: Check if bootstrap is needed
+        id: check
+        run: |
+          if [ -f "cookiecutter.json" ]; then
+            echo "needed=true" >> $GITHUB_OUTPUT
+          else
+            echo "needed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Gather repository metadata
+        if: steps.check.outputs.needed == 'true'
+        id: meta
+        env:
+          GH_OWNER: ${{ github.repository_owner }}
+          REPO_NAME: ${{ github.event.repository.name }}
+          REPO_DESC: ${{ github.event.repository.description }}
+          GH_TOKEN: ${{ secrets.BOOTSTRAP_TOKEN || github.token }}
+        run: |
+          PACKAGE_NAME="${REPO_NAME//-/_}"
+
+          DESCRIPTION="$REPO_DESC"
+          if [ -z "$DESCRIPTION" ]; then
+            DESCRIPTION="A Python package."
+          fi
+
+          # Get display name and email via authenticated API (gh CLI uses GH_TOKEN automatically)
+          USER_JSON=$(gh api /user 2>/dev/null || echo '{}')
+          AUTHOR_NAME=$(echo "$USER_JSON" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('name') or '')" 2>/dev/null || true)
+          AUTHOR_EMAIL=$(echo "$USER_JSON" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('email') or '')" 2>/dev/null || true)
+
+          # If email isn't on the public profile, fetch from the verified emails list
+          if [ -z "$AUTHOR_EMAIL" ]; then
+            AUTHOR_EMAIL=$(gh api /user/emails 2>/dev/null | python3 -c "import json,sys; emails=json.load(sys.stdin); print(next((e['email'] for e in emails if e.get('primary') and e.get('verified')), ''))" 2>/dev/null || true)
+          fi
+
+          if [ -z "$AUTHOR_NAME" ]; then
+            AUTHOR_NAME="$GH_OWNER"
+          fi
+          if [ -z "$AUTHOR_EMAIL" ]; then
+            AUTHOR_EMAIL="${GH_OWNER}@users.noreply.github.com"
+          fi
+
+          YEAR=$(date +%Y)
+
+          echo "repo_name=$REPO_NAME"         >> $GITHUB_OUTPUT
+          echo "package_name=$PACKAGE_NAME"   >> $GITHUB_OUTPUT
+          echo "description=$DESCRIPTION"     >> $GITHUB_OUTPUT
+          echo "github_owner=$GH_OWNER"       >> $GITHUB_OUTPUT
+          echo "author_name=$AUTHOR_NAME"     >> $GITHUB_OUTPUT
+          echo "author_email=$AUTHOR_EMAIL"   >> $GITHUB_OUTPUT
+          echo "year=$YEAR"                   >> $GITHUB_OUTPUT
+
+      - name: Install uv
+        if: steps.check.outputs.needed == 'true'
+        uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990
+        with:
+          enable-cache: false
+
+      - name: Run cookiecutter
+        if: steps.check.outputs.needed == 'true'
+        env:
+          REPO_NAME:    ${{ steps.meta.outputs.repo_name }}
+          DESCRIPTION:  ${{ steps.meta.outputs.description }}
+          AUTHOR_NAME:  ${{ steps.meta.outputs.author_name }}
+          AUTHOR_EMAIL: ${{ steps.meta.outputs.author_email }}
+          GH_OWNER:     ${{ steps.meta.outputs.github_owner }}
+          YEAR:         ${{ steps.meta.outputs.year }}
+        run: |
+          uvx --with pyfiglet  --with jinja2-time cookiecutter . \
+            --no-input \
+            --output-dir /tmp/rendered \
+            project_slug="$REPO_NAME" \
+            description="$DESCRIPTION" \
+            author_name="$AUTHOR_NAME" \
+            author_email="$AUTHOR_EMAIL" \
+            github_owner="$GH_OWNER" \
+            year="$YEAR" \
+            scorecard="${{ inputs.scorecard }}" \
+            license="${{ inputs.license }}"
+
+      - name: Apply rendered template
+        if: steps.check.outputs.needed == 'true'
+        env:
+          REPO_NAME: ${{ steps.meta.outputs.repo_name }}
+        run: |
+          # Overlay rendered files on top of the repo (preserving .git)
+          rsync -av --exclude='.git' "/tmp/rendered/$REPO_NAME/" .
+
+          # Remove template-specific artifacts
+          rm -f cookiecutter.json
+          rm -rf hooks/
+          # The template directory has literal {{ }} in its name
+          rm -rf '{{cookiecutter.project_slug}}'
+          # Remove this bootstrap workflow (replaced by the rendered workflows)
+          rm -f .github/workflows/bootstrap.yml
+          # Remove template-only assets
+          rm -f PAT_perms.png
+
+          # Remove Scorecard workflow and badge if not enabled
+          if [ "${{ inputs.scorecard }}" != "true" ]; then
+            rm -f .github/workflows/scorecard.yml
+          fi
+
+          # Remove LICENSE file if no license selected
+          if [ "${{ inputs.license }}" = "None" ]; then
+            rm -f LICENSE
+          fi
+
+          just install  # generate lock file
+          just fix  # run formatting and linter fixes
+
+      - name: Create Pull Request
+        if: steps.check.outputs.needed == 'true'
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1
+        with:
+          # BOOTSTRAP_TOKEN must be a fine-grained PAT scoped to this repo with
+          # Contents, Pull requests, and Workflows read/write permissions.
+          # GITHUB_TOKEN cannot push .github/workflows/ files (GitHub restriction).
+          # Create one at Settings → Developer settings → Personal access tokens (fine-grained)
+          # and add it as repo secret BOOTSTRAP_TOKEN.
+          token: ${{ secrets.BOOTSTRAP_TOKEN || github.token }}
+          branch: bootstrap/initial-setup
+          delete-branch: true
+          commit-message: "Bootstrap: initialize repository from python-package-template"
+          title: "Bootstrap: initialize repository from python-package-template"
+          body: |
+            This PR initializes the repository by rendering the cookiecutter template.
+
+            **Derived values**
+            | Variable | Value |
+            |---|---|
+            | package name | `${{ steps.meta.outputs.package_name }}` |
+            | author | ${{ steps.meta.outputs.author_name }} |
+            | email | ${{ steps.meta.outputs.author_email }} |
+
+            **OpenSSF Scorecard**: ${{ inputs.scorecard && 'Enabled (scorecard.yml included, badge in README)' || 'Not included' }}
+
+            **License**: ${{ inputs.license }}
+
+            **Next steps after merging**
+
+            1. Add your source code to `src/${{ steps.meta.outputs.package_name }}/`
+            2. Update `pyproject.toml` with your real dependencies and classifiers
+            3. Configure repository secrets: `CODECOV_TOKEN`${{ inputs.scorecard && ', `SCORECARD_TOKEN`' || '' }}
+            4. Enable ReadTheDocs for the repo (optional)

@@ -1,0 +1,3 @@
+coverage:
+  fixes:
+    - "__init__.py::{{cookiecutter.package_name}}/__init__.py"
