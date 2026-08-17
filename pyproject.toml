@@ -128,7 +128,7 @@ source = ["galaxy_digital_cli"]
 
 [tool.ruff]
 line-length = 88
-exclude = ["doc", "dist"]
+exclude = ["doc", "docs", "dist"]
 target-version = "py310"
 
 [tool.ruff.lint]
