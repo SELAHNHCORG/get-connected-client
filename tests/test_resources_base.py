@@ -9,7 +9,14 @@ from galaxy_digital_cli.resources.base import (
 )
 
 
-class Widgets(ListMixin, GetMixin, CreateMixin, UpdateMixin, DeleteMixin, Resource):
+class Widgets(
+    ListMixin[Tag],
+    GetMixin[Tag],
+    CreateMixin[Tag],
+    UpdateMixin[Tag],
+    DeleteMixin[Tag],
+    Resource[Tag],
+):
     path = "/widgets"
     model = Tag
 
@@ -21,6 +28,23 @@ def test_list_parses_and_filters(client, api):
     params = route.calls.last.request.url.params
     assert params["show_inactive"] == "Yes"
     assert params["since_created"] == "2024-01-01"
+
+
+def test_list_show_inactive_false(client, api):
+    route = api.get("/widgets").respond(json={"data": [{"id": 1, "name": "a"}]})
+    list(Widgets(client).list(show_inactive=False))
+    assert route.calls.last.request.url.params["show_inactive"] == "No"
+
+
+def test_list_show_inactive_omitted(client, api):
+    """None must omit the param entirely, not send a falsy value."""
+    route = api.get("/widgets").respond(json={"data": [{"id": 1, "name": "a"}]})
+    # `list()` with no arguments is also the typing smoke test: the declared
+    # return type is Iterator[Tag] (checked statically by mypy/pyright), and
+    # the isinstance below pins the runtime half of that contract.
+    rows = list(Widgets(client).list())
+    assert isinstance(rows[0], Tag)
+    assert "show_inactive" not in route.calls.last.request.url.params
 
 
 def test_get(client, api):
@@ -37,6 +61,16 @@ def test_create_update_delete(client, api):
     route = api.delete("/widgets/9").respond(json={})
     Widgets(client).delete(9)
     assert route.called
+
+
+def test_sublist_parses_rows(client, api):
+    api.get("/widgets/1/things").respond(
+        json={"data": [{"id": 1, "name": "a"}, {"id": 2, "name": "b"}]}
+    )
+    rows = Widgets(client)._get_list("/widgets/1/things", Tag)
+    assert len(rows) == 2
+    assert all(isinstance(r, Tag) for r in rows)
+    assert [r.name for r in rows] == ["a", "b"]
 
 
 def test_sublist_404_empty(client, api):
