@@ -15,6 +15,10 @@ class ReadOnlyError(GalaxyError):
     """A write was attempted while the client is in read-only mode."""
 
 
+class GalaxyConnectionError(GalaxyError):
+    """The request never completed — DNS, TCP, TLS, or timeout failure."""
+
+
 class GalaxyHTTPError(GalaxyError):
     """An HTTP-level error response from the API."""
 

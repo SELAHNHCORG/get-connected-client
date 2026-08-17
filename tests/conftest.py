@@ -131,6 +131,8 @@ def client():
 
 @pytest.fixture
 def api(client):
+    # Depends on `client` purely for ordering: the client (and its httpx
+    # transport) must be constructed before respx starts intercepting.
     import respx
 
     with respx.mock(base_url=BASE) as router:

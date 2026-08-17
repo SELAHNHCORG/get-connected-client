@@ -14,6 +14,7 @@ if TYPE_CHECKING:  # pragma: no cover - typing.Self is 3.11+, we support 3.10
 
 from .config import US1, env_read_only, resolve_url
 from .exceptions import (
+    GalaxyConnectionError,
     GalaxyHTTPError,
     MissingAPIKeyError,
     NotFoundError,
@@ -21,7 +22,41 @@ from .exceptions import (
 )
 
 _WRITE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+#: Methods whose repetition is harmless, so they may be retried after a 5xx or
+#: a transport failure. POST/PATCH are absent on purpose: the server may have
+#: committed the write before the failure, and a retry would duplicate it.
+_IDEMPOTENT_METHODS = frozenset({"GET", "HEAD", "OPTIONS", "PUT", "DELETE"})
 MAX_PER_PAGE = 150
+#: Ceiling on a server-supplied ``Retry-After`` pause, in seconds.
+_MAX_RETRY_AFTER = 60.0
+
+
+def _backoff(response: httpx.Response, attempt: int) -> float:
+    """Seconds to wait before retrying *response*.
+
+    A 429 carrying a parseable ``Retry-After`` wins -- the server told us
+    when it will listen again -- clamped to :data:`_MAX_RETRY_AFTER` so a
+    wild header cannot hang the process. Everything else backs off
+    exponentially: 0.5s, 1s, 2s, ...
+    """
+    if response.status_code == 429:
+        raw = response.headers.get("Retry-After", "")
+        try:
+            return max(0.0, min(float(raw.strip()), _MAX_RETRY_AFTER))
+        except (AttributeError, ValueError):
+            # Absent, an HTTP-date, or otherwise unparseable: fall through.
+            pass
+    return 0.5 * 2**attempt
+
+
+def _row_id(row: Any) -> int | None:
+    """The integer ``id`` of a payload row, or None if it has no usable one."""
+    if not isinstance(row, dict) or row.get("id") is None:
+        return None
+    try:
+        return int(row["id"])
+    except (TypeError, ValueError):
+        return None
 
 
 def _unwrap(payload: Any) -> Any:
@@ -36,6 +71,12 @@ class GalaxyClient:
 
     All requests funnel through :meth:`request`, which enforces read-only
     mode before anything reaches the network.
+
+    ``retries`` counts *retries*, not attempts: ``retries=3`` means up to four
+    requests (the original plus three), with exponential backoff of 0.5s, 1s
+    and 2s between them -- roughly 3.5s of sleeping in the worst case. Only
+    idempotent methods are retried on 5xx or transport failures; a 429 is
+    retried for every method, since a rejected request was never processed.
     """
 
     def __init__(
@@ -47,11 +88,16 @@ class GalaxyClient:
         timeout: float = 30.0,
         retries: int = 3,
     ):
+        """Construct a client.
+
+        :param retries: how many times to retry a retryable failure, so
+            ``retries=3`` allows up to four attempts and ~3.5s of backoff.
+        """
         self.api_key = api_key or os.environ.get("GALAXY_API_KEY") or ""
         if not self.api_key:
             raise MissingAPIKeyError("No API key: pass api_key= or set GALAXY_API_KEY")
         self.base_url = resolve_url(base_url)
-        self.read_only = read_only
+        self._read_only = read_only
         self.timeout = timeout
         self.retries = retries
         self._http: httpx.Client | None = None
@@ -60,31 +106,40 @@ class GalaxyClient:
         # self.users = Users(self)
 
     @property
-    def blocked(self) -> bool:
-        """True when writes are forbidden, by constructor flag or env var.
+    def read_only(self) -> bool:
+        """True when writes are forbidden, by constructor flag or the
+        ``GALAXY_READ_ONLY`` env var.
 
-        ``GALAXY_READ_ONLY`` being explicitly falsy never *unblocks* a client
-        constructed with ``read_only=True`` -- the two are OR'd, never
-        overridden.
+        The two sources are OR'd, never overridden: ``GALAXY_READ_ONLY=0``
+        does not *unblock* a client constructed with ``read_only=True``.
         """
-        return bool(self.read_only or env_read_only())
+        return bool(self._read_only or env_read_only())
 
     def _guard(self, request: httpx.Request) -> None:
         """httpx event hook: last-ditch block of writes in read-only mode.
 
         :meth:`request` already refuses writes before touching the network;
-        this catches anything that reaches ``self.http`` by another route
-        (direct use of the ``http`` property, redirects). httpx invokes
+        this catches anything that reaches ``self.http`` by another route --
+        direct use of the ``http`` property, and redirect hops, should
+        ``follow_redirects`` ever be enabled (it defaults off). httpx invokes
         request hooks before handing the request to the transport, so no
         bytes leave the process.
         """
-        if request.method.upper() in _WRITE_METHODS and self.blocked:
+        if request.method.upper() in _WRITE_METHODS and self.read_only:
             raise ReadOnlyError(
                 f"{request.method.upper()} {request.url} blocked: read-only mode is on"
             )
 
     @property
     def http(self) -> httpx.Client:
+        """The underlying :class:`httpx.Client`, a supported escape hatch.
+
+        Use it for anything :meth:`request` does not model (streaming, odd
+        content types, raw responses). It carries the same auth headers and
+        base URL, and writes issued through it are *still* refused in
+        read-only mode by the :meth:`_guard` request hook -- but it does not
+        retry, unwrap envelopes, or map statuses onto exceptions.
+        """
         if self._http is None:
             self._http = httpx.Client(
                 base_url=self.base_url,
@@ -118,19 +173,40 @@ class GalaxyClient:
     ) -> Any:
         """Perform a single request, the sole gateway to the network.
 
-        Blocks writes in read-only mode *before* any I/O, retries 429/5xx
-        with exponential backoff, and maps error statuses onto the
+        Blocks writes in read-only mode *before* any I/O, retries with
+        exponential backoff (honoring ``Retry-After`` on a 429), and maps
+        error statuses onto the
         :class:`~galaxy_digital_cli.exceptions.GalaxyHTTPError` hierarchy.
+
+        A 429 is retried for every method -- the request was rejected, not
+        processed. A 5xx or a transport failure is retried only for
+        idempotent methods; a POST or PATCH raises on the first failure
+        rather than risk duplicating a write the server may have committed.
+
+        :raises ReadOnlyError: a write was attempted in read-only mode.
+        :raises GalaxyConnectionError: the request never completed.
+        :raises GalaxyHTTPError: the API answered 4xx/5xx.
         """
         method = method.upper()
-        if method in _WRITE_METHODS and self.blocked:
+        if method in _WRITE_METHODS and self.read_only:
             raise ReadOnlyError(f"{method} {path} blocked: read-only mode is on")
+        retriable_failure = method in _IDEMPOTENT_METHODS
         attempt = 0
         while True:
-            response = self.http.request(method, path, params=params, json=json)
-            retryable = response.status_code == 429 or response.status_code >= 500
+            try:
+                response = self.http.request(method, path, params=params, json=json)
+            except httpx.TransportError as error:
+                if retriable_failure and attempt < self.retries:
+                    time.sleep(0.5 * 2**attempt)
+                    attempt += 1
+                    continue
+                raise GalaxyConnectionError(
+                    f"{method} {path} failed: {error}"
+                ) from error
+            status = response.status_code
+            retryable = status == 429 or (status >= 500 and retriable_failure)
             if retryable and attempt < self.retries:
-                time.sleep(0.5 * 2**attempt)
+                time.sleep(_backoff(response, attempt))
                 attempt += 1
                 continue
             break
@@ -159,10 +235,14 @@ class GalaxyClient:
         """
         base = {k: v for k, v in (params or {}).items() if v is not None}
         # Clamp to the API maximum: asking for more than the server will ever
-        # return would make every full page look short and stop us early.
-        size = min(int(base.pop("per_page", per_page)), MAX_PER_PAGE)
+        # return would make every full page look short and stop us early. The
+        # lower bound keeps a 0 or negative per_page from stalling us on an
+        # endless run of "full" empty pages.
+        size = max(1, min(int(base.pop("per_page", per_page)), MAX_PER_PAGE))
         base["per_page"] = size
         since_id = base.pop("since_id", None)
+        if since_id is not None:
+            since_id = int(since_id)
         while True:
             query = dict(base)
             if since_id is not None:
@@ -175,20 +255,25 @@ class GalaxyClient:
                 return
             if not isinstance(rows, list):
                 rows = [rows]
-            ids = [
-                int(r["id"])
-                for r in rows
-                if isinstance(r, dict) and r.get("id") is not None
-            ]
+            fetched = len(rows)
+            ids = [i for i in (_row_id(r) for r in rows) if i is not None]
             nxt = max(ids) if ids else None
-            if since_id is not None and nxt is not None and nxt <= int(since_id):
+            if since_id is not None and nxt is not None and nxt <= since_id:
                 # Every row is at or behind the cursor we asked past, so the
                 # server ignored since_id and replayed a page we already
                 # yielded. Stop before emitting duplicates -- continuing would
                 # loop forever against the API.
                 return
+            if since_id is not None:
+                # A page that partially overlaps the previous one (rows added
+                # or removed underneath us) would otherwise re-yield rows we
+                # already emitted.
+                cursor = since_id
+                rows = [r for r in rows if (rid := _row_id(r)) is None or rid > cursor]
             yield from rows
-            if len(rows) < size:
+            # Shortness is judged on what the server sent, not on what
+            # survived the overlap filter.
+            if fetched < size:
                 return
             if nxt is None:
                 # A full page with no usable cursor: we cannot advance.
