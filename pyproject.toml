@@ -1,0 +1,130 @@
+[project]
+name = "galaxy-digital-cli"
+version = "2026.8.17"
+description = "A CLI interface to Galaxy Digital's API"
+requires-python = ">=3.10,<4.0"
+authors = [
+  {name = "Brian Kohan", email = "bckohan@gmail.com"},
+]
+
+readme = "README.md"
+repository = "https://github.com/SELAHNHCORG/galaxy-digital-cli"
+homepage = "https://github.com/SELAHNHCORG/galaxy-digital-cli"
+keywords = []
+dependencies = []
+classifiers = [
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Development Status :: 1 - Planning",
+    "Intended Audience :: Developers",
+
+    "Natural Language :: English",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Libraries",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+package = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/galaxy_digital_cli"]
+
+[project.urls]
+"Homepage"      = "https://github.com/SELAHNHCORG/galaxy-digital-cli"
+"Documentation" = "https://github.com/SELAHNHCORG/galaxy-digital-cli"
+"Repository"    = "https://github.com/SELAHNHCORG/galaxy-digital-cli"
+"Issues"        = "https://github.com/SELAHNHCORG/galaxy-digital-cli/issues"
+"Changelog"     = "https://github.com/SELAHNHCORG/galaxy-digital-cli/en/latest/changelog.html"
+
+[dependency-groups]
+typing = [
+    "pyright>=1.1.390",
+    "mypy>=1.19.1",
+]
+lint = [
+    "ruff>=0.15.0",
+    "readme-renderer[md]>=43.0",
+    "doc8>=1.1.2",
+    "bandit[toml,sarif]>=1.7.10"
+]
+coverage  = ["coverage[toml]>=7.6.1"]
+test = [
+    { include-group = "coverage" },
+    "pytest>=8.3.4",
+    "pytest-cov>=6.0.0",
+]
+dev = [
+    { include-group = "typing" },
+    { include-group = "test" },
+    { include-group = "lint" },
+    "packaging>=24.2",
+    "tomlkit>=0.13.3",
+    "ipdb>=0.13.13",
+    "ipython>=8.18.1",
+]
+
+[tool.mypy]
+check_untyped_defs = true
+ignore_missing_imports = true
+mypy_path = ["src"]
+packages = ["galaxy_digital_cli"]
+
+[tool.pyright]
+pythonVersion = "3.10"
+typeCheckingMode = "basic"
+include = ["src/galaxy_digital_cli"]
+reportMissingImports = true
+reportMissingTypeStubs = false
+reportUnusedImport = true
+reportDuplicateImport = true
+
+[tool.doc8]
+max-line-length = 100
+sphinx = true
+
+[tool.pytest.ini_options]
+python_files = "test*.py"
+norecursedirs = "*.egg .eggs dist build docs .tox .git __pycache__"
+addopts = [
+    "--strict-markers",
+    "--cov=galaxy_digital_cli",
+    "--cov-branch",
+    "--cov-report=term-missing:skip-covered",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["galaxy_digital_cli"]
+concurrency = ["thread", "multiprocessing"]
+parallel = true
+relative_files = true
+command_line = "-m pytest --cov=galaxy_digital_cli"
+
+[tool.coverage.paths]
+source = ["galaxy_digital_cli"]
+
+[tool.ruff]
+line-length = 88
+exclude = ["doc", "dist"]
+target-version = "py310"
+
+[tool.ruff.lint]
+exclude = ["tests/**/*"]
+
+[tool.bandit]
+targets = ["src"]
+exclude_dirs = [
+    "./tests",
+    "./.venv",
+    "./doc",
+]
+
+skips = [
+    "B101",  # assert_used - assertions are fine in tests
+    "B110",  # Try, Except, Pass detected - these are intentional
+]

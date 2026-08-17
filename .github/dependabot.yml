@@ -2,18 +2,11 @@ version: 2
 updates:
   # GitHub Actions
   - package-ecosystem: "github-actions"
-    directory: "/.github/workflows"
+    directory: "/"
     schedule:
       interval: "monthly"
-    groups:
-      gha-updates:
-        patterns:
-          - "*"
-  
-  - package-ecosystem: "github-actions"
-    directory: "/{{cookiecutter.project_slug}}/.github/workflows"
-    schedule:
-      interval: "monthly"
+    cooldown:
+      default-days: 14
     groups:
       gha-updates:
         patterns:
@@ -25,11 +18,11 @@ updates:
     schedule:
       interval: "monthly"
     groups:
-        uv-runtime:
-          dependency-type: "production"
-          patterns:
-            - "*"
-        uv-dev:
-          dependency-type: "development"
-          patterns:
-            - "*"
+      uv-runtime:
+        dependency-type: "production"
+        patterns:
+          - "*"
+      uv-dev:
+        dependency-type: "development"
+        patterns:
+          - "*"
