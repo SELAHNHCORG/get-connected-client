@@ -56,16 +56,24 @@ def read_config() -> dict[str, Any]:
 
 
 def save_config(values: dict[str, Any]) -> Path:
-    """Write values to the TOML config file with 0600 permissions."""
+    """Write *exactly* ``values`` to the config file, replacing its contents.
+
+    Callers that want to update a single key must merge first::
+
+        cfg = read_config()
+        cfg["api_key"] = "..."
+        save_config(cfg)
+    """
     import tomlkit
 
     path = config_file()
-    path.parent.mkdir(parents=True, exist_ok=True)
     doc = tomlkit.document()
     for key, value in values.items():
         doc[key] = value
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.touch(mode=0o600, exist_ok=True)
+    path.chmod(0o600)  # tighten even if the file pre-existed with looser perms
     path.write_text(tomlkit.dumps(doc))
-    path.chmod(0o600)
     return path
 
 

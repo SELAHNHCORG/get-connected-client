@@ -48,3 +48,26 @@ def test_save_config_permissions(monkeypatch, tmp_path):
     assert cfg.exists()
     assert stat.S_IMODE(os.stat(cfg).st_mode) == 0o600
     assert config.read_config()["api_key"] == "k"
+
+
+def test_read_only_kwarg_overrides_env(monkeypatch, tmp_path):
+    monkeypatch.setenv("GALAXY_CONFIG_FILE", str(tmp_path / "none.toml"))
+    monkeypatch.setenv("GALAXY_READ_ONLY", "yes")
+    assert config.load_settings(read_only=False).read_only is False
+
+
+def test_save_config_replaces_contents(monkeypatch, tmp_path):
+    cfg = tmp_path / "config.toml"
+    monkeypatch.setenv("GALAXY_CONFIG_FILE", str(cfg))
+    config.save_config({"api_key": "k", "url": "ca"})
+    config.save_config({"api_key": "k2"})
+    assert config.read_config() == {"api_key": "k2"}
+
+
+def test_save_config_tightens_existing_perms(monkeypatch, tmp_path):
+    cfg = tmp_path / "config.toml"
+    monkeypatch.setenv("GALAXY_CONFIG_FILE", str(cfg))
+    cfg.write_text("")
+    cfg.chmod(0o644)
+    config.save_config({"api_key": "k"})
+    assert stat.S_IMODE(os.stat(cfg).st_mode) == 0o600
