@@ -1,0 +1,6078 @@
+openapi: 3.0.0
+x-stoplight:
+  id: uo7lk8ian4ndt
+info:
+  version: 1.9.2
+  title: Get Connected Client API
+  description: ''
+tags:
+  - name: Agency
+    description: Agency related items
+  - name: Benchmark
+    description: Benchmark  related items
+  - name: Cause & Interest
+    description: Cause and Interest related items
+  - name: Cluster
+    description: Cluster related items
+  - name: Event
+    description: Event related items
+  - name: Hour
+    description: Hour related items
+  - name: Impact
+    description: Impact Area related items
+  - name: Login
+    description: Login related items
+  - name: Need
+    description: Need related items
+  - name: Qualification
+    description: Qualification related items
+  - name: Question
+    description: Custom question related items
+  - name: Response
+    description: Response related items
+  - name: Team
+    description: Team related items
+  - name: User
+    description: User related items
+  - name: User Group
+    description: Group related items
+
+paths:
+
+  /events:
+    get:
+      tags:
+        - Event
+      parameters:
+        - in: query
+          name: per_page
+          required: false
+          schema:
+            title: listEventsParamPerPage
+            type: integer
+            minimum: 1
+            maximum: 150
+          description: Define how many results are returned per page
+        - in: query
+          name: since_id
+          required: false
+          schema:
+            title: listEventsParamSinceId
+            type: integer
+            minimum: 1
+          description: Filtering items that have been added since that ID
+        - in: query
+          name: since_created
+          required: false
+          schema:
+            title: listEventsParamSinceCreated
+            type: string
+            format: date-time
+            example: '2021-11-01 15:00'
+          description: Filtering items that have been added since that date-time
+        - in: query
+          name: since_updated
+          required: false
+          schema:
+            title: listEventsParamSinceUpdated
+            type: string
+            format: date-time
+            example: '2021-11-01 15:00'
+          description: Filtering items that have been updated since that date-time
+      summary: List events
+      description: List events
+      operationId: listEvents
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: listEventsResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/eventObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+    post:
+      tags:
+        - Event
+      summary: Create new event
+      description: Create new event
+      operationId: createEvent
+      requestBody:
+        $ref: '#/components/requestBodies/eventRequest'
+      responses:
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+
+  '/events/{id}':
+    get:
+      tags:
+        - Event
+      summary: Get event details
+      description: Get event details
+      operationId: getEvent
+      parameters:
+        - name: id
+          in: path
+          description: ID of event
+          required: true
+          schema:
+            title: getEventParamId
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: getEventResponse
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/eventObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+    put:
+      tags:
+        - Event
+      summary: Update event
+      description: Update event
+      operationId: updateEvent
+      parameters:
+        - name: id
+          in: path
+          description: ID of Event
+          required: true
+          schema:
+            title: updateEventParamId
+            type: integer
+      requestBody:
+        $ref: '#/components/requestBodies/eventRequest'
+      responses:
+        '200':
+          description: Updated
+        '401':
+          description: Unauthorized
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+    delete:
+      tags:
+        - Event
+      summary: Delete existing event
+      description: Please note that this is a soft delete and only marks the record as inactive  but will permanently delete any existing RSVPs.
+      operationId: deleteEvent
+      parameters:
+        - name: id
+          in: path
+          description: ID of event
+          required: true
+          schema:
+            title: deleteEventParamId
+            type: integer
+      responses:
+        '204':
+          description: Operation successful
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+      security:
+        - Bearer: []
+
+  /users/login:
+    post:
+      tags:
+        - Login
+      summary: Login for API User
+      description: Login for API User
+      operationId: login
+      requestBody:
+        $ref: '#/components/requestBodies/loginRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                title: loginResponse
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/loginObject'
+        '404':
+          description: Not found
+      security:
+        - Bearer: []
+  /users/authenticate:
+    post:
+      tags:
+        - User
+      summary: Authenticate a user with credentials
+      description: Authenticate a user with credentials which will return a oneclick login link
+      operationId: authenticate
+      requestBody:
+        $ref: '#/components/requestBodies/authenticateRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                title: authenticateResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/userOneclickObject'
+        '404':
+          description: Not found
+      security:
+        - Bearer: []
+  /agencies:
+    get:
+      tags:
+        - Agency
+      parameters:
+        - in: query
+          name: per_page
+          required: false
+          schema:
+            title: agencyParamPerPage
+            type: integer
+            minimum: 1
+            maximum: 150
+          description: Define how many results are returned per page
+        - in: query
+          name: since_id
+          required: false
+          schema:
+            title: agencyParamSinceId
+            type: integer
+            minimum: 1
+          description: Filtering items that have been added since that ID
+        - in: query
+          name: since_created
+          required: false
+          schema:
+            title: agencyParamSinceCreated
+            type: string
+            format: datetime
+            example: '2021-11-01 15:00'
+          description: Filtering items that have been added since that date-time
+        - in: query
+          name: since_updated
+          required: false
+          schema:
+            title: agencyParamSinceUpdated
+            type: string
+            format: datetime
+            example: '2021-11-01 15:00'
+          description: Filtering items that have been updated since that date-time
+        - in: query
+          name: show_inactive
+          required: false
+          schema:
+            title: agencyParamShowActive
+            type: string
+            enum:
+              - 'Yes'
+              - 'No'
+          description: Default request will omit inactive records. Passing Yes will allow them to be returned.
+      summary: List agencies
+      description: List agencies
+      operationId: listAgencies
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: listAgenciesResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/agencyObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+    post:
+      tags:
+        - Agency
+      summary: Create new agency
+      description: Create new agency
+      operationId: createAgency
+      requestBody:
+        $ref: '#/components/requestBodies/agencyRequest'
+      responses:
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+  '/agencies/{id}':
+    get:
+      tags:
+        - Agency
+      summary: Get agency details
+      description: Get agency details
+      operationId: getAgency
+      parameters:
+        - name: id
+          in: path
+          description: ID of agency
+          required: true
+          schema:
+            title: getAgencyParamId
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: agencyGetResponse
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/agencyObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+    put:
+      tags:
+        - Agency
+      summary: Update individual agency
+      description: Update individual agency
+      parameters:
+        - name: id
+          in: path
+          description: ID of agency
+          required: true
+          schema:
+            title: updateAgencyParamId
+            type: integer
+      operationId: updateAgency
+      requestBody:
+        $ref: '#/components/requestBodies/agencyRequest'
+      responses:
+        '200':
+          description: Updated
+        '401':
+          description: Unauthorized
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+    delete:
+      tags:
+        - Agency
+      summary: Delete existing agency
+      description: Please note that this is a soft delete and only marks the record as inactive.
+      operationId: deleteAgency
+      parameters:
+        - name: id
+          in: path
+          description: ID of agency
+          required: true
+          schema:
+            title: deleteAgencyParamId
+            type: integer
+      responses:
+        '204':
+          description: Operation successful
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+      security:
+        - Bearer: []
+  '/agencies/{id}/causes':
+    get:
+      tags:
+        - Agency
+      summary: List causes attached to an agency
+      description: List causes attached to an agency
+      operationId: agencyIndexCause
+      parameters:
+        - name: id
+          in: path
+          description: ID of agency
+          required: true
+          schema:
+            title: agencyIndexCauseParamId
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: agencyIndexCauseResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/causeObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+  '/agencies/{id}/causes/{cause_id}':
+    post:
+      tags:
+        - Agency
+      summary: Attach cause to agency
+      description: Attach cause to agency
+      operationId: agencyCausePost
+      parameters:
+        - name: id
+          in: path
+          description: ID of agency
+          required: true
+          schema:
+            title: agencyCausePostParamId
+            type: integer
+        - name: cause_id
+          in: path
+          description: ID of cause
+          required: true
+          schema:
+            title: agencyCausePostParamCauseId
+            type: integer
+      responses:
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+    delete:
+      tags:
+        - Agency
+      summary: Delete cause from agency
+      description: Delete
+      operationId: agencyCauseDelete
+      parameters:
+        - name: id
+          in: path
+          description: ID of agency
+          required: true
+          schema:
+            title: agencyCauseDeleteParamId
+            type: integer
+        - name: cause_id
+          in: path
+          description: ID of cause
+          required: true
+          schema:
+            title: agencyCauseDeleteParamCauseId
+            type: integer
+      responses:
+        '204':
+          description: Successful operation
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+  '/agencies/{id}/clusters':
+    get:
+      tags:
+        - Agency
+      summary: List clusters attached to an agency
+      description: List clusters attached to an agency
+      operationId: agencyIndexCluster
+      parameters:
+        - name: id
+          in: path
+          description: ID of agency
+          required: true
+          schema:
+            title: agencyIndexClusterParamId
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: agencyIndexClusterResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/clusterObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+  '/agencies/{id}/clusters/{cluster_id}':
+    post:
+      tags:
+        - Agency
+      summary: Attach cluster to agency
+      description: Attach cluster to agency
+      operationId: agencyClusterPost
+      parameters:
+        - name: id
+          in: path
+          description: ID of agency
+          required: true
+          schema:
+            title: agencyClusterPostParamId
+            type: integer
+        - name: cluster_id
+          in: path
+          description: ID of cluster
+          required: true
+          schema:
+            title: agencyClusterPostParamClusterId
+            type: integer
+      responses:
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+    delete:
+      tags:
+        - Agency
+      summary: Delete cluster from agency
+      description: Delete
+      operationId: agencyClusterDelete
+      parameters:
+        - name: id
+          in: path
+          description: ID of agency
+          required: true
+          schema:
+            title: agencyClusterDeleteParamId
+            type: integer
+        - name: cluster_id
+          in: path
+          description: ID of cluster
+          required: true
+          schema:
+            title: agencyClusterDeleteParamClusterId
+            type: integer
+      responses:
+        '204':
+          description: Successful operation
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+  '/agencies/{id}/managers':
+    get:
+      tags:
+        - Agency
+      summary: List managers attached to an agency
+      description: List managers attached to an agency
+      operationId: agencyIndexManager
+      parameters:
+        - name: id
+          in: path
+          description: ID of
+          required: true
+          schema:
+            title: agencyIndexManagerParamId
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: agencyIndexManagerResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/userMiniObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+  '/agencies/{id}/managers/{user_id}':
+    post:
+      tags:
+        - Agency
+      summary: Add an agency manager
+      description: Add an agency manager
+      operationId: createAgencyManager
+      parameters:
+        - name: id
+          in: path
+          description: ID of agency
+          required: true
+          schema:
+            title: createAgencyManagerParamId
+            type: integer
+        - name: user_id
+          in: path
+          description: ID of user being added as a manager
+          required: true
+          schema:
+            title: createAgencyManagerParamUserId
+            type: integer
+      responses:
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+    delete:
+      tags:
+        - Agency
+      summary: Delete agency manager
+      description: Delete
+      operationId: deleteAgencyManager
+      parameters:
+        - name: id
+          in: path
+          description: ID of agency
+          required: true
+          schema:
+            title: deleteAgencyManagerParamId
+            type: integer
+        - name: user_id
+          in: path
+          description: ID of user being deleted as a manager
+          required: true
+          schema:
+            title: deleteAgencyManagerParamUserId
+            type: integer
+      responses:
+        '204':
+          description: Successful operation
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+  '/agencies/{id}/tags':
+    get:
+      tags:
+        - Agency
+      summary: List tags attached to an agency
+      description: List tags attached to an agency
+      operationId: agencyIndexTag
+      parameters:
+        - name: id
+          in: path
+          description: ID of agency
+          required: true
+          schema:
+            title: agencyIndexTagParamId
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: agencyIndexTagResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/tagObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+    post:
+      tags:
+        - Agency
+      summary: Attach tags to an agency
+      description: Attach tags to an agency
+      operationId: createAgencyTag
+      parameters:
+        - name: id
+          in: path
+          description: ID of agency
+          required: true
+          schema:
+            title: createAgencyTagParamId
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              title: createAgencyTagResponse
+              type: object
+              required:
+                - tags
+              properties:
+                tags:
+                  type: array
+                  example:
+                    - Tag 1
+                    - Tag 2
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Successful operation
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+  '/agencies/{id}/tags/{tag_id}':
+    delete:
+      tags:
+        - Agency
+      summary: Delete tag from agency
+      description: Delete
+      operationId: agencyTagDelete
+      parameters:
+        - name: id
+          in: path
+          description: ID of agency
+          required: true
+          schema:
+            title: agencyTagDeleteParamId
+            type: integer
+        - name: tag_id
+          in: path
+          description: ID of tag
+          required: true
+          schema:
+            title: agencyTagDeleteParamTagId
+            type: integer
+      responses:
+        '204':
+          description: Successful operation
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+  /benchmarks:
+    get:
+      tags:
+        - Benchmark
+      parameters:
+        - in: query
+          name: per_page
+          required: false
+          schema:
+            title: listBenchmarksParamPerPage
+            type: integer
+            minimum: 1
+            maximum: 150
+          description: Define how many results are returned per page
+        - in: query
+          name: since_id
+          required: false
+          schema:
+            title: listBenchmarksParamSinceId
+            type: integer
+            minimum: 1
+          description: Filtering items that have been added since that ID
+        - in: query
+          name: since_created
+          required: false
+          schema:
+            title: listBenchmarksParamSinceCreated
+            type: string
+            format: datetime
+            example: '2021-11-01 15:00'
+          description: Filtering items that have been added since that date-time
+        - in: query
+          name: since_updated
+          required: false
+          schema:
+            title: listBenchmarksParamSinceUpdated
+            type: string
+            format: datetime
+            example: '2021-11-01 15:00'
+          description: Filtering items that have been updated since that date-time
+        - in: query
+          name: show_inactive
+          required: false
+          schema:
+            title: listBenchmarksParamShowInactive
+            type: string
+            enum:
+              - 'Yes'
+              - 'No'
+          description: Default request will omit inactive records. Passing Yes will allow them to be returned.
+      summary: List site benchmarks
+      description: List site benchmarks
+      operationId: listBenchmarks
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: listBenchmarksResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/benchmarkObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+    post:
+      tags:
+        - Benchmark
+      summary: Create record
+      description: Description needed
+      operationId: createBenchmark
+      requestBody:
+        $ref: '#/components/requestBodies/benchmarkRequest'
+      responses:
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+
+  '/benchmarks/{id}':
+    get:
+      tags:
+        - Benchmark
+      summary: Get benchmark by id
+      description: Get benchmark by id
+      operationId: getBenchmark
+      parameters:
+        - name: id
+          in: path
+          description: ID of
+          required: true
+          schema:
+            title: getBenchmarkParamId
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: getBenchmarkResponse
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/benchmarkObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+    put:
+      tags:
+        - Benchmark
+      summary: Update benchmark
+      description: Update benchmark
+      operationId: updateBenchmark
+      parameters:
+        - name: id
+          in: path
+          description: ID of benchmark
+          required: true
+          schema:
+            title: updateBenchmarkParamId
+            type: integer
+      requestBody:
+        $ref: '#/components/requestBodies/benchmarkRequest'
+      responses:
+        '204':
+          description: Updated
+        '401':
+          description: Unauthorized
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+    delete:
+      tags:
+        - Benchmark
+      summary: Delete benchmark
+      description: Please note that this is a soft delete and only marks the record as inactive.
+      operationId: deleteBenchmark
+      parameters:
+        - name: id
+          in: path
+          description: ID of benchmark
+          required: true
+          schema:
+            title: deleteBenchmarkParamId
+            type: integer
+      responses:
+        '204':
+          description: Successful operation
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+  '/benchmarks/{id}/users':
+    get:
+      tags:
+        - Benchmark
+      summary: List users who have the given benchmark
+      description: List users who have the given benchmark
+      operationId: listBenchmarkUsers
+      parameters:
+        - name: id
+          in: path
+          description: ID of benchmark
+          required: true
+          schema:
+            title: listBenchmarkUsersParamId
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: listBenchmarkUsersResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/userMiniObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+  /causes:
+    get:
+      tags:
+        - Cause & Interest
+      summary: List site available causes
+      description: List site available causes
+      operationId: causesIndex
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: causesIndexResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/causeObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+  /clusters:
+    get:
+      tags:
+        - Cluster
+      summary: List site available clusters
+      description: List site available clusters
+      operationId: clustersIndex
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: clustersIndexResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/clusterObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+    post:
+      tags:
+        - Cluster
+      summary: Create record
+      description: Create record
+      operationId: createCluster
+      requestBody:
+        $ref: '#/components/requestBodies/clusterRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                title: createClusterResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/clusterObject'
+        '401':
+          description: Unauthorized
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+  '/clusters/{id}':
+    delete:
+      tags:
+        - Cluster
+      summary: Delete Cluster
+      description: Delete Cluster
+      operationId: deleteClusters
+      parameters:
+        - name: id
+          in: path
+          description: ID of cluster
+          required: true
+          schema:
+            title: deleteClustersParamId
+            type: integer
+      responses:
+        '204':
+          description: Successful operation
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+        '422':
+          description: Failed validation
+      security:
+        - Bearer: []
+  /hours:
+    get:
+      tags:
+        - Hour
+      summary: List Hours
+      description: List Hours
+      operationId: listHours
+      parameters:
+        - in: query
+          name: per_page
+          required: false
+          schema:
+            title: listHoursParamPerPage
+            type: integer
+            minimum: 1
+            maximum: 150
+          description: Define how many results are returned per page
+        - in: query
+          name: since_id
+          required: false
+          schema:
+            title: listHoursParamSinceId
+            type: integer
+            minimum: 1
+          description: Filtering items that have been added since that ID
+        - in: query
+          name: since_created
+          required: false
+          schema:
+            title: listHoursParamSinceCreated
+            type: string
+            format: datetime
+            example: '2021-11-01 15:00'
+          description: Filtering items that have been added since that date-time
+        - in: query
+          name: since_updated
+          required: false
+          schema:
+            title: listHoursParamSinceUpdated
+            type: string
+            format: datetime
+            example: '2021-11-01 15:00'
+          description: Filtering items that have been updated since that date-time
+        - in: query
+          name: show_inactive
+          required: false
+          schema:
+            title: listHoursParamShowInactive
+            type: string
+            enum:
+              - 'Yes'
+              - 'No'
+          description: Default request will omit inactive records. Passing Yes will allow them to be returned.
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: listHoursParamResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/hourObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+    post:
+      tags:
+        - Hour
+      summary: Create record
+      description: 'Submit hours either for a specific need or, with the lack of a need id, as individual'
+      operationId: createHour
+      requestBody:
+        $ref: '#/components/requestBodies/hourRequest'
+      responses:
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: User has not responded to that need
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+  '/hours/{id}':
+    get:
+      tags:
+        - Hour
+      summary: Get hour
+      description: Get hour
+      operationId: getHour
+      parameters:
+        - name: id
+          in: path
+          description: ID of hour
+          required: true
+          schema:
+            title: getHourParamId
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: getHourResponse
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/hourObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+    put:
+      tags:
+        - Hour
+      summary: Update Hour
+      description: Update Hour
+      operationId: updateHour
+      parameters:
+        - name: id
+          in: path
+          description: ID of Hour
+          required: true
+          schema:
+            title: updateHourParamId
+            type: integer
+      requestBody:
+        $ref: '#/components/requestBodies/hourRequest'
+      responses:
+        '200':
+          description: Updated
+        '401':
+          description: Unauthorized
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+    delete:
+      tags:
+        - Hour
+      summary: Delete hour
+      description: Please note that this is a soft delete and only marks the record as inactive.
+      operationId: deleteHour
+      parameters:
+        - name: id
+          in: path
+          description: ID of hour
+          required: true
+          schema:
+            title: deleteHourParamId
+            type: integer
+      responses:
+        '204':
+          description: Successful operation
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+  /impacts:
+    get:
+      tags:
+        - Impact
+      summary: List site available impact areas
+      description: List site available impact areas
+      operationId: impactsIndex
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: impactsIndexResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/impactObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+  /interests:
+    get:
+      tags:
+        - Cause & Interest
+      summary: List site available interests
+      description: List site available interests
+      operationId: interestsIndex
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: interestsIndexResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/interestObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+  /needs:
+    get:
+      tags:
+        - Need
+      summary: List needs
+      description: List needs
+      operationId: listNeeds
+      parameters:
+        - in: query
+          name: per_page
+          required: false
+          schema:
+            title: listNeedsParamPerPage
+            type: integer
+            minimum: 1
+            maximum: 150
+          description: Define how many results are returned per page
+        - name: agency_id
+          in: query
+          description: Id of agency that created need
+          required: false
+          schema:
+            title: listNeedsParamAgencyId
+            type: array
+            items:
+              type: integer
+        - name: need_title
+          in: query
+          description: Name of need you are search.
+          required: false
+          schema:
+            title: listNeedsParamNeedTitle
+            type: string
+        - name: need_status
+          in: query
+          description: Status of needs you would like to find.
+          required: false
+          schema:
+            title: listNeedsParamNeedStatus
+            type: string
+            enum:
+              - active
+              - inactive
+              - pending
+        - in: query
+          name: since_id
+          required: false
+          schema:
+            title: listNeedsParamSinceId
+            type: integer
+            minimum: 1
+          description: Filtering items that have been added since that ID
+        - in: query
+          name: since_created
+          required: false
+          schema:
+            title: listNeedsParamSinceCreated
+            type: string
+            format: datetime
+            example: '2021-11-01 15:00'
+          description: Filtering items that have been added since that date-time
+        - in: query
+          name: since_updated
+          required: false
+          schema:
+            title: listNeedsParamSinceUpdated
+            type: string
+            format: datetime
+            example: '2021-11-01 15:00'
+          description: Filtering items that have been updated since that date-time
+        - in: query
+          name: show_inactive
+          required: false
+          schema:
+            title: listNeedsParamShowInactive
+            type: string
+            enum:
+              - 'Yes'
+              - 'No'
+          description: Default request will omit inactive records. Passing Yes will allow them to be returned.
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: listNeedsResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/needObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+    post:
+      tags:
+        - Need
+      summary: Create need
+      description: Create need
+      operationId: createNeed
+      requestBody:
+        $ref: '#/components/requestBodies/needRequest'
+      responses:
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+  '/needs/{id}':
+    get:
+      tags:
+        - Need
+      summary: Get need
+      description: Get need details
+      operationId: getNeed
+      parameters:
+        - name: id
+          in: path
+          description: ID of Need
+          required: true
+          schema:
+            title: getNeedParamId
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: getNeedResponse
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/needObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+    put:
+      tags:
+        - Need
+      summary: Update need
+      description: Update need
+      operationId: updateNeed
+      parameters:
+        - name: id
+          in: path
+          description: ID of Need
+          required: true
+          schema:
+            title: updateNeedParamId
+            type: integer
+      requestBody:
+        $ref: '#/components/requestBodies/needRequest'
+      responses:
+        '200':
+          description: Updated
+        '401':
+          description: Unauthorized
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+    delete:
+      tags:
+        - Need
+      summary: Delete existing Need
+      description: Please note that this is a soft delete and only marks the record as inactive.
+      operationId: deleteNeed
+      parameters:
+        - name: id
+          in: path
+          description: ID of Need
+          required: true
+          schema:
+            title: deleteNeedParamId
+            type: integer
+      responses:
+        '204':
+          description: Operation successful
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+      security:
+        - Bearer: []
+  '/needs/{id}/responses':
+    get:
+      tags:
+        - Need
+      summary: Get list of responses for a need
+      description: Get list of responses for a need
+      operationId: listNeedResponses
+      parameters:
+        - name: id
+          in: path
+          description: ID of Need
+          required: true
+          schema:
+            title: listNeedResponsesParamId
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: listNeedResponsesResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/responseObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+
+  '/needs/{id}/shifts':
+    post:
+      tags:
+        - Need
+      summary: Create shifts for an existing need
+      description: Create shifts for an existing need
+      operationId: needAddShifts
+      parameters:
+        - name: id
+          in: path
+          description: ID of need
+          required: true
+          schema:
+            title: needAddInterestParamId
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              title: needAddShiftsRequestSchema
+              type: object
+              required:
+                - shifts
+              properties:
+                shifts:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - start
+                      - slots
+                      - duration
+                    properties:
+                      start:
+                        type: string
+                        format: datetime
+                        example: 2024-02-28 12:00
+                      slots:
+                        type: string
+                        format: integer
+                        description: The response limit
+                        example: 15
+                      duration:
+                        type: string
+                        format: integer
+                        description: The number of minutes in the shift
+                        example: 120
+
+      responses:
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+
+  '/needs/{id}/shifts/{shift_id}':
+    delete:
+      tags:
+        - Need
+      summary: Remove shift from a need
+      description: Remove shift from a need
+      operationId: needRemoveShifts
+      parameters:
+        - name: id
+          in: path
+          description: ID of need
+          required: true
+          schema:
+            title: needAddShiftParamId
+            type: integer
+        - name: shift_id
+          in: path
+          description: ID of shift to be removed
+          required: true
+          schema:
+            title: needAddShiftParamIdShiftId
+            type: integer
+      responses:
+        '204':
+          description: Successful operation
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+
+  '/needs/{id}/interests/{interest_id}':
+    post:
+      tags:
+        - Need
+      summary: Attach interest to need
+      description: Attach interest to need
+      operationId: needAddInterest
+      parameters:
+        - name: id
+          in: path
+          description: ID of need
+          required: true
+          schema:
+            title: needAddInterestParamId
+            type: integer
+        - name: interest_id
+          in: path
+          description: ID of interest
+          required: true
+          schema:
+            title: needAddInterestParamInterestId
+            type: integer
+      responses:
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+    delete:
+      tags:
+        - Need
+      summary: Remove interest from need
+      description: Remove interest from need
+      operationId: needDeleteInterest
+      parameters:
+        - name: id
+          in: path
+          description: ID of need
+          required: true
+          schema:
+            title: needDeleteInterestParamId
+            type: integer
+        - name: interest_id
+          in: path
+          description: ID of interest
+          required: true
+          schema:
+            title: needDeleteInterestParamInterestId
+            type: integer
+      responses:
+        '204':
+          description: Successful operation
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+  '/needs/{id}/qualifications/{qualification_id}':
+    post:
+      tags:
+        - Need
+      summary: Attach qualification to need
+      description: Attach qualification to need
+      operationId: needAddQualification
+      parameters:
+        - name: id
+          in: path
+          description: ID of need
+          required: true
+          schema:
+            title: needAddQualificationParamId
+            type: integer
+        - name: qualification_id
+          in: path
+          description: ID of qualification
+          required: true
+          schema:
+            title: needAddQualificationParamQualificationId
+            type: integer
+      responses:
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+    delete:
+      tags:
+        - Need
+      summary: Remove qualification from need
+      description: Remove qualification from need
+      operationId: needDeleteQualification
+      parameters:
+        - name: id
+          in: path
+          description: ID of need
+          required: true
+          schema:
+            title: needDeleteQualificationParamId
+            type: integer
+        - name: qualification_id
+          in: path
+          description: ID of qualification
+          required: true
+          schema:
+            title: needDeleteQualificationParamQualificationId
+            type: integer
+      responses:
+        '204':
+          description: Successful operation
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+  '/needs/{id}/questions':
+    get:
+      tags:
+        - Need
+      summary: Get list of questions for a need
+      description: Get list of questions for a need
+      operationId: listNeedQuestions
+      parameters:
+        - name: id
+          in: path
+          description: ID of Need
+          required: true
+          schema:
+            title: listNeedQuestionsParamId
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: listNeedQuestionsResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/questionObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+  /qualifications:
+    get:
+      tags:
+        - Qualification
+      parameters:
+        - in: query
+          name: per_page
+          required: false
+          schema:
+            title: listQualificationsParamPerPage
+            type: integer
+            minimum: 1
+            maximum: 150
+          description: Define how many results are returned per page
+        - in: query
+          name: since_id
+          required: false
+          schema:
+            title: listQualificationsParamSinceId
+            type: integer
+            minimum: 1
+          description: Filtering items that have been added since that ID
+        - in: query
+          name: since_created
+          required: false
+          schema:
+            title: listQualificationsParamSinceCreated
+            type: string
+            format: datetime
+            example: '2021-11-01 15:00'
+          description: Filtering items that have been added since that date-time
+        - in: query
+          name: since_updated
+          required: false
+          schema:
+            title: listQualificationsParamSinceUpdated
+            type: string
+            format: datetime
+            example: '2021-11-01 15:00'
+          description: Filtering items that have been updated since that date-time
+        - in: query
+          name: show_inactive
+          required: false
+          schema:
+            title: listQualificationsParamShowInactive
+            type: string
+            enum:
+              - 'Yes'
+              - 'No'
+          description: Default request will omit inactive records. Passing Yes will allow them to be returned.
+      summary: List qualifications
+      description: List qualifications
+      operationId: listQualifications
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: listQualificationsResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/qualificationObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+    post:
+      tags:
+        - Qualification
+      summary: Create record
+      description: Description needed
+      operationId: createQualification
+      requestBody:
+        $ref: '#/components/requestBodies/qualificationRequest'
+      responses:
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+  '/qualifications/{id}':
+    get:
+      tags:
+        - Qualification
+      summary: Get Qualification
+      description: Get Qualification
+      operationId: getQualification
+      parameters:
+        - name: id
+          in: path
+          description: ID of qualification
+          required: true
+          schema:
+            title: getQualificationParamId
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: getQualificationResponse
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/qualificationObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+    put:
+      tags:
+        - Qualification
+      summary: Update qualification
+      description: Update qualification
+      operationId: updateQualification
+      parameters:
+        - name: id
+          in: path
+          description: ID of qualification
+          required: true
+          schema:
+            title: updateQualificationParamId
+            type: integer
+      requestBody:
+        $ref: '#/components/requestBodies/qualificationRequest'
+      responses:
+        '204':
+          description: Updated
+        '401':
+          description: Unauthorized
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+    delete:
+      tags:
+        - Qualification
+      summary: Delete qualification
+      description: Please note that this is a soft delete and only marks the record as inactive.
+      operationId: deleteQualification
+      parameters:
+        - name: id
+          in: path
+          description: ID of qualification
+          required: true
+          schema:
+            title: deleteQualificationParamId
+            type: integer
+      responses:
+        '204':
+          description: Successful operation
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+  '/qualifications/{id}/users':
+    get:
+      tags:
+        - Qualification
+      summary: List users who have this qualification
+      description: List users who have this qualification
+      operationId: listQualificationUsers
+      parameters:
+        - name: id
+          in: path
+          description: ID of
+          required: true
+          schema:
+            title: listQualificationUsersParamId
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: listQualificationUsersResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/qualificationUsersObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+
+  /questions/registration:
+    get:
+      tags:
+        - Question
+      summary: List custom registration questions
+      description: List custom registration questions
+      operationId: listRegistrationQuestions
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: listRegistrationQuestionsResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/questionObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+
+  /responses:
+    get:
+      tags:
+        - Response
+      summary: Get list of responses
+      description: Get list of responses
+      operationId: listResponses
+      parameters:
+        - in: query
+          name: per_page
+          required: false
+          schema:
+            title: listResponsesParamPerPage
+            type: integer
+            minimum: 1
+            maximum: 150
+          description: Define how many results are returned per page
+        - in: query
+          name: since_id
+          required: false
+          schema:
+            title: listResponsesParamSinceId
+            type: integer
+            minimum: 1
+          description: Filtering items that have been added since that ID
+        - in: query
+          name: since_created
+          required: false
+          schema:
+            title: listResponsesParamSinceCreated
+            type: string
+            format: datetime
+            example: '2021-11-01 15:00'
+          description: Filtering items that have been added since that date-time
+        - in: query
+          name: since_updated
+          required: false
+          schema:
+            title: listResponsesParamSinceUpdated
+            type: string
+            format: datetime
+            example: '2021-11-01 15:00'
+          description: Filtering items that have been updated since that date-time
+        - in: query
+          name: show_inactive
+          required: false
+          schema:
+            title: listResponsesParamShowInactive
+            type: string
+            enum:
+              - 'Yes'
+              - 'No'
+          description: Default request will omit inactive records. Passing Yes will allow them to be returned.
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: listResponsesResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/responseObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+    post:
+      tags:
+        - Response
+      summary: Create record
+      description: Description needed
+      operationId: createResponse
+      requestBody:
+        $ref: '#/components/requestBodies/responseRequest'
+      responses:
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+  '/responses/{id}':
+    get:
+      tags:
+        - Response
+      summary: Get single response
+      description: Get single response
+      operationId: getResponse
+      parameters:
+        - name: id
+          in: path
+          description: ID of
+          required: true
+          schema:
+            title: getResponseParamId
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: getResponseResponse
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/responseObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+    put:
+      tags:
+        - Response
+      summary: Update Response
+      description: Update Response
+      operationId: updateResponse
+      parameters:
+        - name: id
+          in: path
+          description: ID of Response
+          required: true
+          schema:
+            title: updateResponseParamId
+            type: integer
+      requestBody:
+        $ref: '#/components/requestBodies/responseRequest'
+      responses:
+        '200':
+          description: Updated
+        '401':
+          description: Unauthorized
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+    delete:
+      tags:
+        - Response
+      summary: Delete response
+      description: Please note that this is a soft delete and only marks the record as inactive.
+      operationId: deleteResponse
+      parameters:
+        - name: id
+          in: path
+          description: ID of response
+          required: true
+          schema:
+            title: deleteResponseParamId
+            type: integer
+      responses:
+        '204':
+          description: Successful operation
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+  /teams:
+    get:
+      tags:
+        - Team
+      parameters:
+        - in: query
+          name: per_page
+          required: false
+          schema:
+            title: listTeamsParamPerPage
+            type: integer
+            minimum: 1
+            maximum: 150
+          description: Define how many results are returned per page
+        - in: query
+          name: since_id
+          required: false
+          schema:
+            title: listTeamsParamSinceId
+            type: integer
+            minimum: 1
+          description: Filtering items that have been added since that ID
+        - in: query
+          name: since_created
+          required: false
+          schema:
+            title: listTeamsParamSinceCreated
+            type: string
+            format: datetime
+            example: '2021-11-01 15:00'
+          description: Filtering items that have been added since that date-time
+        - in: query
+          name: since_updated
+          required: false
+          schema:
+            title: listTeamsParamSinceUpdated
+            type: string
+            format: datetime
+            example: '2021-11-01 15:00'
+          description: Filtering items that have been updated since that date-time
+        - in: query
+          name: show_inactive
+          required: false
+          schema:
+            title: listTeamsParamShowInactive
+            type: string
+            enum:
+              - 'Yes'
+              - 'No'
+          description: Default request will omit inactive records. Passing Yes will allow them to be returned.
+      summary: List teams
+      description: List teams
+      operationId: listTeams
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: listTeamsResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/teamObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+    post:
+      tags:
+        - Team
+      summary: Create team
+      description: Create team
+      operationId: postTeam
+      requestBody:
+        $ref: '#/components/requestBodies/teamRequest'
+      responses:
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '422':
+          description: Failed validation
+      security:
+        - Bearer: []
+  '/teams/{id}':
+    get:
+      tags:
+        - Team
+      summary: Get team
+      description: Get team
+      operationId: getTeam
+      parameters:
+        - name: id
+          in: path
+          description: ID of team
+          required: true
+          schema:
+            title: getTeamParamId
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: getTeamResponse
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/teamObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+    delete:
+      tags:
+        - Team
+      summary: Delete team
+      description: Please note that this is a soft delete and only marks the record as inactive.
+      operationId: deleteTeam
+      parameters:
+        - name: id
+          in: path
+          description: ID of team
+          required: true
+          schema:
+            title: deleteTeamParamId
+            type: integer
+      responses:
+        '204':
+          description: Successful operation
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+  '/teams/{id}/member/{member}':
+    post:
+      tags:
+        - Team
+      summary: Attach member to team
+      description: Attach member to team
+      operationId: teamMemberAttach
+      parameters:
+        - name: id
+          in: path
+          description: ID of team
+          required: true
+          schema:
+            title: teamMemberAttachParamId
+            type: integer
+        - name: member
+          in: path
+          description: ID of user being attached to team
+          required: true
+          schema:
+            title: teamMemberAttachParamMember
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              title: teamMemberAttachRequest
+              type: object
+              properties:
+                sch_id:
+                  description: Schedule ID
+                  type: string
+                  format: number
+                  example: "235587"
+      responses:
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+    delete:
+      tags:
+        - Team
+      summary: Detach member from team
+      description: Detach member from team
+      operationId: teamMemberDetach
+      parameters:
+        - name: id
+          in: path
+          description: ID of team
+          required: true
+          schema:
+            title: teamMemberDetachParamId
+            type: integer
+        - name: member
+          in: path
+          description: ID of user being detached from team
+          required: true
+          schema:
+            title: teamMemberDetachParamMember
+            type: integer
+      responses:
+        '204':
+          description: Created
+        '401':
+          description: Unauthorized
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+  /users:
+    get:
+      tags:
+        - User
+      summary: List site users
+      description: Multiple search values can be provided to narrow down the results
+      operationId: listUsers
+      parameters:
+        - in: query
+          name: per_page
+          required: false
+          schema:
+            title: listUsersParamPerPage
+            type: integer
+            minimum: 1
+            maximum: 150
+          description: Define how many results are returned per page
+        - in: query
+          name: page
+          required: false
+          schema:
+            title: listUsersParamPage
+            type: integer
+            minimum: 1
+          description: page number
+        - name: user_status
+          in: query
+          description: Status values that need to be considered for filter
+          required: false
+          schema:
+            title: listUsersParamUserArrayStatus
+            type: array
+            items:
+              type: string
+              title: listUsersParamUserStatus
+              enum:
+                - active
+                - pending
+                - imported
+                - inactive
+              default: active
+        - name: user_fname
+          in: query
+          description: User first name
+          required: false
+          schema:
+            title: listUsersParamUserFname
+            type: string
+        - name: user_lname
+          in: query
+          description: User last name
+          required: false
+          schema:
+            title: listUsersParamUserLname
+            type: string
+        - name: user_email
+          in: query
+          description: User email address
+          required: false
+          schema:
+            title: listUsersParamUserEmail
+            type: string
+            format: email
+        - name: user_fname_like
+          in: query
+          description: Filter by partial user first name
+          required: false
+          schema:
+            title: listUsersParamUserFnameLike
+            type: string
+        - name: user_lname_like
+          in: query
+          description: Filter by partial user last name
+          required: false
+          schema:
+            title: listUsersParamUserLnameLike
+            type: string
+        - name: user_email_like
+          in: query
+          description: Filter by partial user email address
+          required: false
+          schema:
+            title: listUsersParamUserEmailLike
+            type: string
+            format: email
+        - in: query
+          name: since_id
+          required: false
+          schema:
+            title: listUsersParamSinceId
+            type: integer
+            minimum: 1
+          description: Filtering items that have been added since that ID
+        - in: query
+          name: since_created
+          required: false
+          schema:
+            title: listUsersParamSinceCreated
+            type: string
+            format: datetime
+            example: '2021-11-01 15:00'
+          description: Filtering items that have been added since that date-time
+        - in: query
+          name: since_updated
+          required: false
+          schema:
+            title: listUsersParamSinceUpdated
+            type: string
+            format: datetime
+            example: '2021-11-01 15:00'
+          description: Filtering items that have been updated since that date-time
+        - in: query
+          name: show_inactive
+          required: false
+          schema:
+            title: listUsersParamShowInactive
+            type: string
+            enum:
+              - 'Yes'
+              - 'No'
+          description: Default request will omit inactive records. Passing Yes will allow them to be returned.
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: listUsersParamResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/userObject'
+                  links:
+                    type: object
+                    properties:
+                      first:
+                        type: string
+                      last:
+                        nullable: true
+                        type: string
+                      prev:
+                        nullable: true
+                        type: string
+                      next:
+                        nullable: true
+                        type: string
+                  meta:
+                    type: object
+                    properties:
+                      current_page:
+                        type: integer
+                      from:
+                        type: integer
+                      path:
+                        type: string
+                      per_page:
+                        type: integer
+                      to:
+                        type: integer
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+    post:
+      tags:
+        - User
+      summary: Create new user
+      description: Create new user
+      operationId: createUser
+      requestBody:
+        $ref: '#/components/requestBodies/userRequest'
+      responses:
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+      security:
+        - Bearer: []
+  '/users/{id}':
+    get:
+      tags:
+        - User
+      summary: Get existing user
+      description: Get existing user
+      operationId: getUser
+      parameters:
+        - name: id
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            title: getUserParamId
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: getUserResponse
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/userObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+    put:
+      tags:
+        - User
+      summary: Update existing user
+      description: Update existing user
+      operationId: putUser
+      parameters:
+        - name: id
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            title: putUserParamId
+            type: integer
+      requestBody:
+        $ref: '#/components/requestBodies/userRequest'
+      responses:
+        '200':
+          description: Operation successful
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+    delete:
+      tags:
+        - User
+      summary: Delete existing user
+      description: Please note that this is a soft delete and only marks the record as inactive.
+      operationId: deleteUser
+      parameters:
+        - name: id
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            title: deleteUserParamId
+            type: integer
+      responses:
+        '204':
+          description: Operation successful
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+      security:
+        - Bearer: []
+  '/users/{id}/agencies':
+    get:
+      tags:
+        - User
+      summary: Get list of a user's fanned agencies
+      description: Get list of a user's fanned agencies
+      operationId: listUserAgencies
+      parameters:
+        - name: id
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            title: listUserAgenciesParamId
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: listUserAgenciesResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/agencyMiniObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+      security:
+        - Bearer: []
+  '/users/{id}/agencies/{agency_id}':
+    post:
+      tags:
+        - User
+      summary: Fan an agency
+      description: Fan an agency
+      operationId: createUserAgencyFan
+      parameters:
+        - name: id
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            title: createUserAgencyFanParamId
+            type: integer
+        - name: agency_id
+          in: path
+          description: ID of agency
+          required: true
+          schema:
+            title: createUserAgencyFanParamAgencyId
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+    delete:
+      tags:
+        - User
+      summary: Delete agency fan relationship
+      description: Delete agency fan relationship
+      operationId: deleteUserAgencyFan
+      parameters:
+        - name: id
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            title: deleteUserAgencyFanParamId
+            type: integer
+        - name: agency_id
+          in: path
+          description: ID of agency
+          required: true
+          schema:
+            title: deleteUserAgencyFanParamAgencyId
+            type: integer
+      responses:
+        '204':
+          description: Successful operation
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+  '/users/{id}/benchmarks':
+    get:
+      tags:
+        - User
+      summary: Get list of a user's benchmarks
+      description: Get list of a user's benchmarks
+      operationId: listUserBenchmarks
+      parameters:
+        - name: id
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            title: listUserBenchmarksParamId
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: listUserBenchmarksResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/benchmarkMiniObject'
+        '401':
+          description: Unauthorized
+      security:
+        - Bearer: []
+  '/users/{id}/benchmarks/{benchmark_id}':
+    delete:
+      tags:
+        - User
+      summary: Delete benchmark from user
+      description: Delete benchmark from user
+      operationId: deleteUserBenchmark
+      parameters:
+        - name: id
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            title: deleteUserBenchmarkParamId
+            type: integer
+        - name: benchmark_id
+          in: path
+          description: ID of benchmark
+          required: true
+          schema:
+            title: deleteUserBenchmarkParamBenchmarkId
+            type: integer
+      responses:
+        '204':
+          description: Successful operation
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+  '/users/{id}/causes':
+    get:
+      tags:
+        - User
+      summary: Get list of a user's causes
+      description: Get list of a user's causes
+      operationId: listUserCauses
+      parameters:
+        - name: id
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            title: listUserCausesParamId
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: listUserCausesResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/causeObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+      security:
+        - Bearer: []
+  '/users/{id}/causes/{cause_id}':
+    post:
+      tags:
+        - User
+      summary: Add cause to a user
+      description: Add cause to a user
+      operationId: createUserCause
+      parameters:
+        - name: id
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            title: createUserCauseParamId
+            type: integer
+        - name: cause_id
+          in: path
+          description: ID of user / cause relationship
+          required: true
+          schema:
+            title: createUserCauseParamCauseId
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              title: createUserCauseRequest
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+      responses:
+        '200':
+          description: Successful operation
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+    delete:
+      tags:
+        - User
+      summary: Remove causes assigned to a user
+      description: Remove causes assigned to a user
+      operationId: deleteUserCause
+      parameters:
+        - name: id
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            title: deleteUserCauseParamId
+            type: integer
+        - name: cause_id
+          in: path
+          description: ID of user / cause relationship
+          required: true
+          schema:
+            title: deleteUserCauseParamCauseId
+            type: integer
+      responses:
+        '204':
+          description: Successful operation
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+  '/users/{id}/extras':
+    get:
+      tags:
+        - User
+      summary: Get list of a user's extra data
+      description: Get list of a user's extra data
+      operationId: listUserExtras
+      parameters:
+        - name: id
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            title: listUserExtrasParamId
+            type: integer
+        - in: query
+          name: subset
+          required: false
+          schema:
+            title: listUserExtrasParamSubset
+            type: string
+            enum:
+              - 'regExtra'
+              - 'profile'
+          description: Define the subset of results you want back. The default is regExtra.
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: listUserExtrasResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/extraObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+      security:
+        - Bearer: []
+    post:
+      tags:
+        - User
+      summary: Update custom user extra data
+      description: 'Update custom user extra data. Note that this payload will be the entirety of the user extras. If this is an update, it must also include previously stored extras.'
+      operationId: createUserExtra
+      parameters:
+        - name: id
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            title: createUserExtraParamId
+            type: integer
+        - name: subset
+          in: query
+          description: Desired subset to store data under. If empty, the default is regExtra.
+          required: false
+          schema:
+            title: createUserExtraParamSubset
+            type: string
+            enum:
+              - regExtra
+              - profile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              title: createUserExtraRequest
+              type: object
+              properties:
+                extras:
+                  items:
+                    type: object
+                    properties:
+                      key:
+                        type: string
+                        example: Language
+                      value:
+                        type: string
+                        example: Spanish
+      responses:
+        '201':
+          description: Successful operation
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+  '/users/{id}/hours':
+    get:
+      tags:
+        - User
+      summary: List user submitted hours
+      description: List user submitted hours
+      operationId: listUserhours
+      parameters:
+        - name: id
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            title: listUserhoursParamId
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: listUserhoursResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/hourObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+  '/users/{id}/interests':
+    get:
+      tags:
+        - User
+      summary: Get list of a user's interests
+      description: Get list of a user's interests
+      operationId: listUserInterests
+      parameters:
+        - name: id
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            title: listUserInterestsParamId
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: listUserInterestsResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/interestObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+      security:
+        - Bearer: []
+  '/users/{id}/interests/{interest_id}':
+    post:
+      tags:
+        - User
+      summary: Assign interest to a user
+      description: Assign interest to a user
+      operationId: addUserInterest
+      parameters:
+        - name: id
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            title: addUserInterestParamId
+            type: integer
+        - name: interest_id
+          in: path
+          description: ID interest
+          required: true
+          schema:
+            title: addUserInterestParamInterestId
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+    delete:
+      tags:
+        - User
+      summary: Remove interest assigned to a user
+      description: Remove interest assigned to a user
+      operationId: deleteUserInterest
+      parameters:
+        - name: id
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            title: deleteUserInterestParamId
+            type: integer
+        - name: interest_id
+          in: path
+          description: ID of user / interests relationship
+          required: true
+          schema:
+            title: deleteUserInterestParamInterestId
+            type: integer
+      responses:
+        '204':
+          description: Successful operation
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+
+  '/users/{id}/welcomeEmail':
+    get:
+      tags:
+        - User
+      summary: Send user welcome email message
+      description: Send user welcome email message.
+      operationId: getUserWelcomeEmail
+      parameters:
+        - name: id
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            title: getUserWelcomeEmailParamId
+            type: integer
+      responses:
+        '201':
+          description: Successful operation
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+      security:
+        - Bearer: []
+
+  '/users/{id}/oneclick':
+    get:
+      tags:
+        - User
+      summary: Get oneclick login link for user
+      description: Get oneclick login link for user
+      operationId: getUserOneclick
+      parameters:
+        - name: id
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            title: getUserOneclickParamId
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: getUserOneclickResponse
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/userOneclickObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+      security:
+        - Bearer: []
+  '/users/{id}/optouts':
+    get:
+      tags:
+        - User
+      summary: Check if a user is opted out of communication
+      description: Check if a user is opted out of communication
+      operationId: getUserOptout
+      parameters:
+        - name: id
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            title: getUserOptoutParamId
+            type: integer
+      responses:
+        '200':
+          description: User has opted out
+          content:
+            application/json:
+              schema:
+                title: getUserOptoutResponse
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/userOptoutsObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: User has not opted out
+      security:
+        - Bearer: []
+    post:
+      tags:
+        - User
+      summary: Opt user out of email communication
+      description: Opt user out of email communication
+      operationId: createUserOptout
+      parameters:
+        - name: id
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            title: createUserOptoutParamId
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              title: createUserOptoutRequest
+              type: object
+              required:
+                - optout_areas
+              properties:
+                optout_areas:
+                  description: Submitted opt-out areas will supersede previously saved optouts. Submitting "all" will opt the user out of all messaging.
+                  type: array
+                  example:
+                    - reminders_and_confirmations
+                    - news_and_recommendations
+                    - surveys_and_thank_yous
+                    - schedule_updates
+                    - account_management
+                    - site_manager_activity
+                    - site_manager_tasks
+                    - site_manager_updates
+                    - agency_manager_activity
+                    - agency_manager_tasks
+                    - agency_manager_updates
+                    - blast
+                    - all
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Successful operation
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+    delete:
+      tags:
+        - User
+      summary: Remove optout assigned to a user
+      description: Remove optout assigned to a user
+      operationId: deleteUserOptout
+      parameters:
+        - name: id
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            title: deleteUserOptoutParamId
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              title: deleteUserOptoutRequest
+              type: object
+              required:
+                - optout_areas
+              properties:
+                optout_areas:
+                  description: Submit only the areas you wish to remove from the user's opt-out list.
+                  type: array
+                  example:
+                    - reminders_and_confirmations
+                    - news_and_recommendations
+                    - surveys_and_thank_yous
+                    - schedule_updates
+                    - account_management
+                    - site_manager_activity
+                    - site_manager_tasks
+                    - site_manager_updates
+                    - agency_manager_activity
+                    - agency_manager_tasks
+                    - agency_manager_updates
+                    - blast
+                    - all
+                  items:
+                    type: string
+      responses:
+        '204':
+          description: Successful operation
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+  '/users/{id}/qualifications':
+    get:
+      tags:
+        - User
+      summary: Get list of a user's qualifications
+      description: Get list of a user's qualifications
+      operationId: listUserQualifications
+      parameters:
+        - name: id
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            title: listUserQualificationsParamId
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: listUserQualificationsResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/userQualificationsObject'
+        '401':
+          description: Unauthorized
+      security:
+        - Bearer: []
+
+  '/users/{id}/registrationQuestions':
+    get:
+      tags:
+        - User
+      summary: Get list of user responses to registration questions
+      description: Get list of user responses to registration questions
+      operationId: listUserRegistrationQuestionAnswers
+      parameters:
+        - name: id
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            title: listRegistrationQuestionAnswersParamId
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: listRegistrationQuestionAnswersResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RegistrationResponseAnswerObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+      security:
+        - Bearer: []
+    post:
+      tags:
+        - User
+      summary: Store answers to custom registration questions
+      description: Store answers to custom registration questions
+      operationId: createRegistrationQuestionAnswers
+      parameters:
+        - name: id
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            title: createRegistrationQuestionAnswersParamId
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              title: createRegistrationQuestionAnswersRequest
+              type: object
+              required:
+                - answers
+              properties:
+                answers:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      question_id:
+                        type: string
+                        format: number
+                        example: 431255
+                      answer:
+                        type: array
+                        items:
+                          type: string
+                          example: First answer
+      responses:
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+
+  '/users/{id}/responses':
+    get:
+      tags:
+        - User
+      summary: List user responses
+      description: List responses for a specific user
+      operationId: listUserResponses
+      parameters:
+        - name: id
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            title: listUserResponsesParamId
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: listUserResponsesResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/userResponseObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+  '/users/{id}/tracks':
+    get:
+      tags:
+        - User
+      summary: Get list of a user's tracks
+      description: Get list of a user's tracks
+      operationId: listUserTracks
+      parameters:
+        - name: id
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            title: listUserTracksParamId
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: listUserTracksResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/trackMiniObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+      security:
+        - Bearer: []
+  '/users/{id}/tags':
+    get:
+      tags:
+        - User
+      summary: Get list of a user's tags
+      description: Get list of a user's tags
+      operationId: listUserTags
+      parameters:
+        - name: id
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            title: listUserTagsParamId
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: listUserTagsResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/tagObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+      security:
+        - Bearer: []
+    post:
+      tags:
+        - User
+      summary: Add tags to a user
+      description: Add tags to a user
+      operationId: createUserTag
+      parameters:
+        - name: id
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            title: createUserTagParamId
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              title: createUserTagRequest
+              type: object
+              required:
+                - tags
+              properties:
+                tags:
+                  type: array
+                  example:
+                    - Tag 1
+                    - Tag 2
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+  '/users/{id}/tags/{tag_id}':
+    delete:
+      tags:
+        - User
+      summary: Remove tag assigned to a user
+      description: Remove tag assigned to a user
+      operationId: deleteUserTag
+      parameters:
+        - name: id
+          in: path
+          description: ID of user
+          required: true
+          schema:
+            title: deleteUserTagParamId
+            type: integer
+        - name: tag_id
+          in: path
+          description: ID of tag
+          required: true
+          schema:
+            title: deleteUserTagParamTagId
+            type: integer
+      responses:
+        '204':
+          description: Successful operation
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+  /groups:
+    get:
+      tags:
+        - User Group
+      parameters:
+        - in: query
+          name: per_page
+          required: false
+          schema:
+            title: listGroupsParamPerPage
+            type: integer
+            minimum: 1
+            maximum: 150
+          description: Define how many results are returned per page
+        - in: query
+          name: since_id
+          required: false
+          schema:
+            title: listGroupsParamSinceId
+            type: integer
+            minimum: 1
+          description: Filtering items that have been added since that ID
+        - in: query
+          name: since_created
+          required: false
+          schema:
+            title: listGroupsParamSinceCreated
+            type: string
+            format: datetime
+            example: '2021-11-01 15:00'
+          description: Filtering items that have been added since that date-time
+        - in: query
+          name: since_updated
+          required: false
+          schema:
+            title: listGroupsParamSinceUpdated
+            type: string
+            format: datetime
+            example: '2021-11-01 15:00'
+          description: Filtering items that have been updated since that date-time
+        - in: query
+          name: show_inactive
+          required: false
+          schema:
+            title: listGroupsParamShowInactive
+            type: string
+            enum:
+              - 'Yes'
+              - 'No'
+          description: Default request will omit inactive records. Passing Yes will allow them to be returned.
+      summary: List user groups
+      description: List user groups
+      operationId: listGroups
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: listGroupsResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/groupObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+    post:
+      tags:
+        - User Group
+      summary: Create record
+      description: Description needed
+      operationId: postGroup
+      requestBody:
+        $ref: '#/components/requestBodies/groupRequest'
+      responses:
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+  '/groups/{id}':
+    get:
+      tags:
+        - User Group
+      summary: Get single user group
+      description: Get single user group
+      operationId: getGroup
+      parameters:
+        - name: id
+          in: path
+          description: ID of
+          required: true
+          schema:
+            title: getGroupParamId
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                title: getGroupResponse
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/groupObject'
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+    put:
+      tags:
+        - User Group
+      summary: Update user group
+      description: Update user group
+      operationId: updateGroup
+      parameters:
+        - name: id
+          in: path
+          description: ID of user group
+          required: true
+          schema:
+            title: updateGroupParamId
+            type: integer
+      requestBody:
+        $ref: '#/components/requestBodies/groupRequest'
+      responses:
+        '204':
+          description: Updated
+        '401':
+          description: Unauthorized
+        '422':
+          description: Failed Validation
+      security:
+        - Bearer: []
+    delete:
+      tags:
+        - User Group
+      summary: Delete user group
+      description: Please note that this is a soft delete and only marks the record as inactive.
+      operationId: deleteGroup
+      parameters:
+        - name: id
+          in: path
+          description: ID of user group
+          required: true
+          schema:
+            title: deleteGroupParamId
+            type: integer
+      responses:
+        '204':
+          description: Successful operation
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+  '/groups/{id}/needs/{need_id}':
+    post:
+      tags:
+        - User Group
+      summary: Attach need to group
+      description: Attach need to group
+      operationId: postGroupNeed
+      parameters:
+        - name: id
+          in: path
+          description: ID of group
+          required: true
+          schema:
+            title: postGroupNeedParamId
+            type: integer
+        - name: need_id
+          in: path
+          description: ID of need being added to group
+          required: true
+          schema:
+            title: postGroupNeedParamNeedId
+            type: integer
+      responses:
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+      security:
+        - Bearer: []
+    delete:
+      tags:
+        - User Group
+      summary: Remove need from group
+      description: Remove need from group
+      operationId: deleteGroupNeed
+      parameters:
+        - name: id
+          in: path
+          description: ID of
+          required: true
+          schema:
+            title: deleteGroupNeedParamId
+            type: integer
+        - name: need_id
+          in: path
+          description: ID of need to remove
+          required: true
+          schema:
+            title: deleteGroupNeedParamNeedId
+            type: integer
+      responses:
+        '204':
+          description: Successful operation
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+  '/groups/{id}/users/{user_id}':
+    post:
+      tags:
+        - User Group
+      summary: Attach user to group
+      description: Attach user to group
+      operationId: postGroupUser
+      parameters:
+        - name: id
+          in: path
+          description: ID of
+          required: true
+          schema:
+            title: postGroupUserParamId
+            type: integer
+        - name: user_id
+          in: path
+          description: ID of user to remove
+          required: true
+          schema:
+            title: postGroupUserParamUserId
+            type: integer
+      responses:
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+      security:
+        - Bearer: []
+    delete:
+      tags:
+        - User Group
+      summary: Remove user from group
+      description: Remove user from group
+      operationId: deleteGroupUser
+      parameters:
+        - name: id
+          in: path
+          description: ID of
+          required: true
+          schema:
+            title: deleteGroupUserParamId
+            type: integer
+        - name: user_id
+          in: path
+          description: ID of user to remove
+          required: true
+          schema:
+            title: deleteGroupUserParamUserId
+            type: integer
+      responses:
+        '204':
+          description: Successful operation
+        '401':
+          description: Unauthorized
+        '404':
+          description: No results
+      security:
+        - Bearer: []
+servers:
+  - description: Production (US 1)
+    url: 'https://api.galaxydigital.com/api'
+  - description: Production (US 2)
+    url: 'https://www.volunteerapi.com/api'
+  - description: Production (Canada)
+    url: 'https://ca.volunteerapi.com/api'
+components:
+  securitySchemes:
+    Bearer:
+      type: apiKey
+      name: Authorization
+      in: header
+  requestBodies:
+    clusterRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/clusterRequestSchema'
+    teamRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/teamRequestSchema'
+    groupRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/groupRequestSchema'
+    qualificationRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/qualificationRequestSchema'
+    hourRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/hourRequestSchema'
+    userRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/userRequestSchema'
+    agencyRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/agencyRequestSchema'
+    needRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/needRequestSchema'
+    responseRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/responseRequestSchema'
+    benchmarkRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/benchmarkRequestSchema'
+    loginRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/loginRequestSchema'
+    eventRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/eventRequestSchema'
+    authenticateRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/authenticateRequestSchema'
+  schemas:
+    groupObject:
+      title: groupObjectSchema
+      type: object
+      properties:
+        id:
+          type: string
+          format: number
+        domain_id:
+          type: string
+          format: number
+        ug_status:
+          type: string
+          enum:
+            - active
+            - pending
+            - inactive
+        ug_title:
+          type: string
+        ug_description:
+          type: string
+        ug_description_private:
+          type: string
+        ug_domains:
+          type: string
+        ug_color:
+          type: string
+          format: hex
+        ug_text_color:
+          type: string
+        ug_icon:
+          type: string
+        ug_suppress_resume:
+          type: string
+          enum:
+            - 'Yes'
+            - 'No'
+        ug_allow_member_remove:
+          type: string
+          enum:
+            - 'Yes'
+            - 'No'
+        ug_submitted_hours:
+          type: string
+          enum:
+            - auto
+            - manual
+            - approved
+        ug_block_id:
+          type: string
+          format: number
+        ug_limit:
+          type: string
+          enum:
+            - 'Yes'
+            - 'No'
+        ug_goal:
+          type: string
+          format: number
+        ug_approval:
+          type: string
+          enum:
+            - 'Yes'
+            - 'No'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        needs:
+          type: array
+          description: Needs attached to user group
+          items:
+            $ref: '#/components/schemas/needMiniObject'
+        users:
+          type: array
+          description: Users attached to user group
+          items:
+            $ref: '#/components/schemas/GroupUserMiniObject'
+        agencies:
+          type: array
+          description: Agencies attached to user group
+          items:
+            $ref: '#/components/schemas/agencyMiniObject'
+        questions_reflection:
+          type: array
+          description: Reflection questions attached to user group
+          items:
+            $ref: '#/components/schemas/questionObject'
+        questions_join:
+          type: array
+          description: Join questions attached to user group
+          items:
+            $ref: '#/components/schemas/questionObject'
+    teamObject:
+      title: teamObjectSchema
+      type: object
+      properties:
+        id:
+          type: string
+          format: number
+        domain_id:
+          type: string
+          format: number
+        team_status:
+          type: string
+          enum:
+            - active
+            - inactive
+        team_title:
+          type: string
+        team_description:
+          type: string
+        creator:
+          $ref: '#/components/schemas/userMiniObject'
+        agency:
+          $ref: '#/components/schemas/agencyMiniObject'
+        need:
+          $ref: '#/components/schemas/needMiniObject'
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/teamMembersObject'
+    agencyMiniObject:
+      title: agencyMiniObjectSchema
+      type: object
+      properties:
+        id:
+          type: string
+          format: number
+        domain_id:
+          type: string
+          format: number
+        agency_name:
+          type: string
+    initiativeMiniObject:
+      title: initiativeMiniObjectSchema
+      type: object
+      properties:
+        id:
+          type: string
+          format: number
+        domain_id:
+          type: string
+          format: number
+        init_title:
+          type: string
+    groupMiniObject:
+      title: groupMiniObjectSchema
+      type: object
+      properties:
+        id:
+          type: string
+          format: number
+        domain_id:
+          type: string
+          format: number
+        group_title:
+          type: string
+    needMiniObject:
+      title: needMiniObjectSchema
+      type: object
+      properties:
+        id:
+          type: string
+          format: number
+        domain_id:
+          type: string
+          format: number
+        need_title:
+          type: string
+    RegistrationResponseAnswerObject:
+      title: RegistrationResponseAnswerObjectSchema
+      type: object
+      properties:
+        type:
+          type: string
+        key:
+          type: string
+          format: number
+        area:
+          type: string
+        question_id:
+          type: string
+          format: number
+        question:
+          type: string
+        answer:
+          type: string
+    ResponseAnswerObject:
+      title: ResponseAnswerObjectSchema
+      type: object
+      properties:
+        type:
+          type: string
+        key:
+          type: string
+          format: number
+        area:
+          type: string
+        question:
+          type: string
+        answer:
+          type: string
+    trackMiniObject:
+      title: trackMiniObjectSchema
+      type: object
+      properties:
+        id:
+          type: string
+          format: number
+          example: "432155"
+        name:
+          type: string
+          example: default
+        created_at:
+          type: string
+          format: date-time
+          example: '2021-01-01 12:00:00'
+    teamMiniObject:
+      title: teamMiniObjectSchema
+      type: object
+      properties:
+        id:
+          type: string
+          format: number
+        domain_id:
+          type: string
+          format: number
+        team_name:
+          type: string
+    GroupUserMiniObject:
+      title: GroupUserMiniObjectSchema
+      type: object
+      properties:
+        id:
+          type: string
+          format: number
+        domain_id:
+          type: string
+          format: number
+        user_fname:
+          type: string
+        user_lname:
+          type: string
+        user_email:
+          type: string
+        leader:
+          type: string
+          enum:
+            - 'Yes'
+            - 'No'
+    userMiniObject:
+      title: userMiniObjectSchema
+      type: object
+      properties:
+        id:
+          type: string
+          format: number
+        domain_id:
+          type: string
+          format: number
+        user_fname:
+          type: string
+        user_lname:
+          type: string
+        user_email:
+          type: string
+    teamMembersObject:
+      title: teamMembersObjectSchema
+      type: object
+      properties:
+        id:
+          type: string
+          format: number
+        domain_id:
+          type: string
+          format: number
+        user_fname:
+          type: string
+        user_lname:
+          type: string
+        user_email:
+          type: string
+        leader:
+          type: string
+          enum:
+            - 'Yes'
+            - 'No'
+    userOptoutsObject:
+      title: userOptoutsObjectSchema
+      type: object
+      properties:
+        id:
+          type: string
+          format: number
+        email:
+          type: string
+          format: email
+        optout_areas:
+          type: array
+          items:
+            type: string
+            example: "surveys_and_thank_yous"
+        date_added:
+          type: string
+          format: datetime
+    userQualificationsObject:
+      title: userQualificationsObjectSchema
+      type: object
+      properties:
+        id:
+          type: string
+          format: number
+        domain_id:
+          type: string
+          format: number
+        qualification_id:
+          type: string
+          format: number
+        qualification_title:
+          type: string
+        status:
+          type: string
+          enum:
+            - active
+            - pending
+            - inactive
+            - expired
+            - rejected
+            - resubmit
+        expires:
+          type: string
+          format: date
+    qualificationUsersObject:
+      title: qualificationUsersObjectSchema
+      type: object
+      properties:
+        id:
+          type: string
+          format: number
+        domain_id:
+          type: string
+          format: number
+        user_fname:
+          type: string
+        user_lname:
+          type: string
+        user_email:
+          type: string
+        status:
+          type: string
+          enum:
+            - active
+            - pending
+            - inactive
+            - expired
+            - rejected
+            - resubmit
+        expires:
+          type: string
+          format: date
+    categoryObject:
+      title: categoryObjectSchema
+      type: object
+      properties:
+        id:
+          type: string
+          format: number
+        name:
+          type: string
+    extraObject:
+      title: extraObjectSchema
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          nullable: true
+          type: string
+    qualificationObject:
+      title: qualificationObjectSchema
+      type: object
+      properties:
+        id:
+          type: string
+          format: number
+        domain_id:
+          type: string
+          format: number
+        qualification_title:
+          type: string
+        qualification_cat_id:
+          type: string
+          format: number
+        qualification_question:
+          type: string
+        qualification_type:
+          type: string
+          enum:
+            - select
+            - radio
+            - text
+            - textarea
+          example: select
+        qualification_options:
+          type: array
+          example:
+            - Option A
+            - Option B
+          items:
+            type: string
+        qualification_link_url:
+          type: string
+        qualification_link_text:
+          type: string
+        qualification_level:
+          type: string
+        qualification_duration:
+          type: string
+          enum:
+            - date
+            - 1month
+            - 6months
+            - 1year
+            - 2years
+            - 3years
+            - forever
+            - 1week
+            - 2weeks
+            - firstofyear
+        qualification_approval:
+          type: string
+          enum:
+            - manual
+            - auto
+            - ifCorrect
+        qualification_status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          example: '2021-01-01 12:00:00'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2021-01-01 12:00:00'
+    needObject:
+      title: needObjectSchema
+      type: object
+      properties:
+        id:
+          type: string
+          format: number
+        domain_id:
+          type: string
+          format: number
+        agency:
+          $ref: '#/components/schemas/agencyMiniObject'
+        initiative:
+          $ref: '#/components/schemas/initiativeMiniObject'
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/groupMiniObject'
+        need_title:
+          type: string
+        need_body:
+          type: string
+        need_address:
+          type: string
+        need_address2:
+          type: string
+        need_city:
+          type: string
+        need_state:
+          type: string
+        need_postal:
+          type: string
+        need_type:
+          type: string
+        need_contact:
+          type: string
+        need_response_notify:
+          type: string
+        need_date:
+          type: string
+          example: '2021-10-28'
+        need_date_type:
+          type: string
+        need_impact_area:
+          type: string
+        need_volunteers_needed:
+          type: string
+        need_public:
+          type: string
+        need_allow_groups:
+          type: string
+        need_hours:
+          type: string
+        need_comments:
+          type: string
+        need_latitude:
+          type: string
+        need_longitude:
+          type: string
+        need_date_close:
+          type: string
+          format: date
+          example: '2021-01-01'
+        family_friendly:
+          type: string
+          enum:
+            - 'Yes'
+            - 'No'
+        outdoors:
+          type: string
+          enum:
+            - 'Yes'
+            - 'No'
+        outdoors_plan:
+          type: string
+        accessible:
+          type: string
+          enum:
+            - 'Yes'
+            - 'No'
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/tagObject'
+        shifts:
+          type: array
+          items:
+            $ref: '#/components/schemas/shiftObject'
+        need_status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          example: '2021-01-01 12:00:00'
+        background_check_required:
+          type: string
+          enum:
+            - 'Yes'
+            - 'No'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2021-01-01 12:00:00'
+    agencyObject:
+      title: agencyObjectSchema
+      type: object
+      properties:
+        id:
+          type: string
+          format: number
+        domain_id:
+          type: string
+          format: number
+        agency_name:
+          type: string
+        agency_link:
+          type: string
+        agency_address:
+          type: string
+        agency_address2:
+          type: string
+        agency_city:
+          type: string
+        agency_state:
+          type: string
+        agency_postal:
+          type: string
+        agency_extra_location:
+          type: string
+        agency_phone:
+          type: string
+        agency_phone_extension:
+          type: string
+        agency_fax:
+          type: string
+        agency_twitter_link:
+          type: string
+        agency_facebook_link:
+          type: string
+        agency_instagram_link:
+          type: string
+        agency_youtube_link:
+          type: string
+        agency_linkedin_link:
+          type: string
+        agency_email:
+          type: string
+        agency_video:
+          type: string
+        agency_url:
+          type: string
+        agency_ein:
+          type: string
+        agency_comments:
+          type: string
+        agency_status:
+          type: string
+          enum:
+            - active
+            - inactive
+            - pending
+            - imported
+        agency_latitude:
+          type: string
+        agency_longitude:
+          type: string
+        agency_contact:
+          type: string
+        agency_contact_title:
+          type: string
+        agency_news:
+          type: string
+        agency_mission:
+          type: string
+        agency_contacts:
+          type: array
+          example:
+            - mary.smith@example.com
+            - kevin@example.com
+          items:
+            type: string
+        agency_hours:
+          type: string
+        agency_partner:
+          type: string
+          enum:
+            - 'Yes'
+            - 'No'
+        logo:
+            type: string
+            format: uri
+            description: Direct link to Agency logo. If agency hasn't provided a logo, the image will be a colored letter box.
+            example: https://www.example.com/content/www.example.com/agency/12345.jpg
+        created_at:
+          type: string
+          format: date-time
+          example: '2021-01-01 12:00:00'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2021-01-01 12:00:00'
+    shiftRequestSchema:
+      title: shiftRequestSchema
+      type: object
+      properties:
+        slots:
+          type: string
+          format: number
+        start_date:
+          type: string
+          format: date
+        start_time:
+          type: string
+          format: time
+          example: '14:00:00'
+        duration:
+          type: string
+          format: integer
+          example: "120"
+          description: Duration in minutes
+    shiftObject:
+      title: shiftObjectSchema
+      type: object
+      properties:
+        id:
+          type: string
+          format: number
+          example: "1234567"
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        duration:
+          type: string
+          format: number
+        slots:
+          type: string
+          format: number
+    userOneclickObject:
+      title: userOneclickObjectSchema
+      type: object
+      properties:
+        link:
+          type: string
+          example: 'https://volunteer.example.com/users/oneclick/c43f51d6a58ebd40caaa433585dd46a7/'
+        expires:
+          type: string
+          format: datetime
+          example: '2022-01-14 14:25:00'
+        now:
+          type: string
+          format: datetime
+          example: '2022-01-14 14:10:00'
+    userObject:
+      title: userObjectSchema
+      type: object
+      properties:
+        id:
+          type: string
+          format: number
+        domain_id:
+          type: string
+          format: number
+        domain_sitename:
+          type: string
+        user_reference_id:
+          type: string
+        user_fname:
+          type: string
+        user_mname:
+          type: string
+        user_lname:
+          type: string
+        user_email:
+          type: string
+        user_phone:
+          type: string
+        user_phone_cell:
+          type: string
+        user_username:
+          type: string
+        user_address:
+          type: string
+        user_address2:
+          type: string
+        user_city:
+          type: string
+        user_state:
+          type: string
+        user_postal:
+          type: string
+        user_county:
+          type: string
+        user_country:
+          type: string
+        user_age_range:
+          nullable: true
+          type: string
+          enum:
+            - 13-18
+            - 19-24
+            - 25-34
+            - 35-44
+            - 45-54
+            - 55-64
+            - 65+
+        user_disaster:
+          type: string
+          description: Contact in event of disaster
+          enum:
+            - 'Yes'
+            - 'No'
+        user_birthday:
+          type: string
+          nullable: true
+          format: date
+        user_company:
+          type: string
+        user_company_title:
+          type: string
+        user_department:
+          type: string
+        user_ethnicity:
+          type: string
+          nullable: true
+          enum:
+            - American Indian and Alaska Native
+            - Asian
+            - Black or African American
+            - Hispanic
+            - Native Hawaiian and Other Pacific Islander
+            - Non-Hispanic White
+            - White
+        user_gender:
+          type: string
+          nullable: true
+          enum:
+            - Male
+            - Female
+            - PreferNotToSay
+            - Other
+        user_grad_semester:
+          type: string
+          nullable: true
+          enum:
+            - spring
+            - summer
+            - fall
+            - winter
+        user_grad_year:
+          type: string
+          format: year
+        user_notes:
+          type: string
+        user_comments:
+          type: string
+        user_status:
+          type: string
+          example: active
+          nullable: true
+          enum:
+            - active
+            - pending
+            - imported
+            - inactive
+        created_at:
+          type: string
+          format: date-time
+          example: '2021-01-01 12:00:00'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2021-01-01 12:00:00'
+    questionObject:
+      title: questionObjectSchema
+      type: object
+      properties:
+        id:
+          type: string
+          format: number
+        q_type:
+          type: string
+          example: input
+          enum:
+            - textarea
+            - input
+            - radio
+            - checkbox
+            - select
+        q_label:
+          type: string
+          description: The question being asked
+          example: What is your favorite color?
+        q_options:
+          type: array
+          example:
+            - Option 1
+            - Option 2
+          items:
+            type: string
+        q_area:
+          type: string
+          enum:
+            - needResponse
+            - initiativeResponse
+            - reflections
+            - initiativeNeed
+            - userGroup
+            - hoursQuestion
+        q_area_id:
+          type: string
+          format: number
+        q_status:
+          type: string
+          enum:
+            - active
+            - pending
+            - inactive
+        created_at:
+          type: string
+          format: date-time
+          example: '2021-01-01 12:00:00'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2021-01-01 12:00:00'
+    hourObject:
+      title: hourObjectSchema
+      type: object
+      properties:
+        id:
+          type: string
+          format: number
+        domain_id:
+          type: string
+          format: number
+        user:
+          $ref: '#/components/schemas/userMiniObject'
+        groups:
+          $ref: '#/components/schemas/groupMiniObject'
+        need:
+          $ref: '#/components/schemas/needMiniObject'
+        hour_description:
+          type: string
+        hour_date_start:
+          type: string
+          format: date-time
+          example: '2021-01-01 12:00:00'
+        hour_date_end:
+          type: string
+          format: date-time
+          example: '2021-01-01 12:00:00'
+        hour_hours:
+          type: string
+        hour_miles:
+          type: string
+        hour_location:
+          type: string
+        hour_contact_name:
+          type: string
+        hour_contact_details:
+          type: string
+        hour_relationship:
+          type: string
+        hour_parent:
+          type: string
+        hour_source:
+          type: string
+        hour_status:
+          type: string
+          example: approved
+          enum:
+            - pending
+            - approved
+            - entered
+            - denied
+            - inactive
+        hour_type:
+          type: string
+          enum:
+            - need
+            - individual
+        created_at:
+          type: string
+          format: date-time
+          example: '2021-01-01 12:00:00'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2021-01-01 12:00:00'
+    userResponseObject:
+      title: userResponseObjectSchema
+      type: object
+      properties:
+        id:
+          type: string
+          format: number
+        need_id:
+          type: string
+          format: number
+        date_start:
+          type: string
+          format: date-time
+        duration:
+          type: string
+          format: number
+        status:
+          type: string
+          enum:
+            - active
+            - inactive
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    responseObject:
+      title: responseObjectSchema
+      type: object
+      properties:
+        id:
+          type: string
+          format: number
+        domain_id:
+          type: string
+          format: number
+        agency:
+          $ref: '#/components/schemas/agencyMiniObject'
+        shift:
+          $ref: '#/components/schemas/shiftObject'
+        need:
+          $ref: '#/components/schemas/needMiniObject'
+        user:
+          $ref: '#/components/schemas/userMiniObject'
+        initiative:
+          $ref: '#/components/schemas/initiativeMiniObject'
+        team:
+          $ref: '#/components/schemas/teamMiniObject'
+        response_phone:
+          type: string
+          format: phone
+        response_address:
+          type: string
+        response_note:
+          type: string
+        response_date_added:
+          type: string
+          format: date-time
+          example: '2021-01-01 12:00:00'
+        response_date_updated:
+          type: string
+          format: date-time
+          example: '2021-01-01 12:00:00'
+        response_source:
+          type: string
+        response_status:
+          type: string
+        response_comments:
+          type: string
+        answers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResponseAnswerObject'
+    tagObject:
+      title: tagObjectSchema
+      type: object
+      properties:
+        id:
+          type: string
+          format: number
+        name:
+          type: string
+    interestObject:
+      title: interestObjectSchema
+      type: object
+      properties:
+        id:
+          description: Unique id for the user / interest relationship
+          type: string
+          format: number
+        name:
+          type: string
+    impactObject:
+      title: impactObjectSchema
+      type: object
+      properties:
+        id:
+          description: Unique id for the impact area
+          type: string
+          format: number
+        impact_name:
+          type: string
+    causeObject:
+      title: causeObjectSchema
+      type: object
+      properties:
+        id:
+          description: Unique id for the user / cause relationship
+          type: string
+          format: number
+        name:
+          type: string
+    eventObject:
+      title: eventObjectSchema
+      type: object
+      properties:
+        id:
+          type: string
+          format: number
+        domain_id:
+          type: string
+          format: number
+        event_area:
+          type: string
+          enum:
+            - agency
+        event_area_id:
+          type: string
+          format: number
+          description: agency the event belongs to
+        event_title:
+          type: string
+        event_description:
+          type: string
+        event_location:
+          type: string
+        event_address:
+          type: string
+        event_address2:
+          type: string
+        event_city:
+          type: string
+        event_state:
+          type: string
+        event_postal:
+          type: string
+        event_email:
+          type: string
+          format: email
+        event_rsvp:
+          type: string
+          enum:
+            - Yes
+            - No
+          description: Does this event accept RSVPs on the web?
+        event_date_start:
+          type: string
+          format: datetime
+        event_date_end:
+          type: string
+          format: datetime
+        event_all_day:
+          type: string
+          enum:
+            - Yes
+            - No
+          description: If yes, the event_date_end will automatically be set to the end of the date it starts.
+        event_comments:
+          type: string
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/tagObject'
+        created_at:
+          type: string
+          format: date-time
+          example: '2021-01-01 12:00:00'
+        update_at:
+          type: string
+          format: date-
+          example: '2021-01-01 12:00:00'
+    loginObject:
+      title: loginObjectSchema
+      type: object
+      properties:
+        user:
+          description: User object
+          type: object
+          properties:
+            id:
+              type: string
+              format: number
+            domain_id:
+              type: string
+              format: number
+            user_fname:
+              type: string
+            user_lname:
+              type: string
+            user_email:
+              type: string
+              format: email
+        token:
+          type: string
+        expires:
+          type: string
+          format: date-time
+    clusterObject:
+      title: clusterObjectSchema
+      type: object
+      properties:
+        id:
+          description: Unique id for the agency / cluster relationship
+          type: string
+          format: number
+        name:
+          type: string
+    benchmarkObject:
+      title: benchmarkObjectSchema
+      type: object
+      properties:
+        id:
+          type: string
+          format: number
+        benchmark_status:
+          type: string
+          enum:
+            - active
+            - inactive
+            - pending
+        benchmark_title:
+          type: string
+        benchmark_icon:
+          type: string
+          enum:
+            - Bronze_10Hours
+            - Bronze_25Hours
+            - Bronze_CommunityChampion
+            - Bronze_I_Made_A_Difference
+            - Bronze_OutStandingService
+            - Silver_20Hours
+            - Silver_50Hours
+            - Silver_CommunityChampion
+            - Silver_I_Made_A_Difference
+            - Silver_OutstandingService
+            - Gold_50Hours
+            - Gold_100Hours
+            - Gold_CommunityChampion
+            - Gold_I_Made_A_Difference
+            - Gold_OutstandingService
+        benchmark_hours:
+          type: string
+          format: number
+        benchmark_date_start:
+          type: string
+          format: date
+        benchmark_date_end:
+          type: string
+          format: date
+        benchmark_approval_required:
+          type: string
+          enum:
+            - 'Yes'
+            - 'No'
+        benchmark_allow_indv_hours:
+          type: string
+          enum:
+            - 'Yes'
+            - 'No'
+        benchmark_group_id:
+          type: string
+          format: number
+        created_at:
+          type: string
+          format: date-time
+          example: '2021-01-01 12:00:00'
+        update_at:
+          type: string
+          format: date-
+          example: '2021-01-01 12:00:00'
+    benchmarkMiniObject:
+      title: benchmarkMiniObjectSchema
+      type: object
+      properties:
+        id:
+          type: string
+          format: number
+        benchmark_status:
+          type: string
+          enum:
+            - active
+            - inactive
+            - pending
+        benchmark_title:
+          type: string
+        benchmark_icon:
+          type: string
+          enum:
+            - Bronze_10Hours
+            - Bronze_25Hours
+            - Bronze_CommunityChampion
+            - Bronze_I_Made_A_Difference
+            - Bronze_OutStandingService
+            - Silver_20Hours
+            - Silver_50Hours
+            - Silver_CommunityChampion
+            - Silver_I_Made_A_Difference
+            - Silver_OutstandingService
+            - Gold_50Hours
+            - Gold_100Hours
+            - Gold_CommunityChampion
+            - Gold_I_Made_A_Difference
+            - Gold_OutstandingService
+        benchmark_hours:
+          type: string
+          format: number
+        benchmark_date_start:
+          type: string
+          format: date
+        benchmark_date_end:
+          type: string
+          format: date
+        created_at:
+          type: string
+          format: date-time
+          example: '2021-01-01 12:00:00'
+        update_at:
+          type: string
+          format: date-
+          example: '2021-01-01 12:00:00'
+    eventRequestSchema:
+      title: eventRequestSchema
+      type: object
+      required:
+        - event_area
+        - event_area_id
+        - event_title
+        - event_date_start
+      properties:
+        event_area:
+          type: string
+          enum:
+            - agency
+        event_area_id:
+          type: string
+          format: number
+        event_title:
+          type: string
+        event_description:
+          type: string
+        event_contact:
+          type: string
+        event_phone:
+          type: string
+        event_email:
+          type: string
+          format: email
+        event_capacity:
+          type: string
+          format: number
+        event_location:
+          type: string
+        event_address:
+          type: string
+        event_address2:
+          type: string
+        event_city:
+          type: string
+        event_state:
+          type: string
+        event_postal:
+          type: string
+        event_country:
+          type: string
+        event_comments:
+          type: string
+        event_all_day:
+          type: string
+          enum:
+            - Yes
+            - No
+        event_rsvp:
+          type: string
+          enum:
+            - Yes
+            - No
+        event_date_start:
+          type: string
+          format: date-time
+          example: '2021-01-01 08:00:00'
+        event_date_end:
+          type: string
+          format: date-time
+          example: '2021-01-01 23:59:59'
+        event_tags:
+          description: Submitted tags will replace any existing tags for this item
+          type: array
+          example:
+            - Outdoors
+            - Entertainment
+    loginRequestSchema:
+      title: loginRequestSchema
+      type: object
+      required:
+        - user_email
+        - user_password
+        - key
+      properties:
+        user_email:
+          type: string
+        user_password:
+          type: string
+        key:
+          type: string
+    authenticateRequestSchema:
+      title: authenticateRequestSchema
+      type: object
+      required:
+        - user_email
+        - user_password
+      properties:
+        user_email:
+          type: string
+        user_password:
+          type: string
+    benchmarkRequestSchema:
+      title: benchmarkRequestSchema
+      type: object
+      required:
+        - benchmark_title
+        - benchmark_status
+        - benchmark_icon
+        - benchmark_approval_required
+        - benchmark_date_start
+        - benchmark_date_end
+      properties:
+        benchmark_title:
+          type: string
+        benchmark_icon:
+          type: string
+          enum:
+            - Bronze_10Hours
+            - Bronze_25Hours
+            - Bronze_CommunityChampion
+            - Bronze_I_Made_A_Difference
+            - Bronze_OutStandingService
+            - Silver_20Hours
+            - Silver_50Hours
+            - Silver_CommunityChampion
+            - Silver_I_Made_A_Difference
+            - Silver_OutstandingService
+            - Gold_50Hours
+            - Gold_100Hours
+            - Gold_CommunityChampion
+            - Gold_I_Made_A_Difference
+            - Gold_OutstandingService
+        benchmark_hours:
+          type: string
+          format: number
+        benchmark_approval_required:
+          type: string
+          enum:
+            - 'Yes'
+            - 'No'
+        benchmark_date_start:
+          type: string
+          format: date
+        benchmark_date_end:
+          type: string
+          format: date
+        benchmark_allow_indv_hours:
+          type: string
+          enum:
+            - 'Yes'
+            - 'No'
+        benchmark_group_id:
+          type: string
+          format: number
+        benchmark_status:
+          type: string
+          enum:
+            - active
+            - inactive
+            - pending
+    clusterRequestSchema:
+      description: clusterRequestSchema
+      title: clusterRequestSchema
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+    groupRequestSchema:
+      title: groupRequestSchema
+      type: object
+      required:
+        - ug_status
+        - ug_title
+        - ug_type
+      properties:
+        ug_status:
+          type: string
+          enum:
+            - active
+            - pending
+            - inactive
+        ug_title:
+          type: string
+        ug_description:
+          type: string
+        ug_description_private:
+          type: string
+        ug_domains:
+          type: string
+        ug_color:
+          type: string
+          format: hex
+        ug_text_color:
+          type: string
+        ug_icon:
+          type: string
+        ug_suppress_resume:
+          type: string
+          enum:
+            - 'Yes'
+            - 'No'
+        ug_allow_member_remove:
+          type: string
+          enum:
+            - 'Yes'
+            - 'No'
+        ug_submitted_hours:
+          type: string
+          enum:
+            - manual
+            - auto
+            - approved
+        ug_type:
+          type: string
+          description: You can only submit slm type if you have the Service Learning module
+          enum:
+            - gc
+            - slm
+        ug_limit:
+          type: string
+          enum:
+            - 'Yes'
+            - 'No'
+        ug_block_id:
+          type: string
+          format: number
+          example: "432155"
+        ug_goal:
+          type: string
+          format: number
+          example: "25"
+        ug_approval:
+          type: string
+          enum:
+            - 'Yes'
+            - 'No'
+    hourRequestSchema:
+      title: hourRequestSchema
+      type: object
+      required:
+        - hour_hours
+        - hour_start
+        - hour_status
+      properties:
+        hour_hours:
+          type: string
+          format: number
+        hour_miles:
+          type: string
+          format: number
+        hour_start:
+          type: string
+          format: date-time
+        hour_status:
+          type: string
+          enum:
+            - approved
+            - inactive
+            - pending
+            - denied
+            - entered
+        hour_location:
+          type: string
+        hour_contact_name:
+          type: string
+          example: Mary Smith
+        hour_contact_details:
+          type: string
+          format: email
+        hour_relationship:
+          type: string
+          example: Coach
+        response_id:
+          type: string
+          format: number
+        user_id:
+          type: string
+          format: number
+        group_ids:
+          type: array
+          description: Array of user group ids
+          items:
+            type: string
+            format: number
+            example: "12345"
+    userRequestSchema:
+      title: userRequestSchema
+      type: object
+      required:
+        - user_fname
+        - user_lname
+        - user_email
+        - user_status
+      properties:
+        user_fname:
+          type: string
+        user_mname:
+          type: string
+        user_lname:
+          type: string
+        user_email:
+          type: string
+          format: email
+        user_username:
+          type: string
+        user_address:
+          type: string
+        user_address2:
+          type: string
+        user_city:
+          type: string
+        user_state:
+          type: string
+        user_postal:
+          type: string
+        user_county:
+          type: string
+        user_country:
+          type: string
+        user_phone:
+          type: string
+        user_phone_cell:
+          type: string
+        user_age_range:
+          type: string
+        user_birthday:
+          type: string
+        user_company:
+          type: string
+        user_company_title:
+          type: string
+        user_department:
+          type: string
+        user_ethnicity:
+          type: string
+        user_gender:
+          type: string
+          enum:
+            - Male
+            - Female
+            - PreferNotToSay
+            - Other
+        user_grad_semester:
+          type: string
+          enum:
+            - spring
+            - summer
+            - fall
+            - winter
+        user_grad_year:
+          type: string
+        user_notes:
+          type: string
+        user_comments:
+          type: string
+        user_reference_id:
+          type: string
+        user_disaster:
+          type: string
+        user_status:
+          type: string
+          example: active
+          enum:
+            - active
+            - pending
+            - imported
+            - inactive
+    agencyRequestSchema:
+      title: agencyRequestSchema
+      type: object
+      required:
+        - agency_name
+        - agency_status
+        - agency_postal
+      properties:
+        agency_name:
+          type: string
+        agency_link:
+          type: string
+        agency_address:
+          type: string
+        agency_address2:
+          type: string
+        agency_city:
+          type: string
+        agency_state:
+          type: string
+        agency_postal:
+          type: string
+        agency_phone:
+          type: string
+        agency_phone_extension:
+          type: string
+        agency_fax:
+          type: string
+        agency_twitter_link:
+          type: string
+        agency_facebook_link:
+          type: string
+        agency_instagram_link:
+          type: string
+        agency_youtube_link:
+          type: string
+        agency_linkedin_link:
+          type: string
+        agency_email:
+          type: string
+        agency_video:
+          type: string
+        agency_url:
+          type: string
+        agency_ein:
+          type: string
+        agency_comments:
+          type: string
+        agency_status:
+          type: string
+          enum:
+            - active
+            - inactive
+            - pending
+        agency_contact:
+          type: string
+        agency_contact_title:
+          type: string
+        agency_news:
+          type: string
+        agency_mission:
+          type: string
+        agency_contacts:
+          type: string
+        agency_partner:
+          type: string
+          enum:
+            - 'Yes'
+            - 'No'
+    responseRequestSchema:
+      title: responseRequestSchema
+      type: object
+      required:
+        - need_id
+        - user_id
+        - schedule_ids
+      properties:
+        need_id:
+          type: string
+          format: number
+          example: "591717"
+        user_id:
+          type: string
+          format: number
+          example: "3456377"
+        team_id:
+          type: string
+          format: number
+          example: "874521"
+        schedule_ids:
+          type: array
+          items:
+            type: string
+            format: number
+            example: "432511"
+        response_note:
+          type: string
+        questions:
+          type: object
+          description: Example of customQuestions answers
+          properties:
+            needResponse:
+              type: object
+              properties:
+                '5109':
+                  type: string
+                  example: Another response example
+            initiativeResponse:
+              type: object
+              properties:
+                '5009':
+                  type: string
+                  example: Answer input string one
+                '8345':
+                  type: array
+                  example:
+                    - Option 1
+                    - Option 2
+                    - Option 4
+                  items:
+                    type: string
+                inputFieldTest:
+                  type: string
+                  example: Dark Chox
+        response_date_added:
+          type: string
+          format: date-time
+          example: '2021-01-01 12:30:00'
+          description: Override the default date the response record was added. This can be any date in the past. If not provided, the current date will be used.
+    needRequestSchema:
+      title: needRequestSchema
+      type: object
+      required:
+        - agency_id
+        - need_title
+        - need_body
+        - need_public
+        - need_status
+        - need_date_type
+        - need_hours
+        - need_postal
+      properties:
+        agency_id:
+          type: string
+          format: number
+        initiative_id:
+          type: string
+          format: number
+        groups:
+          type: array
+          items:
+            type: string
+            format: number
+            example: "432511"
+        event_id:
+          type: string
+          format: number
+        need_title:
+          type: string
+        need_body:
+          type: string
+        need_address:
+          type: string
+        need_address2:
+          type: string
+        need_city:
+          type: string
+        need_state:
+          type: string
+        need_postal:
+          type: string
+        need_type:
+          type: string
+        need_contact:
+          type: string
+        need_response_notify:
+          type: string
+        need_date:
+          type: string
+          example: '2021-10-28'
+        need_date_type:
+          type: string
+          enum:
+            - 'on'
+            - until
+            - ongoing
+            - shifts
+            - recurring
+            - multi
+        need_impact_area:
+          type: string
+        need_volunteers_needed:
+          type: string
+        need_public:
+          type: string
+        need_allow_groups:
+          type: string
+          enum:
+            - 'Yes'
+            - 'No'
+            - Only
+        need_hours:
+          type: string
+        need_hours_description:
+          type: string
+          example: 9am to 5pm
+        need_comments:
+          type: string
+        need_latitude:
+          type: string
+        need_longitude:
+          type: string
+        need_date_close:
+          type: string
+          format: date
+          example: '2021-01-01'
+        need_status:
+          type: string
+        virtual_need:
+          type: string
+          enum:
+            - 'Yes'
+            - 'No'
+        family_friendly:
+          type: string
+          enum:
+            - 'Yes'
+            - 'No'
+        outdoors:
+          type: string
+          enum:
+            - 'Yes'
+            - 'No'
+        accessible:
+          type: string
+          enum:
+            - 'Yes'
+            - 'No'
+        tags:
+          description: Submitted tags will replace any existing tags for this item
+          type: array
+          example:
+            - Fun
+            - Sun
+          items:
+            type: string
+        attributes:
+          type: array
+          items:
+            type: array
+            example:
+              - Park out front
+              - Go left
+        interests:
+          type: array
+          example:
+            - '12345'
+            - '54299'
+          items:
+            type: string
+        shifts:
+          type: array
+          items:
+            $ref: '#/components/schemas/shiftRequestSchema'
+    qualificationRequestSchema:
+      title: qualificationRequestSchema
+      type: object
+      required:
+        - qualification_title
+        - qualification_status
+        - qualification_type
+        - qualification_question
+        - qualification_level
+        - qualification_duration
+      properties:
+        qualification_title:
+          type: string
+        qualification_status:
+          type: string
+          enum:
+            - active
+            - inactive
+        qualification_type:
+          type: string
+          enum:
+            - select
+            - radio
+            - input
+            - textarea
+        qualification_question:
+          type: string
+        qualification_options:
+          type: array
+          example:
+            - '222'
+            - '333'
+          items:
+            type: string
+          description: Comma separated list of options for question types that are select or checkbox
+        qualification_correct_answer:
+          description: 'If used, must be one of the options unsed in qualification_options'
+          type: string
+          example: Option 1
+        qualification_approval:
+          type: string
+          enum:
+            - manual
+            - auto
+            - ifCorrect
+        qualification_level:
+          type: string
+          enum:
+            - notNeeded
+            - viewAny
+            - respondAny
+            - useSite
+            - viewSelected
+            - respondSelected
+        qualification_duration:
+          type: string
+          enum:
+            - date
+            - 1month
+            - 6months
+            - 1year
+            - 2years
+            - 3years
+            - forever
+            - 1week
+            - 2weeks
+            - firstofyear
+        qualification_link_url:
+          type: string
+        qualification_link_text:
+          type: string
+        qualification_link_show:
+          type: string
+          enum:
+            - 'Yes'
+            - 'No'
+        qualification_required:
+          type: string
+          enum:
+            - 'Yes'
+            - 'No'
+        qualification_hide_from_registration:
+          type: string
+          enum:
+            - 'Yes'
+            - 'No'
+    teamRequestSchema:
+      title: teamRequestSchema
+      type: object
+      required:
+        - team_title
+        - team_status
+        - need_id
+        - sch_id
+        - user_id
+      properties:
+        team_title:
+          type: string
+        team_description:
+          type: string
+        team_status:
+          type: string
+          enum:
+            - active
+            - pending
+            - inactive
+        need_id:
+          type: string
+          format: number
+          example: "43119"
+        sch_id:
+          type: string
+          format: number
+          example: "87654332"
+          description: Schedule ID
+        user_id:
+          type: string
+          format: number
+          example: "87654332"
+          description: User ID of first team member.
