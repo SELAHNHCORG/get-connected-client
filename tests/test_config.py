@@ -71,3 +71,8 @@ def test_save_config_tightens_existing_perms(monkeypatch, tmp_path):
     cfg.chmod(0o644)
     config.save_config({"api_key": "k"})
     assert stat.S_IMODE(os.stat(cfg).st_mode) == 0o600
+
+
+def test_parse_bool():
+    assert config.parse_bool("Yes") is True
+    assert config.parse_bool("off") is False

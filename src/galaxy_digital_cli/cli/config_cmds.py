@@ -6,7 +6,7 @@ from typing import Any
 
 import typer
 
-from ..config import _TRUTHY, config_file, read_config, save_config
+from ..config import config_file, parse_bool, read_config, save_config
 from ._output import console, output_one
 
 #: The keys the config file understands, and how to coerce their values.
@@ -21,13 +21,15 @@ config_app = typer.Typer(
 def _coerce(key: str, value: str) -> Any:
     """Turn a command line string into the value stored for *key*."""
     if key == "read_only":
-        return value.strip().lower() in _TRUTHY
+        return parse_bool(value)
     return value
 
 
 def _redact(key: str, value: Any) -> Any:
     """Mask secrets so ``config show`` is safe to paste into a bug report."""
     if key == "api_key" and isinstance(value, str) and value:
+        if len(value) <= 4:
+            return "…redacted"
         return f"…{value[-4:]}"
     return value
 

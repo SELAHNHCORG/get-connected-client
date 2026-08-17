@@ -25,12 +25,17 @@ SERVERS = {
 _TRUTHY = {"1", "true", "yes", "on"}
 
 
+def parse_bool(value: str) -> bool:
+    """Coerce a string to a boolean by membership in the truthy set."""
+    return value.strip().lower() in _TRUTHY
+
+
 def env_read_only() -> bool | None:
     """Read the GALAXY_READ_ONLY env var as a tri-state boolean."""
     raw = os.environ.get("GALAXY_READ_ONLY")
     if raw is None or raw.strip() == "":
         return None
-    return raw.strip().lower() in _TRUTHY
+    return parse_bool(raw)
 
 
 def resolve_url(url: str) -> str:

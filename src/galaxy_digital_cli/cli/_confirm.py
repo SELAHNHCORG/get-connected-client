@@ -18,7 +18,7 @@ def confirm_write(state: Any, description: str, payload: Any = None) -> None:
     if state.assume_yes:
         return
     console.print(f"[bold red]About to write to the API:[/] {description}")
-    if payload:
+    if payload is not None:
         console.print_json(json.dumps(payload, default=str))
     if not typer.confirm("Proceed?"):
         raise typer.Abort()

@@ -65,6 +65,15 @@ def test_config_set_rejects_unknown_key(tmp_path, monkeypatch):
     assert runner.invoke(app, ["config", "set", "bogus", "x"]).exit_code != 0
 
 
+def test_config_set_short_api_key_fully_redacted(tmp_path, monkeypatch):
+    monkeypatch.setenv("GALAXY_CONFIG_FILE", str(tmp_path / "c.toml"))
+    assert runner.invoke(app, ["config", "set", "api_key", "abc"]).exit_code == 0
+    out = runner.invoke(app, ["config", "show"]).output
+    assert "abc" not in out
+    assert "…abc" not in out
+    assert "…redacted" in out
+
+
 def test_config_set_preserves_other_keys(tmp_path, monkeypatch):
     monkeypatch.setenv("GALAXY_CONFIG_FILE", str(tmp_path / "c.toml"))
     runner.invoke(app, ["config", "set", "url", "ca"])
