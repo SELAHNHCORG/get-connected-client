@@ -126,6 +126,11 @@ class GalaxyClient:
         ``follow_redirects`` ever be enabled (it defaults off). httpx invokes
         request hooks before handing the request to the transport, so no
         bytes leave the process.
+
+        Side-effecting GETs -- the ``treat_as_write=True`` endpoints such as
+        ``/users/{id}/welcomeEmail`` -- are enforced in :meth:`request` only,
+        never here: the hook sees a bare :class:`httpx.Request` and cannot
+        tell such a GET from an ordinary read.
         """
         if request.method.upper() in _WRITE_METHODS and self.read_only:
             raise ReadOnlyError(
@@ -185,9 +190,13 @@ class GalaxyClient:
         processed. A 5xx or a transport failure is retried only for
         idempotent methods; a POST or PATCH raises on the first failure
         rather than risk duplicating a write the server may have committed.
+        ``treat_as_write`` also disables those retries: the whole point of
+        the flag is that the request is not really idempotent, so repeating
+        it could send a second email (or mint a second artifact).
 
         :param treat_as_write: enforce the read-only guard for endpoints
-            whose GET has side effects (e.g. /users/{id}/welcomeEmail).
+            whose GET has side effects (e.g. /users/{id}/welcomeEmail), and
+            suppress retries for them.
         :raises ReadOnlyError: a write was attempted in read-only mode.
         :raises GalaxyConnectionError: the request never completed.
         :raises GalaxyHTTPError: the API answered 4xx/5xx.
@@ -195,7 +204,10 @@ class GalaxyClient:
         method = method.upper()
         if (method in _WRITE_METHODS or treat_as_write) and self.read_only:
             raise ReadOnlyError(f"{method} {path} blocked: read-only mode is on")
-        retriable_failure = method in _IDEMPOTENT_METHODS
+        # A treat_as_write GET is a write wearing a GET's clothes: replaying it
+        # after a 5xx could send a second email, so it forfeits retries. A 429
+        # is still retried below -- that request was rejected, never processed.
+        retriable_failure = method in _IDEMPOTENT_METHODS and not treat_as_write
         attempt = 0
         while True:
             try:

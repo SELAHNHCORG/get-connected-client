@@ -4,6 +4,10 @@ Every command that changes anything on the server goes through
 :func:`~galaxy_digital_cli.cli._confirm.confirm_write` first. That includes
 ``welcome-email``, which the API models as a GET but which really does put
 mail in someone's inbox.
+
+The paths shown in those prompts are built with the resource's own
+:meth:`~galaxy_digital_cli.resources.base.Resource.url`, never hand-typed, so
+what the operator is asked to approve is exactly what goes on the wire.
 """
 
 from __future__ import annotations
@@ -12,9 +16,10 @@ from typing import Any
 
 import typer
 
+from ..client import MAX_PER_PAGE
 from ._confirm import confirm_write
-from ._output import output, output_one
-from ._state import State, _merge_fields, handle_errors
+from ._output import output, output_one, output_result
+from ._state import _merge_fields, get_state, handle_errors
 
 users_app = typer.Typer(help="Manage users.", no_args_is_help=True)
 
@@ -22,20 +27,14 @@ users_app = typer.Typer(help="Manage users.", no_args_is_help=True)
 LIST_COLUMNS = ["id", "user_fname", "user_lname", "user_email", "user_status"]
 NAMED_COLUMNS = ["id", "name"]
 
-MAX_PER_PAGE = 150
-
 _ID = typer.Argument(..., help="ID of the user.")
 _TAG_NAMES = typer.Argument(..., help="Tag names to add.")
+_OPTOUT_AREAS = typer.Argument(..., help="Message area names, or 'all'.")
 #: Module-level singleton so ruff's B008 (immutable-default check) does not
 #: trip over a mutable ``list[str]`` annotation paired with a call default.
 _STATUS = typer.Option(
     None, "--status", help="active, pending, imported or inactive (repeatable)."
 )
-
-
-def _state(ctx: typer.Context) -> State:
-    """The per-invocation state the root callback stashed on the context."""
-    return ctx.obj
 
 
 # ---------------------------------------------------------------------------
@@ -59,8 +58,10 @@ def list_users(
     since_updated: str | None = typer.Option(
         None, "--since-updated", help="Updated since 'YYYY-MM-DD HH:MM'."
     ),
-    show_inactive: bool = typer.Option(
-        False, "--show-inactive", help="Include inactive users."
+    show_inactive: bool | None = typer.Option(
+        None,
+        "--show-inactive/--no-show-inactive",
+        help="Include inactive users; omit for the server default.",
     ),
     status: list[str] | None = _STATUS,
     email: str | None = typer.Option(None, "--email", help="Exact email address."),
@@ -75,13 +76,15 @@ def list_users(
     ),
 ) -> None:
     """List users, paging through every match."""
-    state = _state(ctx)
+    state = get_state(ctx)
     rows = state.client.users.list(
         per_page=per_page,
         since_id=since_id,
         since_created=since_created,
         since_updated=since_updated,
-        show_inactive=True if show_inactive else None,
+        # Tri-state, passed through untouched: None omits the parameter and
+        # takes the server default, True sends Yes, False sends No.
+        show_inactive=show_inactive,
         user_status=status or None,
         user_email=email,
         user_email_like=email_like,
@@ -97,7 +100,7 @@ def list_users(
 @handle_errors
 def get_user(ctx: typer.Context, id: int = _ID) -> None:
     """Show one user."""
-    state = _state(ctx)
+    state = get_state(ctx)
     output_one(state, state.client.users.get(id))
 
 
@@ -120,10 +123,10 @@ def create_user(
     ),
 ) -> None:
     """Create a user."""
-    state = _state(ctx)
+    state = get_state(ctx)
     fields = _user_fields(data, fname, lname, email)
-    confirm_write(state, "POST /users", fields)
-    output_one(state, state.client.users.create(**fields))
+    confirm_write(state, f"POST {state.client.users.url()}", fields)
+    output_result(state, state.client.users.create(**fields))
 
 
 @users_app.command("update")
@@ -139,19 +142,20 @@ def update_user(
     ),
 ) -> None:
     """Update a user, sending only the fields you name."""
-    state = _state(ctx)
+    state = get_state(ctx)
     fields = _user_fields(data, fname, lname, email)
-    confirm_write(state, f"PUT /users/{id}", fields)
-    output_one(state, state.client.users.update(id, **fields))
+    confirm_write(state, f"PUT {state.client.users.url(id)}", fields)
+    output_result(state, state.client.users.update(id, **fields))
 
 
 @users_app.command("delete")
 @handle_errors
 def delete_user(ctx: typer.Context, id: int = _ID) -> None:
     """Delete a user (a soft delete: the record is marked inactive)."""
-    state = _state(ctx)
-    confirm_write(state, f"DELETE /users/{id}")
+    state = get_state(ctx)
+    confirm_write(state, f"DELETE {state.client.users.url(id)}")
     state.client.users.delete(id)
+    output_result(state)
 
 
 # ---------------------------------------------------------------------------
@@ -161,9 +165,9 @@ def delete_user(ctx: typer.Context, id: int = _ID) -> None:
 
 @users_app.command("agencies")
 @handle_errors
-def user_agencies(ctx: typer.Context, id: int = _ID) -> None:
+def agencies(ctx: typer.Context, id: int = _ID) -> None:
     """List the agencies a user has fanned."""
-    state = _state(ctx)
+    state = get_state(ctx)
     output(state, state.client.users.agencies(id), ["id", "agency_name"])
 
 
@@ -175,9 +179,9 @@ def add_agency(
     agency_id: int = typer.Argument(..., help="ID of the agency."),
 ) -> None:
     """Fan an agency on a user's behalf."""
-    state = _state(ctx)
-    confirm_write(state, f"POST /users/{id}/agencies/{agency_id}")
-    state.client.users.add_agency(id, agency_id)
+    state = get_state(ctx)
+    confirm_write(state, f"POST {state.client.users.url(id, 'agencies', agency_id)}")
+    output_result(state, state.client.users.add_agency(id, agency_id))
 
 
 @users_app.command("remove-agency")
@@ -188,9 +192,9 @@ def remove_agency(
     agency_id: int = typer.Argument(..., help="ID of the agency."),
 ) -> None:
     """Drop a user's fan relationship with an agency."""
-    state = _state(ctx)
-    confirm_write(state, f"DELETE /users/{id}/agencies/{agency_id}")
-    state.client.users.remove_agency(id, agency_id)
+    state = get_state(ctx)
+    confirm_write(state, f"DELETE {state.client.users.url(id, 'agencies', agency_id)}")
+    output_result(state, state.client.users.remove_agency(id, agency_id))
 
 
 # ---------------------------------------------------------------------------
@@ -200,9 +204,9 @@ def remove_agency(
 
 @users_app.command("benchmarks")
 @handle_errors
-def user_benchmarks(ctx: typer.Context, id: int = _ID) -> None:
+def benchmarks(ctx: typer.Context, id: int = _ID) -> None:
     """List the benchmarks a user has earned."""
-    state = _state(ctx)
+    state = get_state(ctx)
     output(
         state,
         state.client.users.benchmarks(id),
@@ -218,9 +222,11 @@ def remove_benchmark(
     benchmark_id: int = typer.Argument(..., help="ID of the benchmark."),
 ) -> None:
     """Take a benchmark away from a user."""
-    state = _state(ctx)
-    confirm_write(state, f"DELETE /users/{id}/benchmarks/{benchmark_id}")
-    state.client.users.remove_benchmark(id, benchmark_id)
+    state = get_state(ctx)
+    confirm_write(
+        state, f"DELETE {state.client.users.url(id, 'benchmarks', benchmark_id)}"
+    )
+    output_result(state, state.client.users.remove_benchmark(id, benchmark_id))
 
 
 # ---------------------------------------------------------------------------
@@ -230,9 +236,9 @@ def remove_benchmark(
 
 @users_app.command("causes")
 @handle_errors
-def user_causes(ctx: typer.Context, id: int = _ID) -> None:
+def causes(ctx: typer.Context, id: int = _ID) -> None:
     """List a user's causes."""
-    state = _state(ctx)
+    state = get_state(ctx)
     output(state, state.client.users.causes(id), NAMED_COLUMNS)
 
 
@@ -244,9 +250,9 @@ def add_cause(
     cause_id: int = typer.Argument(..., help="ID of the cause."),
 ) -> None:
     """Assign a cause to a user."""
-    state = _state(ctx)
-    confirm_write(state, f"POST /users/{id}/causes/{cause_id}")
-    state.client.users.add_cause(id, cause_id)
+    state = get_state(ctx)
+    confirm_write(state, f"POST {state.client.users.url(id, 'causes', cause_id)}")
+    output_result(state, state.client.users.add_cause(id, cause_id))
 
 
 @users_app.command("remove-cause")
@@ -257,9 +263,9 @@ def remove_cause(
     cause_id: int = typer.Argument(..., help="ID of the cause."),
 ) -> None:
     """Unassign a cause from a user."""
-    state = _state(ctx)
-    confirm_write(state, f"DELETE /users/{id}/causes/{cause_id}")
-    state.client.users.remove_cause(id, cause_id)
+    state = get_state(ctx)
+    confirm_write(state, f"DELETE {state.client.users.url(id, 'causes', cause_id)}")
+    output_result(state, state.client.users.remove_cause(id, cause_id))
 
 
 # ---------------------------------------------------------------------------
@@ -267,15 +273,17 @@ def remove_cause(
 # ---------------------------------------------------------------------------
 
 _SUBSET = typer.Option(None, "--subset", help="regExtra (default) or profile.")
+#: The subset the API stores under when the parameter is omitted, per
+#: doc/api.yml. Shown in the confirm prompt so the operator sees where the
+#: write is actually going.
+DEFAULT_SUBSET = "regExtra"
 
 
 @users_app.command("extras")
 @handle_errors
-def user_extras(
-    ctx: typer.Context, id: int = _ID, subset: str | None = _SUBSET
-) -> None:
+def extras(ctx: typer.Context, id: int = _ID, subset: str | None = _SUBSET) -> None:
     """List a user's custom key/value data."""
-    state = _state(ctx)
+    state = get_state(ctx)
     output(state, state.client.users.extras(id, subset=subset), ["key", "value"])
 
 
@@ -296,10 +304,18 @@ def set_extras(
     The payload is the *entirety* of the user's extras for the subset, so
     include the pairs you want to keep.
     """
-    state = _state(ctx)
+    state = get_state(ctx)
     fields = _merge_fields(data)
-    confirm_write(state, f"POST /users/{id}/extras", fields)
-    state.client.users.set_extras(id, fields, subset=subset)
+    pairs = fields.get("extras")
+    if not isinstance(pairs, list):
+        raise typer.BadParameter('--data must be an object with an "extras" array')
+    confirm_write(
+        state,
+        f"POST {state.client.users.url(id, 'extras')}"
+        f"?subset={subset or DEFAULT_SUBSET}",
+        fields,
+    )
+    output_result(state, state.client.users.set_extras(id, pairs, subset=subset))
 
 
 # ---------------------------------------------------------------------------
@@ -309,9 +325,9 @@ def set_extras(
 
 @users_app.command("hours")
 @handle_errors
-def user_hours(ctx: typer.Context, id: int = _ID) -> None:
+def hours(ctx: typer.Context, id: int = _ID) -> None:
     """List the hours a user has submitted."""
-    state = _state(ctx)
+    state = get_state(ctx)
     output(
         state,
         state.client.users.hours(id),
@@ -326,9 +342,9 @@ def user_hours(ctx: typer.Context, id: int = _ID) -> None:
 
 @users_app.command("interests")
 @handle_errors
-def user_interests(ctx: typer.Context, id: int = _ID) -> None:
+def interests(ctx: typer.Context, id: int = _ID) -> None:
     """List a user's interests."""
-    state = _state(ctx)
+    state = get_state(ctx)
     output(state, state.client.users.interests(id), NAMED_COLUMNS)
 
 
@@ -340,9 +356,9 @@ def add_interest(
     interest_id: int = typer.Argument(..., help="ID of the interest."),
 ) -> None:
     """Assign an interest to a user."""
-    state = _state(ctx)
-    confirm_write(state, f"POST /users/{id}/interests/{interest_id}")
-    state.client.users.add_interest(id, interest_id)
+    state = get_state(ctx)
+    confirm_write(state, f"POST {state.client.users.url(id, 'interests', interest_id)}")
+    output_result(state, state.client.users.add_interest(id, interest_id))
 
 
 @users_app.command("remove-interest")
@@ -353,9 +369,11 @@ def remove_interest(
     interest_id: int = typer.Argument(..., help="ID of the interest."),
 ) -> None:
     """Unassign an interest from a user."""
-    state = _state(ctx)
-    confirm_write(state, f"DELETE /users/{id}/interests/{interest_id}")
-    state.client.users.remove_interest(id, interest_id)
+    state = get_state(ctx)
+    confirm_write(
+        state, f"DELETE {state.client.users.url(id, 'interests', interest_id)}"
+    )
+    output_result(state, state.client.users.remove_interest(id, interest_id))
 
 
 # ---------------------------------------------------------------------------
@@ -371,16 +389,18 @@ def welcome_email(ctx: typer.Context, id: int = _ID) -> None:
     The API serves this over GET, but it really does send mail, so it
     confirms like any other write.
     """
-    state = _state(ctx)
-    confirm_write(state, f"GET /users/{id}/welcomeEmail (sends mail)")
-    state.client.users.send_welcome_email(id)
+    state = get_state(ctx)
+    confirm_write(
+        state, f"GET {state.client.users.url(id, 'welcomeEmail')} (sends mail)"
+    )
+    output_result(state, state.client.users.send_welcome_email(id))
 
 
 @users_app.command("oneclick")
 @handle_errors
 def oneclick(ctx: typer.Context, id: int = _ID) -> None:
     """Mint a one-click login link for a user."""
-    state = _state(ctx)
+    state = get_state(ctx)
     output_one(state, state.client.users.oneclick(id))
 
 
@@ -388,43 +408,47 @@ def oneclick(ctx: typer.Context, id: int = _ID) -> None:
 # optouts
 # ---------------------------------------------------------------------------
 
-_OPTOUT_DATA = typer.Option(
-    ...,
-    "--data",
-    help='JSON body, e.g. \'{"optout_areas": ["blast"]}\'.',
-)
-
 
 @users_app.command("optouts")
 @handle_errors
 def optouts(ctx: typer.Context, id: int = _ID) -> None:
     """Show which message areas a user has opted out of."""
-    state = _state(ctx)
+    state = get_state(ctx)
     output_one(state, state.client.users.optouts(id))
 
 
 @users_app.command("add-optout")
 @handle_errors
-def add_optout(ctx: typer.Context, id: int = _ID, data: str = _OPTOUT_DATA) -> None:
+def add_optout(
+    ctx: typer.Context, id: int = _ID, areas: list[str] = _OPTOUT_AREAS
+) -> None:
     """Opt a user out of messaging (supersedes their stored optouts)."""
-    state = _state(ctx)
-    fields = _merge_fields(data)
-    confirm_write(state, f"POST /users/{id}/optouts", fields)
-    state.client.users.add_optout(id, **fields)
+    state = get_state(ctx)
+    confirm_write(
+        state,
+        f"POST {state.client.users.url(id, 'optouts')}",
+        {"optout_areas": list(areas)},
+    )
+    output_result(state, state.client.users.add_optout(id, list(areas)))
 
 
 @users_app.command("remove-optout")
 @handle_errors
-def remove_optout(ctx: typer.Context, id: int = _ID, data: str = _OPTOUT_DATA) -> None:
+def remove_optout(
+    ctx: typer.Context, id: int = _ID, areas: list[str] = _OPTOUT_AREAS
+) -> None:
     """Lift named areas from a user's opt-out list."""
-    state = _state(ctx)
-    fields = _merge_fields(data)
-    confirm_write(state, f"DELETE /users/{id}/optouts", fields)
-    state.client.users.remove_optout(id, **fields)
+    state = get_state(ctx)
+    confirm_write(
+        state,
+        f"DELETE {state.client.users.url(id, 'optouts')}",
+        {"optout_areas": list(areas)},
+    )
+    output_result(state, state.client.users.remove_optout(id, list(areas)))
 
 
 # ---------------------------------------------------------------------------
-# qualifications, registration questions, responses, tracks
+# qualifications, registration answers, responses, tracks
 # ---------------------------------------------------------------------------
 
 
@@ -432,7 +456,7 @@ def remove_optout(ctx: typer.Context, id: int = _ID, data: str = _OPTOUT_DATA) -
 @handle_errors
 def qualifications(ctx: typer.Context, id: int = _ID) -> None:
     """List a user's qualifications."""
-    state = _state(ctx)
+    state = get_state(ctx)
     output(
         state,
         state.client.users.qualifications(id),
@@ -440,11 +464,11 @@ def qualifications(ctx: typer.Context, id: int = _ID) -> None:
     )
 
 
-@users_app.command("registration-questions")
+@users_app.command("registration-answers")
 @handle_errors
-def registration_questions(ctx: typer.Context, id: int = _ID) -> None:
+def registration_answers(ctx: typer.Context, id: int = _ID) -> None:
     """List a user's answers to the custom registration questions."""
-    state = _state(ctx)
+    state = get_state(ctx)
     output(
         state,
         state.client.users.registration_answers(id),
@@ -452,9 +476,9 @@ def registration_questions(ctx: typer.Context, id: int = _ID) -> None:
     )
 
 
-@users_app.command("set-registration-questions")
+@users_app.command("set-registration-answers")
 @handle_errors
-def set_registration_questions(
+def set_registration_answers(
     ctx: typer.Context,
     id: int = _ID,
     data: str = typer.Option(
@@ -467,20 +491,24 @@ def set_registration_questions(
     ),
 ) -> None:
     """Store a user's answers to the custom registration questions."""
-    state = _state(ctx)
+    state = get_state(ctx)
     fields = _merge_fields(data)
     answers = fields.get("answers")
     if not isinstance(answers, list):
         raise typer.BadParameter('--data must be an object with an "answers" array')
-    confirm_write(state, f"POST /users/{id}/registrationQuestions", fields)
-    state.client.users.set_registration_answers(id, answers)
+    confirm_write(
+        state,
+        f"POST {state.client.users.url(id, 'registrationQuestions')}",
+        fields,
+    )
+    output_result(state, state.client.users.set_registration_answers(id, answers))
 
 
 @users_app.command("responses")
 @handle_errors
 def responses(ctx: typer.Context, id: int = _ID) -> None:
     """List the needs a user has signed up for."""
-    state = _state(ctx)
+    state = get_state(ctx)
     output(
         state,
         state.client.users.responses(id),
@@ -492,7 +520,7 @@ def responses(ctx: typer.Context, id: int = _ID) -> None:
 @handle_errors
 def tracks(ctx: typer.Context, id: int = _ID) -> None:
     """List a user's tracks."""
-    state = _state(ctx)
+    state = get_state(ctx)
     output(state, state.client.users.tracks(id), ["id", "name", "created_at"])
 
 
@@ -505,7 +533,7 @@ def tracks(ctx: typer.Context, id: int = _ID) -> None:
 @handle_errors
 def tags(ctx: typer.Context, id: int = _ID) -> None:
     """List a user's tags."""
-    state = _state(ctx)
+    state = get_state(ctx)
     output(state, state.client.users.tags(id), NAMED_COLUMNS)
 
 
@@ -517,9 +545,11 @@ def add_tags(
     tags: list[str] = _TAG_NAMES,
 ) -> None:
     """Add one or more tags -- by name, not id -- to a user."""
-    state = _state(ctx)
-    confirm_write(state, f"POST /users/{id}/tags", {"tags": tags})
-    state.client.users.add_tags(id, list(tags))
+    state = get_state(ctx)
+    confirm_write(
+        state, f"POST {state.client.users.url(id, 'tags')}", {"tags": list(tags)}
+    )
+    output_result(state, state.client.users.add_tags(id, list(tags)))
 
 
 @users_app.command("remove-tag")
@@ -530,6 +560,6 @@ def remove_tag(
     tag_id: int = typer.Argument(..., help="ID of the tag."),
 ) -> None:
     """Remove a tag from a user."""
-    state = _state(ctx)
-    confirm_write(state, f"DELETE /users/{id}/tags/{tag_id}")
-    state.client.users.remove_tag(id, tag_id)
+    state = get_state(ctx)
+    confirm_write(state, f"DELETE {state.client.users.url(id, 'tags', tag_id)}")
+    output_result(state, state.client.users.remove_tag(id, tag_id))

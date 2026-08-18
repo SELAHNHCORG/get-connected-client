@@ -4,6 +4,7 @@ Every write in this file is mocked with respx. Nothing here may ever reach
 the production API.
 """
 
+import inspect
 import json
 
 import pytest
@@ -11,7 +12,7 @@ from typer.testing import CliRunner
 
 from galaxy_digital_cli.cli import app
 from galaxy_digital_cli.client import GalaxyClient
-from galaxy_digital_cli.exceptions import ReadOnlyError
+from galaxy_digital_cli.exceptions import GalaxyHTTPError, ReadOnlyError
 from galaxy_digital_cli.models.common import (
     AgencyMini,
     BenchmarkMini,
@@ -136,6 +137,14 @@ def test_small_user_models():
     assert answer.question_id == 4 and answer.answer == "blue"
 
 
+def test_registration_answer_accepts_multi_select():
+    """The read spec says string, but multi-select questions answer with a list."""
+    multi = RegistrationAnswer.model_validate(
+        {"question_id": "4", "answer": ["blue", "green"]}
+    )
+    assert multi.answer == ["blue", "green"]
+
+
 # --------------------------------------------------------------------------
 # resource: URL + verb mapping
 # --------------------------------------------------------------------------
@@ -240,6 +249,22 @@ def test_send_welcome_email_respects_read_only(api):
     assert not api.calls
 
 
+def test_send_welcome_email_is_never_retried(client, api, monkeypatch):
+    """treat_as_write forfeits retries: a replay could mail the user twice.
+
+    The GET verb alone would make this retriable, which is exactly the trap:
+    the endpoint is a write wearing a read's clothes.
+    """
+    monkeypatch.setattr(
+        "galaxy_digital_cli.client.time.sleep",
+        lambda _seconds: pytest.fail("a treat_as_write request must not back off"),
+    )
+    route = api.get("/users/5/welcomeEmail").respond(status_code=500)
+    with pytest.raises(GalaxyHTTPError):
+        Users(client).send_welcome_email(5)
+    assert route.call_count == 1
+
+
 def test_singletons(client, api):
     api.get("/users/5/oneclick").respond(
         json={"data": {"link": "https://x/oneclick/abc/", "expires": "2022-01-14"}}
@@ -300,11 +325,11 @@ def test_add_tags_body(client, api):
 
 def test_optout_bodies(client, api):
     post = api.post("/users/5/optouts").respond(status_code=201)
-    Users(client).add_optout(5, optout_areas=["blast"])
+    Users(client).add_optout(5, ["blast"])
     assert json.loads(post.calls.last.request.content) == {"optout_areas": ["blast"]}
 
     delete = api.delete("/users/5/optouts").respond(status_code=204)
-    Users(client).remove_optout(5, optout_areas=["blast"])
+    Users(client).remove_optout(5, ["blast"])
     assert json.loads(delete.calls.last.request.content) == {"optout_areas": ["blast"]}
 
 
@@ -317,6 +342,19 @@ def test_set_registration_answers_body(client, api):
 
 def test_client_attaches_namespace(client):
     assert isinstance(client.users, Users)
+
+
+def test_users_covers_every_spec_operation():
+    """Keep the class docstring's "32 operations" claim from going stale.
+
+    ``url`` is excluded: it builds paths, it is not an endpoint.
+    """
+    endpoints = {
+        name
+        for name, member in inspect.getmembers(Users, inspect.isfunction)
+        if not name.startswith("_") and name != "url"
+    }
+    assert len(endpoints) == 32
 
 
 # --------------------------------------------------------------------------
@@ -495,39 +533,33 @@ def test_cli_set_extras(api, cli_env):
 
 
 def test_cli_add_and_remove_optout(api, cli_env):
+    """The areas are variadic arguments, like add-tags -- no --data JSON."""
     post = api.post("/users/5/optouts").respond(status_code=201)
-    body = '{"optout_areas": ["blast"]}'
-    assert (
-        runner.invoke(
-            app, ["--yes", "users", "add-optout", "5", "--data", body]
-        ).exit_code
-        == 0
-    )
-    assert json.loads(post.calls.last.request.content) == {"optout_areas": ["blast"]}
+    result = runner.invoke(app, ["--yes", "users", "add-optout", "5", "blast", "event"])
+    assert result.exit_code == 0, result.output
+    assert json.loads(post.calls.last.request.content) == {
+        "optout_areas": ["blast", "event"]
+    }
 
     delete = api.delete("/users/5/optouts").respond(status_code=204)
-    assert (
-        runner.invoke(
-            app, ["--yes", "users", "remove-optout", "5", "--data", body]
-        ).exit_code
-        == 0
-    )
-    assert delete.called
+    result = runner.invoke(app, ["--yes", "users", "remove-optout", "5", "blast"])
+    assert result.exit_code == 0, result.output
+    assert json.loads(delete.calls.last.request.content) == {"optout_areas": ["blast"]}
 
 
-def test_cli_set_registration_questions(api, cli_env):
+def test_cli_set_registration_answers(api, cli_env):
     route = api.post("/users/5/registrationQuestions").respond(status_code=201)
     body = '{"answers": [{"question_id": "1", "answer": ["blue"]}]}'
     result = runner.invoke(
-        app, ["--yes", "users", "set-registration-questions", "5", "--data", body]
+        app, ["--yes", "users", "set-registration-answers", "5", "--data", body]
     )
     assert result.exit_code == 0, result.output
     assert json.loads(route.calls.last.request.content) == json.loads(body)
 
 
-def test_cli_set_registration_questions_requires_answers(api, cli_env):
+def test_cli_set_registration_answers_requires_answers(api, cli_env):
     result = runner.invoke(
-        app, ["--yes", "users", "set-registration-questions", "5", "--data", "{}"]
+        app, ["--yes", "users", "set-registration-answers", "5", "--data", "{}"]
     )
     assert result.exit_code != 0
     assert not api.calls
@@ -544,7 +576,7 @@ def test_cli_set_registration_questions_requires_answers(api, cli_env):
         (["interests", "5"], "/users/5/interests", {"data": [{"id": "1"}]}),
         (["qualifications", "5"], "/users/5/qualifications", {"data": [{"id": "1"}]}),
         (
-            ["registration-questions", "5"],
+            ["registration-answers", "5"],
             "/users/5/registrationQuestions",
             {"data": [{"question": "q"}]},
         ),
@@ -566,19 +598,112 @@ def test_cli_read_commands(api, cli_env, args, path, payload):
     assert route.called
 
 
-def test_cli_remove_commands(api, cli_env):
-    for args, method, path in [
+@pytest.mark.parametrize(
+    "args,method,path",
+    [
         (["remove-agency", "5", "2"], "DELETE", "/users/5/agencies/2"),
         (["remove-benchmark", "5", "3"], "DELETE", "/users/5/benchmarks/3"),
         (["add-cause", "5", "4"], "POST", "/users/5/causes/4"),
         (["remove-cause", "5", "4"], "DELETE", "/users/5/causes/4"),
         (["add-interest", "5", "6"], "POST", "/users/5/interests/6"),
         (["remove-interest", "5", "6"], "DELETE", "/users/5/interests/6"),
-    ]:
-        route = api.request(method, path).respond(status_code=204)
-        result = runner.invoke(app, ["--yes", "users", *args])
-        assert result.exit_code == 0, result.output
-        assert route.called
+    ],
+)
+def test_cli_remove_commands(api, cli_env, args, method, path):
+    route = api.request(method, path).respond(status_code=204)
+    result = runner.invoke(app, ["--yes", "users", *args])
+    assert result.exit_code == 0, result.output
+    assert route.called
+
+
+def test_cli_confirm_prompt_shows_the_wire_path(api, cli_env):
+    """The prompt must name the path the request would really have taken.
+
+    ``/users/5/causes/4`` is the path ``test_cli_remove_commands`` registers
+    for this same command, so a prompt that drifts from the client's URL
+    builder fails here.
+    """
+    result = runner.invoke(app, ["users", "remove-cause", "5", "4"], input="n\n")
+    assert result.exit_code != 0
+    assert not api.calls
+    assert "DELETE /users/5/causes/4" in result.output
+
+
+def test_cli_set_extras_prompt_names_the_subset(api, cli_env):
+    """The subset decides where the write lands, so the prompt must show it."""
+    body = '{"extras": [{"key": "Language", "value": "Spanish"}]}'
+    declined = runner.invoke(
+        app, ["users", "set-extras", "5", "--data", body], input="n\n"
+    )
+    assert declined.exit_code != 0
+    assert not api.calls
+    assert "POST /users/5/extras?subset=regExtra" in declined.output
+
+    declined = runner.invoke(
+        app,
+        ["users", "set-extras", "5", "--data", body, "--subset", "profile"],
+        input="n\n",
+    )
+    assert "POST /users/5/extras?subset=profile" in declined.output
+
+
+def test_cli_set_extras_requires_extras_array(api, cli_env):
+    """A body without the "extras" envelope never reaches the network."""
+    for body in ('{"nope": []}', '{"extras": {"key": "k"}}'):
+        result = runner.invoke(
+            app, ["--yes", "users", "set-extras", "5", "--data", body]
+        )
+        assert result.exit_code != 0
+        assert not api.calls
+
+
+@pytest.mark.parametrize(
+    "flag,expected",
+    [(None, None), ("--show-inactive", "Yes"), ("--no-show-inactive", "No")],
+)
+def test_cli_show_inactive_is_tri_state(api, cli_env, flag, expected):
+    """Omitted means "take the server default", not "send No"."""
+    route = api.get("/users").respond(json={"data": [USER_ROW]})
+    result = runner.invoke(app, ["users", "list", *([flag] if flag else [])])
+    assert result.exit_code == 0, result.output
+    params = route.calls.last.request.url.params
+    if expected is None:
+        assert "show_inactive" not in params
+    else:
+        assert params["show_inactive"] == expected
+
+
+def test_cli_write_emits_json(api, cli_env):
+    """A 204 write still owes --json a parseable object on stdout."""
+    route = api.delete("/users/5").respond(status_code=204)
+    result = runner.invoke(app, ["--json", "--yes", "users", "delete", "5"])
+    assert result.exit_code == 0, result.output
+    assert route.called
+    assert json.loads(result.output) == {"ok": True}
+
+
+def test_cli_read_only_blocks_welcome_email(api, cli_env, monkeypatch):
+    """--yes does not override read-only mode, and nothing reaches the wire."""
+    monkeypatch.setenv("GALAXY_READ_ONLY", "1")
+    result = runner.invoke(app, ["--yes", "users", "welcome-email", "5"])
+    assert result.exit_code == 1
+    assert "error:" in result.stderr
+    assert "read-only" in result.stderr
+    assert not api.calls
+
+
+def test_cli_sublist_json(api, cli_env):
+    api.get("/users/5/tags").respond(json={"data": [{"id": "1", "name": "VIP"}]})
+    result = runner.invoke(app, ["--json", "users", "tags", "5"])
+    assert result.exit_code == 0, result.output
+    assert json.loads(result.output)[0]["name"] == "VIP"
+
+
+def test_cli_get_json(api, cli_env):
+    api.get("/users/5").respond(json={"data": USER_ROW})
+    result = runner.invoke(app, ["--json", "users", "get", "5"])
+    assert result.exit_code == 0, result.output
+    assert json.loads(result.output)["user_email"] == "ada@example.com"
 
 
 def test_cli_help_lists_every_command():
@@ -609,8 +734,8 @@ def test_cli_help_lists_every_command():
         "add-optout",
         "remove-optout",
         "qualifications",
-        "registration-questions",
-        "set-registration-questions",
+        "registration-answers",
+        "set-registration-answers",
         "responses",
         "tracks",
         "tags",

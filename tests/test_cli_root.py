@@ -1,6 +1,8 @@
+import json
+
 import pytest
 import typer
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 from typer.testing import CliRunner
 
 import galaxy_digital_cli
@@ -34,6 +36,17 @@ def demo_write(ctx: typer.Context) -> None:
     """Confirms, then pretends to write."""
     confirm_write(ctx.obj, "delete the thing", {"id": 1})
     console.print("WROTE")
+
+
+class _StrictRow(BaseModel):
+    id: int
+
+
+@demo_app.command("bad-payload")
+@handle_errors
+def demo_bad_payload() -> None:
+    """Always fails the way a malformed API payload would."""
+    _StrictRow.model_validate({"id": "not-a-number"})
 
 
 def test_version():
@@ -110,6 +123,40 @@ def test_galaxy_error_with_debug_reraises():
     result = runner.invoke(demo_app, ["--debug", "boom"])
     assert result.exit_code != 0
     assert isinstance(result.exception, GalaxyError)
+
+
+def test_validation_error_is_clean():
+    """A payload our models reject is the server's problem, not a traceback."""
+    result = runner.invoke(demo_app, ["bad-payload"])
+    assert result.exit_code == 1
+    assert "error:" in result.stderr
+    assert "Traceback" not in result.output
+    assert "Traceback" not in result.stderr
+
+
+def test_validation_error_with_debug_reraises():
+    result = runner.invoke(demo_app, ["--debug", "bad-payload"])
+    assert result.exit_code != 0
+    assert isinstance(result.exception, ValidationError)
+
+
+def test_output_result_reports_empty_writes(capsys):
+    """A write that returns nothing still emits parseable JSON under --json."""
+    from galaxy_digital_cli.cli._output import output_result
+    from galaxy_digital_cli.cli._state import State
+    from galaxy_digital_cli.config import Settings
+
+    state = State(settings=Settings(api_key=None, url="x", read_only=False))
+    output_result(state, None)
+    assert "done" in capsys.readouterr().out
+
+    state.json_output = True
+    output_result(state, None)
+    assert json.loads(capsys.readouterr().out) == {"ok": True}
+
+    # a real payload still renders as a record
+    output_result(state, {"id": 1})
+    assert json.loads(capsys.readouterr().out) == {"id": 1}
 
 
 def test_confirm_declined_aborts():

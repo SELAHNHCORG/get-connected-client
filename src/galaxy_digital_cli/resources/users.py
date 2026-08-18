@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from ..exceptions import NotFoundError
 from ..models.common import (
     AgencyMini,
     BenchmarkMini,
@@ -43,9 +42,23 @@ class Users(
 ):
     """Users and everything hanging off them.
 
-    Beyond the inherited CRUD, ``/users`` exposes twenty sub-resources --
-    fanned agencies, benchmarks, causes, extras, hours, interests, optouts,
-    qualifications, registration answers, responses, tracks and tags.
+    This namespace covers every ``/users`` endpoint in ``doc/api.yml``: 21
+    paths, 32 operations, one method apiece. Rather than enumerate them here
+    (a list that rots the moment one is added), they group as:
+
+    * **CRUD** on the collection and the row -- :meth:`list`, :meth:`get`,
+      :meth:`create`, :meth:`update`, :meth:`delete`, inherited from the
+      mixins.
+    * **Membership** sub-resources, each a read plus add/remove --
+      :meth:`agencies`, :meth:`causes`, :meth:`interests` and :meth:`tags`,
+      with :meth:`benchmarks` read-and-remove only.
+    * **Read-only** sub-resources -- :meth:`hours`, :meth:`qualifications`,
+      :meth:`responses` and :meth:`tracks`.
+    * **Read/replace** sub-resources, where the write supersedes everything
+      stored -- :meth:`extras`/:meth:`set_extras`,
+      :meth:`registration_answers`/:meth:`set_registration_answers` and
+      :meth:`optouts`/:meth:`add_optout`/:meth:`remove_optout`.
+    * **Actions** -- :meth:`send_welcome_email` and :meth:`oneclick`.
 
     :meth:`list` accepts the endpoint's own filters on top of the standard
     paging ones::
@@ -107,15 +120,11 @@ class Users(
         :return: the stored pairs, or ``[]`` when the user has none -- the
             API answers 404 rather than an empty list.
         """
-        url = self._url(id, "extras")
-        params = {"subset": subset} if subset is not None else None
-        try:
-            rows = self._client.get_data(url, params) or []
-        except NotFoundError:
-            return []
-        if not isinstance(rows, list):
-            rows = [rows]
-        return [self._parse(row, Extra) for row in rows]
+        return self._get_list(
+            self._url(id, "extras"),
+            Extra,
+            params={"subset": subset} if subset else None,
+        )
 
     def set_extras(
         self,
@@ -172,8 +181,20 @@ class Users(
             "GET", self._url(id, "welcomeEmail"), treat_as_write=True
         )
 
+    # Unlike send_welcome_email, this is NOT flagged treat_as_write. The call
+    # does mint a credential, so it is side-effecting in that sense -- but it
+    # is idempotent (each call just issues another short-lived link, changing
+    # nothing about the user) and read-only tooling legitimately needs it to
+    # hand a volunteer a login. Blocking it in read-only mode would break that
+    # tooling for no safety gain. Revisit if links ever become single-issue or
+    # start invalidating their predecessors.
     def oneclick(self, id: int) -> UserOneclick:
-        """Mint a one-click (passwordless) login link for this user."""
+        """Mint a one-click (passwordless) login link for this user.
+
+        Left as a plain read even though it mints a credential: it is
+        idempotent and changes nothing about the user, so read-only mode
+        permits it (see the note above this method).
+        """
         return self._get_one(self._url(id, "oneclick"), UserOneclick)
 
     def optouts(self, id: int) -> UserOptouts:
@@ -183,23 +204,27 @@ class Users(
         """
         return self._get_one(self._url(id, "optouts"), UserOptouts)
 
-    def add_optout(self, id: int, **body: Any) -> Any:
+    def add_optout(self, id: int, optout_areas: list[str]) -> Any:
         """Opt this user out of messaging.
 
-        The spec's body is ``optout_areas``, a list of area names (or
-        ``["all"]``). It *supersedes* whatever was stored before::
+        :param optout_areas: area names, or ``["all"]``. The list
+            *supersedes* whatever was stored before::
 
-            client.users.add_optout(5, optout_areas=["blast"])
+                client.users.add_optout(5, ["blast"])
         """
-        return self._client.request("POST", self._url(id, "optouts"), json=body)
+        return self._client.request(
+            "POST", self._url(id, "optouts"), json={"optout_areas": optout_areas}
+        )
 
-    def remove_optout(self, id: int, **body: Any) -> Any:
+    def remove_optout(self, id: int, optout_areas: list[str]) -> Any:
         """Remove areas from this user's opt-out list.
 
-        Unlike :meth:`add_optout`, ``optout_areas`` here names only the areas
-        to lift.
+        :param optout_areas: unlike :meth:`add_optout`, this names only the
+            areas to lift, leaving the rest of the opt-outs in place.
         """
-        return self._client.request("DELETE", self._url(id, "optouts"), json=body)
+        return self._client.request(
+            "DELETE", self._url(id, "optouts"), json={"optout_areas": optout_areas}
+        )
 
     # -- qualifications ---------------------------------------------------
 

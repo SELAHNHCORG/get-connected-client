@@ -53,6 +53,14 @@ class Resource(Generic[M]):
         """
         return "/".join([self.path, *[str(p) for p in parts]])
 
+    def url(self, *parts: Any) -> str:
+        """Public path builder -- use for confirm prompts so they can't drift
+        from the wire.
+
+        With no *parts* this is the collection itself, ``self.path``.
+        """
+        return self._url(*parts)
+
     def _parse(self, payload: Any, model: type[GalaxyModel] | None = None) -> Any:
         """Validate *payload* into *model*, defaulting to ``self.model``.
 
@@ -64,22 +72,35 @@ class Resource(Generic[M]):
             return model.model_validate(payload)
         return payload
 
-    def _get_one(self, url: str, model: type[GalaxyModel] | None = None) -> Any:
+    def _get_one(
+        self,
+        url: str,
+        model: type[GalaxyModel] | None = None,
+        params: dict[str, Any] | None = None,
+    ) -> Any:
         """GET *url* and validate the unwrapped payload into a single model.
 
-        Pass *model* to parse a sub-resource that is not ``self.model``.
+        Pass *model* to parse a sub-resource that is not ``self.model``, and
+        *params* for any query string the endpoint takes.
         """
-        return self._parse(self._client.get_data(url), model)
+        return self._parse(self._client.get_data(url, params), model)
 
-    def _get_list(self, url: str, model: type[GalaxyModel] | None = None) -> list[Any]:
+    def _get_list(
+        self,
+        url: str,
+        model: type[GalaxyModel] | None = None,
+        params: dict[str, Any] | None = None,
+    ) -> list[Any]:
         """GET *url* and validate the unwrapped payload into a list of models.
 
         A lone object is wrapped in a one-element list. A 404 yields ``[]``:
         the API answers 404 rather than an empty list when a sub-resource
         collection has no rows, which is absence, not an error.
+
+        Pass *params* for any query string the endpoint takes.
         """
         try:
-            rows = self._client.get_data(url) or []
+            rows = self._client.get_data(url, params) or []
         except NotFoundError:
             return []
         if not isinstance(rows, list):

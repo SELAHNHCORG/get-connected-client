@@ -10,6 +10,7 @@ from importlib import import_module
 from typing import Any, TypeVar
 
 import typer
+from pydantic import ValidationError
 
 from ..client import GalaxyClient
 from ..config import Settings
@@ -68,18 +69,27 @@ def click_current_context_or_none() -> Any:
     return getter(silent=True)
 
 
+def get_state(ctx: typer.Context) -> State:
+    """The per-invocation state the root callback stashed on the context."""
+    return ctx.obj
+
+
 def handle_errors(fn: F) -> F:
-    """Decorator for CLI commands: GalaxyError -> concise stderr message + exit 1.
+    """Decorator for CLI commands: expected errors -> stderr message + exit 1.
+
+    Catches :class:`~galaxy_digital_cli.exceptions.GalaxyError` and pydantic's
+    :class:`~pydantic.ValidationError` -- an API payload that does not match
+    our models is the server's problem, not a bug worth a traceback.
 
     Re-raises the original exception when ``--debug`` was passed so typer
-    prints the full traceback.
+    prints the full traceback, for both error kinds.
     """
 
     @functools.wraps(fn)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         try:
             return fn(*args, **kwargs)
-        except GalaxyError as error:
+        except (GalaxyError, ValidationError) as error:
             ctx = click_current_context_or_none()
             if ctx is not None and getattr(ctx.obj, "debug", False):
                 raise

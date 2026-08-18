@@ -88,11 +88,17 @@ class UserResponse(GalaxyModel):
 
 
 class RegistrationAnswer(GalaxyModel):
-    """RegistrationResponseAnswerObject -- one answer to a registration question."""
+    """RegistrationResponseAnswerObject -- one answer to a registration question.
+
+    ``answer`` is deliberately widened to ``str | list[str]``: the read spec
+    types it as a string, but the write shape (and multi-select questions on
+    the wire) send a list of choices. Accepting both keeps a round trip --
+    read, edit, write back -- from failing validation.
+    """
 
     type: str | None = None
     key: str | None = None
     area: str | None = None
     question_id: int | None = None
     question: str | None = None
-    answer: str | None = None
+    answer: str | list[str] | None = None
