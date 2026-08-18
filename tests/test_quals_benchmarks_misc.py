@@ -25,6 +25,16 @@ from galaxy_digital_cli.resources.benchmarks import Benchmarks
 from galaxy_digital_cli.resources.misc import Clusters, Lookups
 from galaxy_digital_cli.resources.qualifications import Qualifications
 
+from .test_agencies import _COVERED_AGENCIES_PATHS
+from .test_events_hours import _COVERED_EVENTS_PATHS, _COVERED_HOURS_PATHS
+from .test_needs import _COVERED_NEEDS_PATHS
+from .test_responses_teams_groups import (
+    _COVERED_GROUPS_PATHS,
+    _COVERED_RESPONSES_PATHS,
+    _COVERED_TEAMS_PATHS,
+)
+from .test_users import _COVERED_USERS_PATHS
+
 runner = CliRunner()
 
 QUALIFICATION_ROW = {
@@ -447,6 +457,14 @@ def test_auth_login_body_and_parse(client, api):
     }
 
 
+def test_auth_login_without_data_returns_raw_payload(client, api):
+    """When the API answers without a ``data`` object, ``login`` falls back
+    to returning the raw payload, mirroring ``CreateMixin.create``."""
+    api.post("/users/login").respond(json={"message": "ok"})
+    result = Auth(client).login("mary@example.com", "hunter2")
+    assert result == {"message": "ok"}
+
+
 def test_auth_login_key_defaults_to_empty_string(client, api):
     route = api.post("/users/login").respond(json={"data": LOGIN_ROW})
     Auth(client).login("mary@example.com", "hunter2")
@@ -526,61 +544,18 @@ _COVERED_BY_THIS_VERTICAL = (
 )
 
 # The paths every other vertical's own spec-guard test already asserts it
-# covers, taken from each file's ``_COVERED_*_PATHS`` constant.
-_COVERED_BY_OTHER_VERTICALS = {
-    "/agencies",
-    "/agencies/{id}",
-    "/agencies/{id}/causes",
-    "/agencies/{id}/causes/{cause_id}",
-    "/agencies/{id}/clusters",
-    "/agencies/{id}/clusters/{cluster_id}",
-    "/agencies/{id}/managers",
-    "/agencies/{id}/managers/{user_id}",
-    "/agencies/{id}/tags",
-    "/agencies/{id}/tags/{tag_id}",
-    "/needs",
-    "/needs/{id}",
-    "/needs/{id}/responses",
-    "/needs/{id}/shifts",
-    "/needs/{id}/shifts/{shift_id}",
-    "/needs/{id}/interests/{interest_id}",
-    "/needs/{id}/qualifications/{qualification_id}",
-    "/needs/{id}/questions",
-    "/events",
-    "/events/{id}",
-    "/hours",
-    "/hours/{id}",
-    "/responses",
-    "/responses/{id}",
-    "/teams",
-    "/teams/{id}",
-    "/teams/{id}/member/{member}",
-    "/groups",
-    "/groups/{id}",
-    "/groups/{id}/needs/{need_id}",
-    "/groups/{id}/users/{user_id}",
-    "/users",
-    "/users/{id}",
-    "/users/{id}/agencies",
-    "/users/{id}/agencies/{agency_id}",
-    "/users/{id}/benchmarks",
-    "/users/{id}/benchmarks/{benchmark_id}",
-    "/users/{id}/causes",
-    "/users/{id}/causes/{cause_id}",
-    "/users/{id}/extras",
-    "/users/{id}/hours",
-    "/users/{id}/interests",
-    "/users/{id}/interests/{interest_id}",
-    "/users/{id}/oneclick",
-    "/users/{id}/optouts",
-    "/users/{id}/qualifications",
-    "/users/{id}/registrationQuestions",
-    "/users/{id}/responses",
-    "/users/{id}/tags",
-    "/users/{id}/tags/{tag_id}",
-    "/users/{id}/tracks",
-    "/users/{id}/welcomeEmail",
-}
+# covers, imported directly from each file's ``_COVERED_*_PATHS`` constant
+# so there is a single source of truth per vertical.
+_COVERED_BY_OTHER_VERTICALS = (
+    _COVERED_AGENCIES_PATHS
+    | _COVERED_NEEDS_PATHS
+    | _COVERED_EVENTS_PATHS
+    | _COVERED_HOURS_PATHS
+    | _COVERED_RESPONSES_PATHS
+    | _COVERED_TEAMS_PATHS
+    | _COVERED_GROUPS_PATHS
+    | _COVERED_USERS_PATHS
+)
 
 
 def test_full_api_spec_coverage():
