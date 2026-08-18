@@ -117,4 +117,4 @@ production account.
 
 ## Contributing
 
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md).
+Contributions are welcome -- open an issue or pull request on GitHub.

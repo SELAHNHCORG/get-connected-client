@@ -138,6 +138,6 @@ about to happen and requires explicit confirmation:
 Pass ``--yes``/``-y`` on the root command to skip the prompt -- required
 for non-interactive use such as scripts or CI. This is a UX safeguard, not
 a security boundary: it runs in the CLI layer only
-(:func:`~galaxy_digital_cli.cli._confirm.confirm_write`), so library callers
+(``confirm_write()``), so library callers
 using :class:`~galaxy_digital_cli.client.GalaxyClient` directly do not get
 a prompt -- read-only mode is the mechanism for guarding library code.

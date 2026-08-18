@@ -252,6 +252,26 @@ def test_missing_api_key_is_clean(monkeypatch, tmp_path):
     assert "Traceback" not in result.output
 
 
+def test_cli_reference_docs_list_every_command():
+    """Every registered CLI command must be mentioned in doc/source/cli.rst."""
+    import pathlib
+
+    from typer.main import get_command
+
+    cli_rst = (
+        pathlib.Path(__file__).resolve().parent.parent / "doc" / "source" / "cli.rst"
+    ).read_text()
+    root = get_command(app)
+    missing = []
+    for group_name, group in root.commands.items():
+        if not hasattr(group, "commands"):
+            continue
+        for command_name in group.commands:
+            if command_name not in cli_rst:
+                missing.append(f"{group_name} {command_name}")
+    assert not missing, f"commands absent from doc/source/cli.rst: {missing}"
+
+
 def test_output_accepts_models_and_scalars(capsys):
     from galaxy_digital_cli.cli._output import output
     from galaxy_digital_cli.cli._state import State
