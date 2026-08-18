@@ -11,8 +11,11 @@ from ._state import State
 from .agencies import agencies_app
 from .config_cmds import config_app
 from .events import events_app
+from .groups import groups_app
 from .hours import hours_app
 from .needs import needs_app
+from .responses import responses_app
+from .teams import teams_app
 from .users import users_app
 
 app = typer.Typer(
@@ -26,7 +29,10 @@ app.add_typer(agencies_app, name="agencies")
 app.add_typer(needs_app, name="needs")
 app.add_typer(events_app, name="events")
 app.add_typer(hours_app, name="hours")
-# Further resource sub-apps are registered here by Tasks 12-13.
+app.add_typer(responses_app, name="responses")
+app.add_typer(teams_app, name="teams")
+app.add_typer(groups_app, name="groups")
+# Further resource sub-apps are registered here by Task 13.
 
 
 def _version(value: bool) -> None:

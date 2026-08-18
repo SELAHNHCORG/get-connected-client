@@ -105,8 +105,11 @@ class GalaxyClient:
         # this module for MAX_PER_PAGE, so a top-level import would cycle.
         from .resources.agencies import Agencies
         from .resources.events import Events
+        from .resources.groups import Groups
         from .resources.hours import Hours
         from .resources.needs import Needs
+        from .resources.responses import Responses
+        from .resources.teams import Teams
         from .resources.users import Users
 
         self.users = Users(self)
@@ -114,6 +117,9 @@ class GalaxyClient:
         self.needs = Needs(self)
         self.events = Events(self)
         self.hours = Hours(self)
+        self.responses = Responses(self)
+        self.teams = Teams(self)
+        self.groups = Groups(self)
 
     @property
     def read_only(self) -> bool:

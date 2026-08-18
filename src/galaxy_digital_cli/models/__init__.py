@@ -24,9 +24,11 @@ from .common import (
     UserMini,
 )
 from .events import Event
+from .groups import Group, GroupUser
 from .hours import Hour
 from .needs import Need
 from .responses import Response, ResponseAnswer
+from .teams import Team, TeamMember
 from .users import (
     RegistrationAnswer,
     User,
@@ -46,7 +48,9 @@ __all__ = [
     "Event",
     "Extra",
     "GalaxyModel",
+    "Group",
     "GroupMini",
+    "GroupUser",
     "Hour",
     "Impact",
     "InitiativeMini",
@@ -59,6 +63,8 @@ __all__ = [
     "ResponseAnswer",
     "Shift",
     "Tag",
+    "Team",
+    "TeamMember",
     "TeamMini",
     "TrackMini",
     "User",
