@@ -10,6 +10,8 @@ from ..config import load_settings
 from ._state import State
 from .agencies import agencies_app
 from .config_cmds import config_app
+from .events import events_app
+from .hours import hours_app
 from .needs import needs_app
 from .users import users_app
 
@@ -22,7 +24,9 @@ app.add_typer(config_app, name="config")
 app.add_typer(users_app, name="users")
 app.add_typer(agencies_app, name="agencies")
 app.add_typer(needs_app, name="needs")
-# Further resource sub-apps are registered here by Tasks 11-13.
+app.add_typer(events_app, name="events")
+app.add_typer(hours_app, name="hours")
+# Further resource sub-apps are registered here by Tasks 12-13.
 
 
 def _version(value: bool) -> None:

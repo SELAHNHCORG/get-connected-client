@@ -23,6 +23,7 @@ from .common import (
     TrackMini,
     UserMini,
 )
+from .events import Event
 from .hours import Hour
 from .needs import Need
 from .responses import Response, ResponseAnswer
@@ -42,6 +43,7 @@ __all__ = [
     "Category",
     "Cause",
     "Cluster",
+    "Event",
     "Extra",
     "GalaxyModel",
     "GroupMini",
