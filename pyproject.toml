@@ -62,11 +62,11 @@ typing = [
 ]
 lint = [
     "ruff>=0.15.0",
-    "readme-renderer[md]>=43.0",
+    "readme-renderer[md]>=45.0",
     "doc8>=1.1.2",
-    "bandit[toml,sarif]>=1.7.10"
+    "bandit[toml,sarif]>=1.9.4"
 ]
-coverage  = ["coverage[toml]>=7.6.1"]
+coverage  = ["coverage[toml]>=7.15.4"]
 test = [
     { include-group = "coverage" },
     "pytest>=8.3.4",
