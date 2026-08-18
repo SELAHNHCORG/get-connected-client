@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+from typing import Any
+
+from pydantic import field_validator
+
 from .base import GalaxyModel
 from .common import GroupMini, NeedMini, UserMini
 
@@ -29,3 +33,12 @@ class Hour(GalaxyModel):
     hour_type: str | None = None
     created_at: str | None = None
     updated_at: str | None = None
+
+    @field_validator("groups", mode="before")
+    @classmethod
+    def _wrap_single_group(cls, value: Any) -> Any:
+        # The spec (hourObject) declares `groups` as a bare object while every
+        # other resource declares it as an array; tolerate both shapes.
+        if isinstance(value, dict):
+            return [value]
+        return value

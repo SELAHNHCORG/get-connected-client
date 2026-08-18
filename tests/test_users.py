@@ -10,11 +10,14 @@ import pytest
 from typer.testing import CliRunner
 
 from galaxy_digital_cli.cli import app
+from galaxy_digital_cli.client import GalaxyClient
+from galaxy_digital_cli.exceptions import ReadOnlyError
 from galaxy_digital_cli.models.common import (
     AgencyMini,
     BenchmarkMini,
     Cause,
     Extra,
+    GroupMini,
     Interest,
     Tag,
     TrackMini,
@@ -29,6 +32,8 @@ from galaxy_digital_cli.models.users import (
     UserResponse,
 )
 from galaxy_digital_cli.resources.users import Users
+
+from .conftest import BASE
 
 runner = CliRunner()
 
@@ -107,6 +112,15 @@ def test_hour_model_nested():
     assert hour.need and hour.need.need_title == "Sort cans"
     assert hour.groups and hour.groups[0].group_title == "Team"
     assert len(Hour.model_fields) == 20
+
+
+def test_hour_groups_tolerates_bare_object():
+    """doc/api.yml declares `groups` as a bare object; the API sends a list."""
+    single = Hour.model_validate({"id": 1, "groups": {"id": 2}})
+    assert single.groups == [GroupMini(id=2)]
+
+    listed = Hour.model_validate({"id": 1, "groups": [{"id": 2}, {"id": 3}]})
+    assert listed.groups == [GroupMini(id=2), GroupMini(id=3)]
 
 
 def test_small_user_models():
@@ -218,6 +232,14 @@ def test_relationship_writes(client, api, call, method, path):
     assert route.called
 
 
+def test_send_welcome_email_respects_read_only(api):
+    """GET .../welcomeEmail sends mail, so it must honor read-only mode too."""
+    read_only_client = GalaxyClient(api_key="k", base_url=BASE, read_only=True)
+    with pytest.raises(ReadOnlyError):
+        Users(read_only_client).send_welcome_email(5)
+    assert not api.calls
+
+
 def test_singletons(client, api):
     api.get("/users/5/oneclick").respond(
         json={"data": {"link": "https://x/oneclick/abc/", "expires": "2022-01-14"}}
@@ -243,6 +265,13 @@ def test_extras_subset_and_body(client, api):
     post = api.post("/users/5/extras").respond(status_code=201)
     body = {"extras": [{"key": "Language", "value": "Spanish"}]}
     Users(client).set_extras(5, body, subset="profile")
+    assert json.loads(post.calls.last.request.content) == body
+    assert post.calls.last.request.url.params["subset"] == "profile"
+
+    # the bare list form is wrapped in the same envelope
+    Users(client).set_extras(
+        5, [{"key": "Language", "value": "Spanish"}], subset="profile"
+    )
     assert json.loads(post.calls.last.request.content) == body
     assert post.calls.last.request.url.params["subset"] == "profile"
 
@@ -300,6 +329,19 @@ def test_cli_list_json(api, cli_env):
     result = runner.invoke(app, ["--json", "users", "list", "--status", "active"])
     assert result.exit_code == 0, result.output
     assert json.loads(result.output)[0]["user_email"] == "ada@example.com"
+
+
+def test_cli_list_status_repeatable(api, cli_env):
+    route = api.get("/users").respond(json={"data": [USER_ROW]})
+    result = runner.invoke(
+        app,
+        ["users", "list", "--status", "active", "--status", "pending"],
+    )
+    assert result.exit_code == 0, result.output
+    assert route.calls.last.request.url.params.get_list("user_status") == [
+        "active",
+        "pending",
+    ]
 
 
 def test_cli_list_passes_filters(api, cli_env):

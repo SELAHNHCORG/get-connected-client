@@ -26,6 +26,11 @@ MAX_PER_PAGE = 150
 
 _ID = typer.Argument(..., help="ID of the user.")
 _TAG_NAMES = typer.Argument(..., help="Tag names to add.")
+#: Module-level singleton so ruff's B008 (immutable-default check) does not
+#: trip over a mutable ``list[str]`` annotation paired with a call default.
+_STATUS = typer.Option(
+    None, "--status", help="active, pending, imported or inactive (repeatable)."
+)
 
 
 def _state(ctx: typer.Context) -> State:
@@ -57,9 +62,7 @@ def list_users(
     show_inactive: bool = typer.Option(
         False, "--show-inactive", help="Include inactive users."
     ),
-    status: str | None = typer.Option(
-        None, "--status", help="active, pending, imported or inactive."
-    ),
+    status: list[str] | None = _STATUS,
     email: str | None = typer.Option(None, "--email", help="Exact email address."),
     email_like: str | None = typer.Option(None, "--email-like", help="Partial email."),
     fname: str | None = typer.Option(None, "--fname", help="Exact first name."),
@@ -79,7 +82,7 @@ def list_users(
         since_created=since_created,
         since_updated=since_updated,
         show_inactive=True if show_inactive else None,
-        user_status=status,
+        user_status=status or None,
         user_email=email,
         user_email_like=email_like,
         user_fname=fname,

@@ -172,6 +172,7 @@ class GalaxyClient:
         *,
         params: dict[str, Any] | None = None,
         json: Any = None,
+        treat_as_write: bool = False,
     ) -> Any:
         """Perform a single request, the sole gateway to the network.
 
@@ -185,12 +186,14 @@ class GalaxyClient:
         idempotent methods; a POST or PATCH raises on the first failure
         rather than risk duplicating a write the server may have committed.
 
+        :param treat_as_write: enforce the read-only guard for endpoints
+            whose GET has side effects (e.g. /users/{id}/welcomeEmail).
         :raises ReadOnlyError: a write was attempted in read-only mode.
         :raises GalaxyConnectionError: the request never completed.
         :raises GalaxyHTTPError: the API answered 4xx/5xx.
         """
         method = method.upper()
-        if method in _WRITE_METHODS and self.read_only:
+        if (method in _WRITE_METHODS or treat_as_write) and self.read_only:
             raise ReadOnlyError(f"{method} {path} blocked: read-only mode is on")
         retriable_failure = method in _IDEMPOTENT_METHODS
         attempt = 0

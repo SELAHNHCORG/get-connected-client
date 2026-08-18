@@ -118,19 +118,26 @@ class Users(
         return [self._parse(row, Extra) for row in rows]
 
     def set_extras(
-        self, id: int, extras: dict[str, Any], subset: str | None = None
+        self,
+        id: int,
+        extras: list[dict[str, Any]] | dict[str, Any],
+        subset: str | None = None,
     ) -> Any:
-        """Replace this user's extras with *extras*, sent verbatim as the body.
+        """Replace this user's extras with *extras*.
 
         The spec's shape is ``{"extras": [{"key": ..., "value": ...}, ...]}``.
         The payload is the *entirety* of the user's extras for the subset, so
         an update must resend the pairs it wants to keep.
 
+        :param extras: either the bare ``[{"key": ..., "value": ...}, ...]``
+            list -- wrapped in the ``{"extras": ...}`` envelope for you -- or
+            a dict that already contains that envelope, sent verbatim.
         :param subset: ``"regExtra"`` (the server default) or ``"profile"``.
         """
+        body = {"extras": extras} if isinstance(extras, list) else extras
         params = {"subset": subset} if subset is not None else None
         return self._client.request(
-            "POST", self._url(id, "extras"), params=params, json=extras
+            "POST", self._url(id, "extras"), params=params, json=body
         )
 
     # -- hours ------------------------------------------------------------
@@ -161,7 +168,9 @@ class Users(
         A GET with a side effect: the spec models it as a read, but it puts
         mail in someone's inbox. Treat it as a write.
         """
-        return self._client.request("GET", self._url(id, "welcomeEmail"))
+        return self._client.request(
+            "GET", self._url(id, "welcomeEmail"), treat_as_write=True
+        )
 
     def oneclick(self, id: int) -> UserOneclick:
         """Mint a one-click (passwordless) login link for this user."""
