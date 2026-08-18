@@ -145,3 +145,7 @@ def _isolate_env(monkeypatch, tmp_path):
     monkeypatch.delenv("GALAXY_READ_ONLY", raising=False)
     monkeypatch.delenv("GALAXY_API_URL", raising=False)
     monkeypatch.setenv("GALAXY_API_KEY", "test-key")
+    # typer/rich force ANSI escapes into --help output when GITHUB_ACTIONS or
+    # FORCE_COLOR are set, breaking plain-text assertions in CI.
+    monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
+    monkeypatch.delenv("FORCE_COLOR", raising=False)
