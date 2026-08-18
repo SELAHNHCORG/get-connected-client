@@ -14,9 +14,6 @@ dependencies = [
     "pydantic>=2.7",
     "typer>=0.12",
     "rich>=13.0",
-    "platformdirs>=4.0",
-    "tomlkit>=0.13",
-    "tomli>=2.0; python_version < '3.11'",
 ]
 classifiers = [
     "Operating System :: OS Independent",
@@ -86,7 +83,6 @@ dev = [
     { include-group = "lint" },
     { include-group = "docs" },
     "packaging>=24.2",
-    "tomlkit>=0.13.3",
     "ipdb>=0.13.13",
     "ipython>=8.18.1",
 ]

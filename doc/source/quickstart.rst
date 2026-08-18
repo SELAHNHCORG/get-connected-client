@@ -50,17 +50,20 @@ CLI
 The ``galaxy`` command mirrors the library: one sub-app per resource, with
 ``list``, ``get``, ``create``, ``update`` and ``delete`` where the endpoint
 supports them, plus resource-specific sub-commands (``users agencies``,
-``needs add-shift``, and so on). It adds a ``config`` sub-app for the
-settings file, and splits the library's ``lookups`` namespace into the
-``causes``, ``interests``, ``impacts`` and ``registration-questions``
+``needs add-shift``, and so on). It adds a ``config`` sub-app that reports
+the resolved settings, and splits the library's ``lookups`` namespace into
+the ``causes``, ``interests``, ``impacts`` and ``registration-questions``
 sub-apps. See :doc:`cli` for the full command tree.
 
-Store credentials once:
+Credentials come from the environment -- put these in your shell profile
+(``~/.bashrc``, ``~/.zshrc``, ...) to keep them across sessions:
 
 .. code-block:: bash
 
-   galaxy config set api_key YOUR_API_KEY
-   galaxy config set url us1        # us1 (default), us2, or ca
+   export GALAXY_API_KEY=YOUR_API_KEY
+   export GALAXY_API_URL=us1        # us1 (default), us2, or ca
+
+   galaxy config show               # check what got resolved, key redacted
 
 Then use it:
 

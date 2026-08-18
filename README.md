@@ -20,7 +20,7 @@ qualifications  benchmarks  clusters  causes  interests  impacts
 registration-questions  auth
 ```
 
-`config` manages the persisted settings file and has no library
+`config` reports the resolved settings and has no library
 counterpart; conversely the library's `client.lookups` namespace is split
 on the CLI into the `causes`, `interests`, `impacts` and
 `registration-questions` sub-apps.
@@ -52,12 +52,16 @@ in which case `GalaxyClient()` needs no arguments.
 ### CLI
 
 ```bash
-galaxy config set api_key YOUR_API_KEY
-galaxy config set url us1        # us1 (default), us2, or ca
+export GALAXY_API_KEY=YOUR_API_KEY
+export GALAXY_API_URL=us1        # us1 (default), us2, or ca
 
+galaxy config show               # what got resolved; the key is redacted
 galaxy users list --per-page 10
 galaxy --json needs get 123
 ```
+
+Put the `export` lines in your shell profile (`~/.bashrc`, `~/.zshrc`, ...)
+to keep them across sessions -- nothing is persisted to disk by the CLI.
 
 `--json` emits raw JSON instead of a formatted table, for scripting. It
 is a root option, so it goes before the sub-app name.
@@ -70,20 +74,21 @@ The **CLI** resolves settings with this precedence, highest first:
    `--read-only`.
 2. **Environment variables** -- `GALAXY_API_KEY`, `GALAXY_API_URL`,
    `GALAXY_READ_ONLY`.
-3. **Config file** -- `~/.config/galaxy-digital/config.toml` by default,
-   or wherever `GALAXY_CONFIG_FILE` points. Managed with `galaxy config
-   set/unset/show/path`; written at mode `0600` since it may hold a
-   plaintext API key.
-4. **Defaults** -- server `us1`, `read_only` off, no API key.
+3. **Defaults** -- server `us1`, `read_only` off, no API key.
+
+There is no config file: nothing is written to disk, so a plaintext API
+key never lands in one. `galaxy config show` prints what the chain above
+resolved (key redacted) and whether each value came from the environment
+or the default.
 
 ### Library behavior
 
 `GalaxyClient` does *not* implement that chain. It takes explicit
 arguments and falls back to `GALAXY_API_KEY` for the key only.
-`GALAXY_API_URL` and the config file are the CLI's doing, not the
-client's, so `base_url` defaults to `us1` no matter what the CLI would
-have resolved. (`GALAXY_READ_ONLY` is the one env var the client does
-honor, and only in one direction: it can turn read-only on, never off.)
+`GALAXY_API_URL` is the CLI's doing, not the client's, so `base_url`
+defaults to `us1` no matter what the CLI would have resolved.
+(`GALAXY_READ_ONLY` is the one env var the client does honor, and only in
+one direction: it can turn read-only on, never off.)
 
 ```python
 from galaxy_digital_cli import GalaxyClient
@@ -107,7 +112,7 @@ client = GalaxyClient(api_key=s.api_key, base_url=s.url, read_only=s.read_only)
 ```
 
 See the full configuration reference in the documentation for env var
-details, server aliases (`us1`/`us2`/`ca`), and the config file schema.
+details and server aliases (`us1`/`us2`/`ca`).
 
 ## Write Safety
 
@@ -117,8 +122,8 @@ core design constraint, not an afterthought:
 
 - **Read-only modes.** Writes can be blocked outright three ways, and any
   one of them is enough: the `GalaxyClient(read_only=True)` constructor
-  flag, the CLI's `--read-only` flag (or `galaxy config set read_only
-  true`), or the `GALAXY_READ_ONLY` environment variable. The guard is
+  flag, the CLI's `--read-only` flag, or the `GALAXY_READ_ONLY`
+  environment variable. The guard is
   enforced before any request reaches the network, and a second time as
   an `httpx` request hook as a backstop. Four commands the API models as
   reads are blocked by `--read-only` too, because each one has a real

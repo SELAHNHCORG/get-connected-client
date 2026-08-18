@@ -62,52 +62,58 @@ def test_help_lists_global_options_and_config():
     assert "config" in out
 
 
-def test_config_roundtrip(tmp_path, monkeypatch):
-    monkeypatch.setenv("GALAXY_CONFIG_FILE", str(tmp_path / "c.toml"))
-    assert runner.invoke(app, ["config", "set", "api_key", "secret1234"]).exit_code == 0
-    shown = runner.invoke(app, ["config", "show"])
-    assert "secret1234" not in shown.output
-    assert "1234" in shown.output
-    assert str(tmp_path / "c.toml") in runner.invoke(app, ["config", "path"]).output
-    assert runner.invoke(app, ["config", "unset", "api_key"]).exit_code == 0
-    assert "api_key" not in runner.invoke(app, ["config", "show"]).output
+def test_config_show_redacts_api_key():
+    """The autouse _isolate_env fixture exports GALAXY_API_KEY=test-key."""
+    result = runner.invoke(app, ["config", "show"])
+    assert result.exit_code == 0
+    assert "test-key" not in result.output
+    assert "…-key" in result.output
 
 
-def test_config_set_rejects_unknown_key(tmp_path, monkeypatch):
-    monkeypatch.setenv("GALAXY_CONFIG_FILE", str(tmp_path / "c.toml"))
-    assert runner.invoke(app, ["config", "set", "bogus", "x"]).exit_code != 0
+def test_config_show_reports_sources():
+    """api_key comes from the env (fixture); url falls through to the default."""
+    lines = runner.invoke(app, ["config", "show"]).output.splitlines()
+    api_key_row = next(line for line in lines if "api_key" in line)
+    url_row = next(line for line in lines if "url" in line)
+    assert "env" in api_key_row
+    assert "default" in url_row
 
 
-def test_config_set_short_api_key_fully_redacted(tmp_path, monkeypatch):
-    monkeypatch.setenv("GALAXY_CONFIG_FILE", str(tmp_path / "c.toml"))
-    assert runner.invoke(app, ["config", "set", "api_key", "abc"]).exit_code == 0
+def test_config_show_json():
+    out = runner.invoke(app, ["--json", "config", "show"]).output
+    rows = {row["setting"]: row for row in json.loads(out)}
+    assert rows["api_key"]["value"] == "…-key"
+    assert rows["api_key"]["source"] == "env"
+    assert rows["url"]["value"] == "https://api.galaxydigital.com/api"
+    assert rows["url"]["source"] == "default"
+    assert rows["read_only"]["value"] is False
+    assert rows["read_only"]["source"] == "default"
+
+
+def test_config_show_short_api_key_fully_redacted(monkeypatch):
+    monkeypatch.setenv("GALAXY_API_KEY", "abc")
     out = runner.invoke(app, ["config", "show"]).output
     assert "abc" not in out
-    assert "…abc" not in out
     assert "…redacted" in out
 
 
-def test_config_set_preserves_other_keys(tmp_path, monkeypatch):
-    monkeypatch.setenv("GALAXY_CONFIG_FILE", str(tmp_path / "c.toml"))
-    runner.invoke(app, ["config", "set", "url", "ca"])
-    runner.invoke(app, ["config", "set", "api_key", "k123456"])
-    out = runner.invoke(app, ["config", "show"]).output
-    assert "url" in out and "3456" in out
+def test_config_show_without_api_key(monkeypatch):
+    monkeypatch.delenv("GALAXY_API_KEY", raising=False)
+    out = runner.invoke(app, ["--json", "config", "show"]).output
+    rows = {row["setting"]: row for row in json.loads(out)}
+    assert rows["api_key"]["value"] == "(not set)"
+    assert rows["api_key"]["source"] == "default"
 
 
-def test_config_set_read_only_parses_bool(tmp_path, monkeypatch):
-    monkeypatch.setenv("GALAXY_CONFIG_FILE", str(tmp_path / "c.toml"))
-    assert runner.invoke(app, ["config", "set", "read_only", "yes"]).exit_code == 0
-    from galaxy_digital_cli.config import read_config
-
-    assert read_config()["read_only"] is True
-    runner.invoke(app, ["config", "set", "read_only", "off"])
-    assert read_config()["read_only"] is False
-
-
-def test_config_unset_missing_key_is_ok(tmp_path, monkeypatch):
-    monkeypatch.setenv("GALAXY_CONFIG_FILE", str(tmp_path / "c.toml"))
-    assert runner.invoke(app, ["config", "unset", "api_key"]).exit_code == 0
+def test_config_show_reflects_env_overrides(monkeypatch):
+    monkeypatch.setenv("GALAXY_API_URL", "ca")
+    monkeypatch.setenv("GALAXY_READ_ONLY", "1")
+    out = runner.invoke(app, ["--json", "config", "show"]).output
+    rows = {row["setting"]: row for row in json.loads(out)}
+    assert rows["url"]["value"] == "https://ca.volunteerapi.com/api"
+    assert rows["url"]["source"] == "env"
+    assert rows["read_only"]["value"] is True
+    assert rows["read_only"]["source"] == "env"
 
 
 def test_galaxy_error_is_clean():
@@ -188,15 +194,13 @@ def test_confirm_write_without_payload(monkeypatch, capsys):
     assert "no payload here" in capsys.readouterr().out
 
 
-def test_json_output_flag(tmp_path, monkeypatch):
-    monkeypatch.setenv("GALAXY_CONFIG_FILE", str(tmp_path / "c.toml"))
-    runner.invoke(app, ["config", "set", "url", "us2"])
+def test_json_output_flag(monkeypatch):
+    monkeypatch.setenv("GALAXY_API_URL", "us2")
     out = runner.invoke(app, ["--json", "config", "show"]).output
-    assert '"url"' in out and "us2" in out
+    assert '"url"' in out and "volunteerapi.com" in out
 
 
-def test_state_client_is_lazy_and_configured(monkeypatch):
-    monkeypatch.setenv("GALAXY_CONFIG_FILE", "/nonexistent/none.toml")
+def test_state_client_is_lazy_and_configured():
     from galaxy_digital_cli.cli._state import State
     from galaxy_digital_cli.config import load_settings
 
@@ -238,14 +242,13 @@ def test_output_helpers(capsys):
     assert '"id"' in capsys.readouterr().out
 
 
-def test_missing_api_key_is_clean(monkeypatch, tmp_path):
-    """No API key, no config: MissingAPIKeyError should exit 1, no traceback.
+def test_missing_api_key_is_clean(monkeypatch):
+    """No API key anywhere: MissingAPIKeyError should exit 1, no traceback.
 
     Deferred here from Task 7 because no resource command existed yet to
     exercise the lazily-built client -- ``galaxy causes list`` (Task 13) is
     the first read that actually needs one.
     """
-    monkeypatch.setenv("GALAXY_CONFIG_FILE", str(tmp_path / "config.toml"))
     monkeypatch.delenv("GALAXY_API_KEY", raising=False)
     result = runner.invoke(app, ["causes", "list"])
     assert result.exit_code == 1

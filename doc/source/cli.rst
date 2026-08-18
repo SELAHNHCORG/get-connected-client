@@ -12,11 +12,11 @@ These apply to every sub-command and must be given before the sub-app name
 (e.g. ``galaxy --json needs list``):
 
 ``--api-key TEXT``
-    API key. Falls back to ``GALAXY_API_KEY`` / the config file.
+    API key. Falls back to ``GALAXY_API_KEY``.
 
 ``--url TEXT``
     Server URL or alias (``us1``, ``us2``, ``ca``). Falls back to
-    ``GALAXY_API_URL`` / the config file.
+    ``GALAXY_API_URL``.
 
 ``--read-only``
     Block all writes for this invocation. See :doc:`configuration`.
@@ -36,8 +36,8 @@ These apply to every sub-command and must be given before the sub-app name
 Command tree
 ------------
 
-``config`` -- manage the persisted configuration file
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``config`` -- inspect the resolved configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. list-table::
    :header-rows: 1
@@ -45,14 +45,14 @@ Command tree
 
    * - Command
      - Description
-   * - ``path``
-     - Print the path of the configuration file.
    * - ``show``
-     - Show the stored configuration (API key redacted).
-   * - ``set KEY VALUE``
-     - Set ``api_key``, ``url``, or ``read_only``.
-   * - ``unset KEY``
-     - Remove a stored key.
+     - Show the resolved ``api_key`` (redacted), ``url`` and
+       ``read_only``, plus whether each came from the environment or the
+       default.
+
+There is nothing to set or unset: settings come from the global flags,
+then ``GALAXY_API_KEY`` / ``GALAXY_API_URL`` / ``GALAXY_READ_ONLY``, then
+the defaults. See :doc:`configuration`.
 
 ``auth`` -- credential exchange
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
