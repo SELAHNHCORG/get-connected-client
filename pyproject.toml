@@ -8,10 +8,16 @@ authors = [
 ]
 
 readme = "README.md"
-repository = "https://github.com/SELAHNHCORG/galaxy-digital-cli"
-homepage = "https://github.com/SELAHNHCORG/galaxy-digital-cli"
 keywords = []
-dependencies = []
+dependencies = [
+    "httpx>=0.27",
+    "pydantic>=2.7",
+    "typer>=0.12",
+    "rich>=13.0",
+    "platformdirs>=4.0",
+    "tomlkit>=0.13",
+    "tomli>=2.0; python_version < '3.11'",
+]
 classifiers = [
     "Operating System :: OS Independent",
     "Topic :: Software Development :: Libraries :: Python Modules",
@@ -20,6 +26,11 @@ classifiers = [
 
     "Natural Language :: English",
     "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Libraries",
 ]
@@ -36,10 +47,13 @@ packages = ["src/galaxy_digital_cli"]
 
 [project.urls]
 "Homepage"      = "https://github.com/SELAHNHCORG/galaxy-digital-cli"
-"Documentation" = "https://github.com/SELAHNHCORG/galaxy-digital-cli"
+"Documentation" = "https://galaxy-digital-cli.readthedocs.io/en/latest/"
 "Repository"    = "https://github.com/SELAHNHCORG/galaxy-digital-cli"
 "Issues"        = "https://github.com/SELAHNHCORG/galaxy-digital-cli/issues"
-"Changelog"     = "https://github.com/SELAHNHCORG/galaxy-digital-cli/en/latest/changelog.html"
+"Changelog"     = "https://galaxy-digital-cli.readthedocs.io/en/latest/"
+
+[project.scripts]
+galaxy = "galaxy_digital_cli.cli:app"
 
 [dependency-groups]
 typing = [
@@ -57,11 +71,20 @@ test = [
     { include-group = "coverage" },
     "pytest>=8.3.4",
     "pytest-cov>=6.0.0",
+    "respx>=0.21",
+    "pyyaml>=6.0",
+]
+docs = [
+    "sphinx>=7.2",
+    "furo>=2024.1.29",
+    "sphinx-autobuild>=2024.2.4",
+    "doc8>=1.1.2",
 ]
 dev = [
     { include-group = "typing" },
     { include-group = "test" },
     { include-group = "lint" },
+    { include-group = "docs" },
     "packaging>=24.2",
     "tomlkit>=0.13.3",
     "ipdb>=0.13.13",
@@ -95,6 +118,12 @@ addopts = [
     "--cov=galaxy_digital_cli",
     "--cov-branch",
     "--cov-report=term-missing:skip-covered",
+    "-m",
+    "not live and not live_write",
+]
+markers = [
+    "live: hits the real production API (read-only); requires GALAXY_API_KEY",
+    "live_write: WRITES to the production API; requires GALAXY_LIVE_WRITE_ACK",
 ]
 
 [tool.coverage.run]
@@ -110,7 +139,7 @@ source = ["galaxy_digital_cli"]
 
 [tool.ruff]
 line-length = 88
-exclude = ["doc", "dist"]
+exclude = ["doc", "docs", "dist"]
 target-version = "py310"
 
 [tool.ruff.lint]
