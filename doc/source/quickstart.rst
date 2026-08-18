@@ -47,10 +47,13 @@ variable, in which case the constructor needs nothing:
 CLI
 ---
 
-The ``galaxy`` command mirrors the library one-to-one: one sub-app per
-resource, with ``list``, ``get``, ``create``, ``update`` and ``delete``
-where the endpoint supports them, plus resource-specific sub-commands
-(``users agencies``, ``needs add-shift``, and so on).
+The ``galaxy`` command mirrors the library: one sub-app per resource, with
+``list``, ``get``, ``create``, ``update`` and ``delete`` where the endpoint
+supports them, plus resource-specific sub-commands (``users agencies``,
+``needs add-shift``, and so on). It adds a ``config`` sub-app for the
+settings file, and splits the library's ``lookups`` namespace into the
+``causes``, ``interests``, ``impacts`` and ``registration-questions``
+sub-apps. See :doc:`cli` for the full command tree.
 
 Store credentials once:
 
@@ -64,11 +67,12 @@ Then use it:
 .. code-block:: bash
 
    galaxy users list --per-page 10
-   galaxy needs get 123 --json
+   galaxy --json needs get 123
    galaxy needs create --title "Beach Cleanup" --agency-id 42
 
 ``--json`` emits raw JSON instead of a formatted table, which is convenient
-for scripting or piping into ``jq``.
+for scripting or piping into ``jq``. Like every global option it belongs to
+the root command, so it goes *before* the sub-app name.
 
 Write safety, in brief
 -----------------------

@@ -120,9 +120,12 @@ explicitly.
    * - ``remove-interest ID INTEREST_ID``
      - Unassign an interest from a user.
    * - ``welcome-email ID``
-     - Send a user the site's welcome email.
+     - Send a user the site's welcome email. A GET with a side effect, so
+       ``--read-only`` blocks it.
    * - ``oneclick ID``
-     - Mint a one-click login link for a user.
+     - Mint a one-click login link for a user. Also a GET with a side
+       effect -- it hands out a credential -- so ``--read-only`` blocks it
+       too.
    * - ``optouts ID``
      - Show which message areas a user has opted out of.
    * - ``add-optout ID AREAS...``
@@ -141,7 +144,7 @@ explicitly.
      - List a user's tracks.
    * - ``tags ID``
      - List a user's tags.
-   * - ``add-tags ID NAMES...``
+   * - ``add-tags ID TAGS...``
      - Add one or more tags, by name, to a user.
    * - ``remove-tag ID TAG_ID``
      - Remove a tag from a user.
@@ -185,7 +188,7 @@ explicitly.
      - Remove a user as a manager of an agency.
    * - ``tags ID``
      - List an agency's tags.
-   * - ``add-tags ID NAMES...``
+   * - ``add-tags ID TAGS...``
      - Add one or more tags, by name, to an agency.
    * - ``remove-tag ID TAG_ID``
      - Remove a tag from an agency.
@@ -221,9 +224,9 @@ explicitly.
      - Attach an interest to a need.
    * - ``remove-interest ID INTEREST_ID``
      - Detach an interest from a need.
-   * - ``add-qualification ID QUAL_ID``
+   * - ``add-qualification ID QUALIFICATION_ID``
      - Attach a qualification to a need.
-   * - ``remove-qualification ID QUAL_ID``
+   * - ``remove-qualification ID QUALIFICATION_ID``
      - Detach a qualification from a need.
 
 ``events`` -- manage events
@@ -409,14 +412,24 @@ Small, mostly read-only lookup endpoints:
 Soft deletes
 ------------
 
-Every resource's ``delete`` is documented above as a "soft delete": the API
-marks the record inactive rather than removing it, so it may reappear when
-listing with ``--show-inactive`` (where the endpoint supports that filter).
+Where the table above says "soft delete", the API marks the record inactive
+rather than removing it, so it may reappear when listing with
+``--show-inactive`` (where the endpoint supports that filter). That is what
+the spec documents for the ``delete`` on ``users``, ``agencies``, ``needs``,
+``events``, ``hours``, ``responses``, ``teams``, ``groups``,
+``qualifications`` and ``benchmarks``. It says nothing of the sort about
+``clusters delete`` or about the ``remove-*``/``detach`` sub-commands, so do
+not assume those are recoverable. Deleting an event is also only *mostly*
+soft: the spec warns it permanently deletes that event's RSVPs.
 
 Free-form fields with ``--data``
 ----------------------------------
 
-``create`` and ``update`` commands expose the common fields (``--title``,
-``--name``, and so on) as named options, plus a catch-all ``--data`` option
-that takes a JSON object of any further ``*_*`` fields the endpoint accepts.
-Keys in ``--data`` win over the named options when both set the same field.
+Most ``create`` and ``update`` commands expose the common fields
+(``--title``, ``--name``, and so on) as named options, plus a catch-all
+``--data`` option that takes a JSON object of any further ``*_*`` fields the
+endpoint accepts. Keys in ``--data`` win over the named options when both
+set the same field.
+
+``clusters create`` is the exception: the endpoint takes a name and nothing
+else, so it offers ``--name`` alone.

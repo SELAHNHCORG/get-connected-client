@@ -330,6 +330,25 @@ def test_cli_list_extra_filters(api, cli_env):
     assert params["need_status"] == "active"
 
 
+def test_cli_list_agency_id_repeatable(api, cli_env):
+    """The spec types ``agency_id`` as an array, so the flag repeats."""
+    route = api.get("/needs").respond(json={"data": [NEED_ROW]})
+    result = runner.invoke(
+        app,
+        ["needs", "list", "--agency-id", "9", "--agency-id", "11"],
+    )
+    assert result.exit_code == 0, result.output
+    assert route.calls.last.request.url.params.get_list("agency_id") == ["9", "11"]
+
+
+def test_cli_list_without_agency_id_omits_the_param(api, cli_env):
+    """An empty repeatable must drop out, not send ``agency_id=[]``."""
+    route = api.get("/needs").respond(json={"data": [NEED_ROW]})
+    result = runner.invoke(app, ["needs", "list"])
+    assert result.exit_code == 0, result.output
+    assert "agency_id" not in route.calls.last.request.url.params
+
+
 def test_cli_get(api, cli_env):
     api.get("/needs/42").respond(json={"data": NEED_ROW})
     result = runner.invoke(app, ["needs", "get", "42"])
@@ -440,6 +459,41 @@ def test_cli_add_shift_sends(api, cli_env):
     assert json.loads(route.calls.last.request.content) == {
         "shifts": [{"start": "2024-02-28 12:00:00", "slots": 10, "duration": "120"}]
     }
+
+
+def test_cli_add_shift_prompt_shows_the_wire_body(api, cli_env):
+    """The prompt must show the ``shifts`` envelope, not the flat options.
+
+    ``test_cli_add_shift_sends`` above pins the body that really goes out;
+    a prompt that showed ``start_date``/``start_time`` would be describing
+    a request the client never makes.
+    """
+    declined = runner.invoke(
+        app,
+        [
+            "needs",
+            "add-shift",
+            "42",
+            "--slots",
+            "10",
+            "--start-date",
+            "2024-02-28",
+            "--start-time",
+            "12:00:00",
+            "--duration",
+            "120",
+        ],
+        input="n\n",
+    )
+    assert declined.exit_code != 0
+    assert not api.calls
+    # rich wraps and pretty-prints the JSON, so compare on collapsed
+    # whitespace rather than an exact substring.
+    output = " ".join(declined.output.split())
+    assert "POST /needs/42/shifts" in output
+    assert '"shifts"' in output
+    assert '"start": "2024-02-28 12:00:00"' in output
+    assert "start_date" not in output
 
 
 @pytest.mark.parametrize(

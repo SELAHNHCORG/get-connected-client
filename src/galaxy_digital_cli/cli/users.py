@@ -313,7 +313,9 @@ def set_extras(
     url += (
         f"?subset={subset}" if subset else f" (server default subset: {DEFAULT_SUBSET})"
     )
-    confirm_write(state, url, fields)
+    # Preview the body that is actually sent -- only the ``extras`` array
+    # travels, so any other key in --data would be a lie in the prompt.
+    confirm_write(state, url, {"extras": pairs})
     output_result(state, state.client.users.set_extras(id, pairs, subset=subset))
 
 
@@ -398,7 +400,11 @@ def welcome_email(ctx: typer.Context, id: int = _ID) -> None:
 @users_app.command("oneclick")
 @handle_errors
 def oneclick(ctx: typer.Context, id: int = _ID) -> None:
-    """Mint a one-click login link for a user."""
+    """Mint a one-click login link for a user.
+
+    The API serves this over GET, but it hands out a passwordless
+    credential, so ``--read-only`` refuses it like any other write.
+    """
     state = get_state(ctx)
     output_one(state, state.client.users.oneclick(id))
 
@@ -495,10 +501,12 @@ def set_registration_answers(
     answers = fields.get("answers")
     if not isinstance(answers, list):
         raise typer.BadParameter('--data must be an object with an "answers" array')
+    # Preview the body that is actually sent -- only the ``answers`` array
+    # travels, so any other key in --data would be a lie in the prompt.
     confirm_write(
         state,
         f"POST {state.client.users.url(id, 'registrationQuestions')}",
-        fields,
+        {"answers": answers},
     )
     output_result(state, state.client.users.set_registration_answers(id, answers))
 

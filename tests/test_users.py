@@ -251,6 +251,19 @@ def test_send_welcome_email_respects_read_only(api):
     assert not api.calls
 
 
+def test_oneclick_respects_read_only(api):
+    """Minting a passwordless login link is a write in everything but verb.
+
+    ``/users/authenticate`` hands back the same artifact and is blocked in
+    read-only mode; this must be blocked the same way, before any bytes
+    leave the process.
+    """
+    read_only_client = GalaxyClient(api_key="k", base_url=BASE, read_only=True)
+    with pytest.raises(ReadOnlyError):
+        Users(read_only_client).oneclick(5)
+    assert not api.calls
+
+
 def test_send_welcome_email_is_never_retried(client, api, monkeypatch):
     """treat_as_write forfeits retries: a replay could mail the user twice.
 
@@ -712,6 +725,40 @@ def test_cli_set_extras_prompt_names_the_subset(api, cli_env):
     assert "POST /users/5/extras?subset=profile" in output
 
 
+def test_cli_set_extras_prompt_shows_only_what_is_sent(api, cli_env):
+    """Only the ``extras`` array travels, so only it may be previewed.
+
+    ``--data`` may carry other keys; the resource ignores them, and a
+    prompt that echoed them back would be describing a body the client
+    never sends.
+    """
+    body = '{"extras": [{"key": "Language", "value": "Spanish"}], "ignored": 1}'
+    declined = runner.invoke(
+        app, ["users", "set-extras", "5", "--data", body], input="n\n"
+    )
+    assert declined.exit_code != 0
+    assert not api.calls
+    output = " ".join(declined.output.split())
+    assert '"extras"' in output
+    assert "ignored" not in output
+
+
+def test_cli_set_registration_answers_prompt_shows_only_what_is_sent(api, cli_env):
+    """Same contract as set-extras: preview the ``answers`` envelope alone."""
+    body = '{"answers": [{"question_id": "1", "answer": ["blue"]}], "ignored": 1}'
+    declined = runner.invoke(
+        app,
+        ["users", "set-registration-answers", "5", "--data", body],
+        input="n\n",
+    )
+    assert declined.exit_code != 0
+    assert not api.calls
+    output = " ".join(declined.output.split())
+    assert "POST /users/5/registrationQuestions" in output
+    assert '"answers"' in output
+    assert "ignored" not in output
+
+
 def test_cli_set_extras_requires_extras_array(api, cli_env):
     """A body without the "extras" envelope never reaches the network."""
     for body in ('{"nope": []}', '{"extras": {"key": "k"}}'):
@@ -753,6 +800,15 @@ def test_cli_read_only_blocks_welcome_email(api, cli_env, monkeypatch):
     result = runner.invoke(app, ["--yes", "users", "welcome-email", "5"])
     assert result.exit_code == 1
     assert "error:" in result.stderr
+    assert "read-only" in result.stderr
+    assert not api.calls
+
+
+def test_cli_read_only_blocks_oneclick(api, cli_env, monkeypatch):
+    """``oneclick`` hands out a credential, so read-only mode refuses it."""
+    monkeypatch.setenv("GALAXY_READ_ONLY", "1")
+    result = runner.invoke(app, ["--yes", "users", "oneclick", "5"])
+    assert result.exit_code == 1
     assert "read-only" in result.stderr
     assert not api.calls
 

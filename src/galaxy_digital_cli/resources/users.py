@@ -183,21 +183,31 @@ class Users(
             "GET", self._url(id, "welcomeEmail"), treat_as_write=True
         )
 
-    # Unlike send_welcome_email, this is NOT flagged treat_as_write. The call
-    # does mint a credential, so it is side-effecting in that sense -- but it
-    # is idempotent (each call just issues another short-lived link, changing
-    # nothing about the user) and read-only tooling legitimately needs it to
-    # hand a volunteer a login. Blocking it in read-only mode would break that
-    # tooling for no safety gain. Revisit if links ever become single-issue or
-    # start invalidating their predecessors.
+    # Flagged treat_as_write like send_welcome_email: the spec models this as
+    # a GET, but it mints a passwordless credential. That is the same artifact
+    # /users/authenticate returns, and that endpoint is gated by read-only
+    # mode, so gating this one keeps the guarantee consistent -- a read-only
+    # client cannot hand out a login by either route.
     def oneclick(self, id: int) -> UserOneclick:
         """Mint a one-click (passwordless) login link for this user.
 
-        Left as a plain read even though it mints a credential: it is
-        idempotent and changes nothing about the user, so read-only mode
-        permits it (see the note above this method).
+        A GET with a side effect: it issues a credential, so it is treated
+        as a write and refused in read-only mode (see the note above this
+        method).
+
+        :raises ReadOnlyError: the client is in read-only mode.
         """
-        return self._get_one(self._url(id, "oneclick"), UserOneclick)
+        payload = self._client.request(
+            "GET", self._url(id, "oneclick"), treat_as_write=True
+        )
+        # Same unwrap-then-validate as _get_one, spelled out here because
+        # _get_one has no way to pass treat_as_write through to the client.
+        data = (
+            payload["data"]
+            if isinstance(payload, dict) and "data" in payload
+            else payload
+        )
+        return self._parse(data, UserOneclick)
 
     def optouts(self, id: int) -> UserOptouts:
         """The message areas this user has opted out of.

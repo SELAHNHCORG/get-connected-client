@@ -9,10 +9,21 @@
 
 A Python library and command line interface to Galaxy Digital's Get
 Connected API. It provides a typed, synchronous `GalaxyClient` covering
-all 66 documented API paths (users, agencies, needs, events, hours,
-responses, teams, groups, qualifications, benchmarks, clusters, lookups,
-and auth), plus a `galaxy` command that mirrors it one sub-app per
-resource.
+all 66 documented API paths through one namespace per resource
+(`users`, `agencies`, `needs`, `events`, `hours`, `responses`, `teams`,
+`groups`, `qualifications`, `benchmarks`, `clusters`, `lookups`, `auth`),
+plus a `galaxy` command that mirrors it with one sub-app apiece:
+
+```
+config  users  agencies  needs  events  hours  responses  teams  groups
+qualifications  benchmarks  clusters  causes  interests  impacts
+registration-questions  auth
+```
+
+`config` manages the persisted settings file and has no library
+counterpart; conversely the library's `client.lookups` namespace is split
+on the CLI into the `causes`, `interests`, `impacts` and
+`registration-questions` sub-apps.
 
 ## Installation
 
@@ -45,17 +56,18 @@ galaxy config set api_key YOUR_API_KEY
 galaxy config set url us1        # us1 (default), us2, or ca
 
 galaxy users list --per-page 10
-galaxy needs get 123 --json
+galaxy --json needs get 123
 ```
 
-`--json` emits raw JSON instead of a formatted table, for scripting.
+`--json` emits raw JSON instead of a formatted table, for scripting. It
+is a root option, so it goes before the sub-app name.
 
 ## Configuration
 
-Settings resolve with this precedence, highest first:
+The **CLI** resolves settings with this precedence, highest first:
 
-1. **Explicit arguments** -- CLI flags (`--api-key`, `--url`,
-   `--read-only`) or `GalaxyClient(...)` keyword arguments.
+1. **Explicit arguments** -- the CLI flags `--api-key`, `--url` and
+   `--read-only`.
 2. **Environment variables** -- `GALAXY_API_KEY`, `GALAXY_API_URL`,
    `GALAXY_READ_ONLY`.
 3. **Config file** -- `~/.config/galaxy-digital/config.toml` by default,
@@ -63,6 +75,36 @@ Settings resolve with this precedence, highest first:
    set/unset/show/path`; written at mode `0600` since it may hold a
    plaintext API key.
 4. **Defaults** -- server `us1`, `read_only` off, no API key.
+
+### Library behavior
+
+`GalaxyClient` does *not* implement that chain. It takes explicit
+arguments and falls back to `GALAXY_API_KEY` for the key only.
+`GALAXY_API_URL` and the config file are the CLI's doing, not the
+client's, so `base_url` defaults to `us1` no matter what the CLI would
+have resolved. (`GALAXY_READ_ONLY` is the one env var the client does
+honor, and only in one direction: it can turn read-only on, never off.)
+
+```python
+from galaxy_digital_cli import GalaxyClient
+
+# explicit arguments; base_url accepts the same aliases as --url
+GalaxyClient(api_key="...", base_url="us2")
+
+# api_key omitted -> GALAXY_API_KEY; the server stays us1
+GalaxyClient()
+```
+
+Library callers who want the CLI's full resolution can ask for it
+explicitly:
+
+```python
+from galaxy_digital_cli import GalaxyClient
+from galaxy_digital_cli.config import load_settings
+
+s = load_settings()
+client = GalaxyClient(api_key=s.api_key, base_url=s.url, read_only=s.read_only)
+```
 
 See the full configuration reference in the documentation for env var
 details, server aliases (`us1`/`us2`/`ca`), and the config file schema.
@@ -78,10 +120,12 @@ core design constraint, not an afterthought:
   flag, the CLI's `--read-only` flag (or `galaxy config set read_only
   true`), or the `GALAXY_READ_ONLY` environment variable. The guard is
   enforced before any request reaches the network, and a second time as
-  an `httpx` request hook as a backstop. `galaxy auth login` and `galaxy
-  auth authenticate` are blocked by `--read-only` too, since minting a
-  session token or login link is a side effect worth gating like any
-  other write.
+  an `httpx` request hook as a backstop. Four commands the API models as
+  reads are blocked by `--read-only` too, because each one has a real
+  side effect: `galaxy auth login` and `galaxy auth authenticate` mint a
+  session token or a login link, `galaxy users welcome-email` puts mail
+  in someone's inbox, and `galaxy users oneclick` hands out a
+  passwordless login link.
 - **Confirm prompts.** Every CLI write shows exactly what is about to be
   sent and asks for confirmation before it fires. Pass `--yes`/`-y` to
   skip the prompt in scripts.

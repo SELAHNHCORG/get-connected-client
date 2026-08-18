@@ -1,19 +1,19 @@
 Configuration
 =============
 
-Settings are resolved by :func:`~galaxy_digital_cli.config.load_settings`
-with a fixed precedence, highest first:
+The ``galaxy`` command resolves its settings through
+:func:`~galaxy_digital_cli.config.load_settings`, with a fixed precedence,
+highest first:
 
-.. list-table:: Precedence
+.. list-table:: CLI precedence
    :header-rows: 1
    :widths: 10 90
 
    * - Order
      - Source
    * - 1
-     - Explicit arguments -- CLI flags (``--api-key``, ``--url``,
-       ``--read-only``) or constructor keyword arguments
-       (:class:`~galaxy_digital_cli.client.GalaxyClient`).
+     - Explicit arguments -- the CLI flags ``--api-key``, ``--url`` and
+       ``--read-only``.
    * - 2
      - Environment variables -- ``GALAXY_API_KEY``, ``GALAXY_API_URL``,
        ``GALAXY_READ_ONLY``.
@@ -26,6 +26,43 @@ with a fixed precedence, highest first:
 A source that provides a value wins outright; it is not merged with lower
 sources for that same setting. ``read_only`` is the one exception at the
 client level: see `Read-only modes`_ below.
+
+Library behavior
+----------------
+
+The table above describes the CLI. :class:`~galaxy_digital_cli.client.GalaxyClient`
+deliberately implements *none* of that chain except the API key's env var
+fallback: it takes what you pass it, and reads ``GALAXY_API_KEY`` when
+``api_key`` is omitted. ``GALAXY_API_URL`` and the config file are never
+consulted by the client, so ``base_url`` defaults to ``us1`` regardless of
+what the CLI would have resolved. (``GALAXY_READ_ONLY`` is the one env var
+the client does honor, and only in one direction -- see `Read-only
+modes`_.)
+
+.. code-block:: python
+
+   from galaxy_digital_cli import GalaxyClient
+
+   # explicit arguments; base_url accepts the same aliases as --url
+   GalaxyClient(api_key="...", base_url="us2")
+
+   # api_key omitted -> GALAXY_API_KEY; server stays us1
+   GalaxyClient()
+
+Library callers who *want* the CLI's full resolution can opt into it by
+running it themselves and handing the result to the constructor:
+
+.. code-block:: python
+
+   from galaxy_digital_cli import GalaxyClient
+   from galaxy_digital_cli.config import load_settings
+
+   s = load_settings()
+   client = GalaxyClient(api_key=s.api_key, base_url=s.url, read_only=s.read_only)
+
+:func:`~galaxy_digital_cli.config.load_settings` also accepts the same
+three overrides the CLI passes it (``api_key``, ``url``, ``read_only``),
+which slot in at level 1 of the table.
 
 Environment variables
 ----------------------
@@ -110,18 +147,41 @@ unblock a client built with ``read_only=True``.
 The guard is enforced twice: once in
 :meth:`GalaxyClient.request <galaxy_digital_cli.client.GalaxyClient.request>`
 before any request is issued (including GET endpoints that have side
-effects, such as ``/users/{id}/welcomeEmail``, via ``treat_as_write``), and
-again as an ``httpx`` request hook on the underlying client, in case
-something reaches it through the ``http`` escape hatch instead of
-``request()``. A blocked write raises
+effects, via ``treat_as_write``), and again as an ``httpx`` request hook on
+the underlying client, in case something reaches it through the ``http``
+escape hatch instead of ``request()``. A blocked write raises
 :class:`~galaxy_digital_cli.exceptions.ReadOnlyError`.
 
-``galaxy auth login`` and ``galaxy auth authenticate`` are blocked by
-``--read-only`` too: minting a session token or a one-click login link is a
-side effect worth gating like any other write, even though neither command
-goes through the confirmation prompt described below (the operator just
-typed a password; a second "are you sure?" would not add anything, and
-neither command echoes the password back).
+Read-only mode therefore blocks more than the obvious
+``create``/``update``/``delete``. Four further commands are gated -- the
+``auth`` pair because they are POSTs like any other write, and two
+``users`` commands because the spec models them as GETs even though each
+has a real side effect:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 60
+
+   * - Command
+     - Why it is gated
+   * - ``galaxy auth login``
+     - Mints a session token.
+   * - ``galaxy auth authenticate``
+     - Mints a one-click login link.
+   * - ``galaxy users welcome-email``
+     - Puts mail in someone's inbox
+       (``GET /users/{id}/welcomeEmail``).
+   * - ``galaxy users oneclick``
+     - Hands out a passwordless login link
+       (``GET /users/{id}/oneclick``) -- the same artifact
+       ``authenticate`` returns, so it is gated the same way.
+
+Of those four, only ``welcome-email`` also shows the confirmation prompt
+described below. The ``auth`` pair skips it because the operator just
+typed a password, so a second "are you sure?" would not add anything (and
+neither command echoes the password back); ``oneclick`` skips it because
+it changes no stored record -- it prints a link. Read-only mode, not the
+prompt, is what guards those three.
 
 Confirm prompts and ``--yes``
 -------------------------------

@@ -25,6 +25,12 @@ needs_app = typer.Typer(help="Manage needs.", no_args_is_help=True)
 LIST_COLUMNS = ["id", "need_title", "need_status", "need_date"]
 
 _ID = typer.Argument(..., help="ID of the need.")
+#: Module-level singleton so ruff's B008 (immutable-default check) does not
+#: trip over a mutable ``list[int]`` annotation paired with a call default.
+#: The spec types the ``/needs`` filter as an array, so the flag repeats.
+_AGENCY_ID = typer.Option(
+    None, "--agency-id", help="Only needs from this agency (repeatable)."
+)
 
 
 # ---------------------------------------------------------------------------
@@ -53,9 +59,7 @@ def list_needs(
         "--show-inactive/--no-show-inactive",
         help="Include inactive needs; omit for the server default.",
     ),
-    agency_id: int | None = typer.Option(
-        None, "--agency-id", help="Only needs from this agency."
-    ),
+    agency_id: list[int] | None = _AGENCY_ID,
     title: str | None = typer.Option(None, "--title", help="Search by need title."),
     status: str | None = typer.Option(
         None, "--status", help="active, inactive or pending."
@@ -71,7 +75,7 @@ def list_needs(
         # Tri-state, passed through untouched: None omits the parameter and
         # takes the server default, True sends Yes, False sends No.
         show_inactive=show_inactive,
-        agency_id=agency_id,
+        agency_id=agency_id or None,
         need_title=title,
         need_status=status,
     )
@@ -196,13 +200,20 @@ def add_shift(
 ) -> None:
     """Add a shift to a need."""
     state = get_state(ctx)
-    fields = {
-        "slots": slots,
-        "start_date": start_date,
-        "start_time": start_time,
-        "duration": duration,
+    # Preview the real wire body, not the flat options: the endpoint takes a
+    # ``shifts`` array with one combined ``start``. This mirrors the envelope
+    # :meth:`~galaxy_digital_cli.resources.needs.Needs.add_shift` builds from
+    # the very same arguments -- keep the two in step.
+    body = {
+        "shifts": [
+            {
+                "start": f"{start_date} {start_time}",
+                "slots": slots,
+                "duration": duration,
+            }
+        ]
     }
-    confirm_write(state, f"POST {state.client.needs.url(id, 'shifts')}", fields)
+    confirm_write(state, f"POST {state.client.needs.url(id, 'shifts')}", body)
     output_result(
         state,
         state.client.needs.add_shift(
