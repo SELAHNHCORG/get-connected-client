@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from .agencies import Agency
 from .base import GalaxyModel
 from .common import (
     AgencyMini,
@@ -33,6 +34,7 @@ from .users import (
 )
 
 __all__ = [
+    "Agency",
     "AgencyMini",
     "BenchmarkMini",
     "Category",
