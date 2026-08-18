@@ -116,6 +116,39 @@ def test_config_show_reflects_env_overrides(monkeypatch):
     assert rows["read_only"]["source"] == "env"
 
 
+def test_config_show_reports_flag_source_for_api_key():
+    result = runner.invoke(app, ["--api-key", "flagkey9876", "config", "show"])
+    assert result.exit_code == 0
+    assert "flagkey9876" not in result.output
+    assert "…9876" in result.output
+    lines = result.output.splitlines()
+    api_key_row = next(line for line in lines if "api_key" in line)
+    assert "flag" in api_key_row
+
+
+def test_config_show_reports_flag_source_for_url():
+    out = runner.invoke(app, ["--url", "us2", "config", "show"]).output
+    lines = out.splitlines()
+    url_row = next(line for line in lines if "url" in line)
+    assert "volunteerapi.com" in url_row
+    assert "flag" in url_row
+
+
+def test_config_show_flag_url_beats_env(monkeypatch):
+    monkeypatch.setenv("GALAXY_API_URL", "ca")
+    out = runner.invoke(app, ["--url", "us2", "--json", "config", "show"]).output
+    rows = {row["setting"]: row for row in json.loads(out)}
+    assert rows["url"]["value"] == "https://www.volunteerapi.com/api"
+    assert rows["url"]["source"] == "flag"
+
+
+def test_config_show_reports_flag_source_for_read_only():
+    out = runner.invoke(app, ["--read-only", "--json", "config", "show"]).output
+    rows = {row["setting"]: row for row in json.loads(out)}
+    assert rows["read_only"]["value"] is True
+    assert rows["read_only"]["source"] == "flag"
+
+
 def test_galaxy_error_is_clean():
     result = runner.invoke(demo_app, ["boom"])
     assert result.exit_code == 1

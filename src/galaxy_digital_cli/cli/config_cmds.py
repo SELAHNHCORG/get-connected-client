@@ -14,8 +14,9 @@ from typing import Any
 
 import typer
 
-from ..config import env_read_only, load_settings
+from ..config import env_read_only
 from ._output import output
+from ._state import get_state
 
 config_app = typer.Typer(
     help=(
@@ -35,30 +36,48 @@ def _redact(value: str | None) -> str:
     return f"…{value[-4:]}"
 
 
-def _source(var: str) -> str:
-    """Report whether ``var`` supplied the value, or the default did."""
-    return "env" if os.environ.get(var) else "default"
-
-
 @config_app.command("show")
 def show(ctx: typer.Context) -> None:
     """Show the resolved settings and where each one came from."""
-    settings = load_settings()
+    settings = get_state(ctx).settings
+    root_params = ctx.find_root().params
+
+    if root_params.get("api_key") is not None:
+        api_key_source = "flag"
+    elif os.environ.get("GALAXY_API_KEY"):
+        api_key_source = "env"
+    else:
+        api_key_source = "default"
+
+    if root_params.get("url") is not None:
+        url_source = "flag"
+    elif os.environ.get("GALAXY_API_URL"):
+        url_source = "env"
+    else:
+        url_source = "default"
+
+    if root_params.get("read_only"):
+        read_only_source = "flag"
+    elif env_read_only() is not None:
+        read_only_source = "env"
+    else:
+        read_only_source = "default"
+
     rows: list[dict[str, Any]] = [
         {
             "setting": "api_key",
             "value": _redact(settings.api_key),
-            "source": _source("GALAXY_API_KEY"),
+            "source": api_key_source,
         },
         {
             "setting": "url",
             "value": settings.url,
-            "source": _source("GALAXY_API_URL"),
+            "source": url_source,
         },
         {
             "setting": "read_only",
             "value": settings.read_only,
-            "source": "env" if env_read_only() is not None else "default",
+            "source": read_only_source,
         },
     ]
     output(ctx.obj, rows, ["setting", "value", "source"], title="configuration")
