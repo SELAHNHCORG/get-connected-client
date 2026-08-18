@@ -8,7 +8,12 @@ from galaxy_digital_cli import config
 @pytest.fixture
 def no_env(monkeypatch):
     """Start from a clean slate: none of the GALAXY_* vars set."""
-    for var in ("GALAXY_API_KEY", "GALAXY_API_URL", "GALAXY_READ_ONLY"):
+    for var in (
+        "GALAXY_API_KEY",
+        "GALAXY_API_TOKEN",
+        "GALAXY_API_URL",
+        "GALAXY_READ_ONLY",
+    ):
         monkeypatch.delenv(var, raising=False)
     return monkeypatch
 
@@ -16,26 +21,33 @@ def no_env(monkeypatch):
 def test_defaults(no_env):
     s = config.load_settings()
     assert s.api_key is None
+    assert s.token is None
     assert s.url == config.SERVERS["us1"]
     assert s.read_only is False
 
 
 def test_env_beats_defaults(no_env):
     no_env.setenv("GALAXY_API_KEY", "from-env")
+    no_env.setenv("GALAXY_API_TOKEN", "token-from-env")
     no_env.setenv("GALAXY_API_URL", "us2")
     no_env.setenv("GALAXY_READ_ONLY", "1")
     s = config.load_settings()
     assert s.api_key == "from-env"
+    assert s.token == "token-from-env"
     assert s.url == config.SERVERS["us2"]
     assert s.read_only is True
 
 
 def test_kwargs_beat_env(no_env):
     no_env.setenv("GALAXY_API_KEY", "from-env")
+    no_env.setenv("GALAXY_API_TOKEN", "token-from-env")
     no_env.setenv("GALAXY_API_URL", "us2")
     no_env.setenv("GALAXY_READ_ONLY", "1")
-    s = config.load_settings(api_key="from-kwarg", url="ca", read_only=False)
+    s = config.load_settings(
+        api_key="from-kwarg", url="ca", read_only=False, token="token-from-kwarg"
+    )
     assert s.api_key == "from-kwarg"
+    assert s.token == "token-from-kwarg"
     assert s.url == config.SERVERS["ca"]
     assert s.read_only is False
 
@@ -67,6 +79,11 @@ def test_read_only_kwarg_overrides_env(no_env):
 def test_empty_env_api_key_is_none(no_env):
     no_env.setenv("GALAXY_API_KEY", "")
     assert config.load_settings().api_key is None
+
+
+def test_empty_env_token_is_none(no_env):
+    no_env.setenv("GALAXY_API_TOKEN", "")
+    assert config.load_settings().token is None
 
 
 def test_parse_bool():

@@ -12,7 +12,12 @@ These apply to every sub-command and must be given before the sub-app name
 (e.g. ``galaxy --json needs list``):
 
 ``--api-key TEXT``
-    API key. Falls back to ``GALAXY_API_KEY``.
+    The site API key, used to log in. Falls back to ``GALAXY_API_KEY``. It
+    does not authenticate requests on its own -- see :doc:`configuration`.
+
+``--token TEXT``
+    The session token from ``galaxy auth login``, sent as
+    ``Authorization: Bearer <token>``. Falls back to ``GALAXY_API_TOKEN``.
 
 ``--url TEXT``
     Server URL or alias (``us1``, ``us2``, ``ca``). Falls back to
@@ -46,13 +51,13 @@ Command tree
    * - Command
      - Description
    * - ``show``
-     - Show the resolved ``api_key`` (redacted), ``url`` and
-       ``read_only``, plus whether each came from the environment or the
-       default.
+     - Show the resolved ``api_key`` and ``token`` (both redacted), ``url``
+       and ``read_only``, plus whether each came from a flag, the
+       environment, or the default.
 
-There is nothing to set or unset: settings come from the global flags,
-then ``GALAXY_API_KEY`` / ``GALAXY_API_URL`` / ``GALAXY_READ_ONLY``, then
-the defaults. See :doc:`configuration`.
+There is nothing to set or unset: settings come from the global flags, then
+``GALAXY_API_KEY`` / ``GALAXY_API_TOKEN`` / ``GALAXY_API_URL`` /
+``GALAXY_READ_ONLY``, then the defaults. See :doc:`configuration`.
 
 ``auth`` -- credential exchange
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -64,13 +69,44 @@ the defaults. See :doc:`configuration`.
    * - Command
      - Description
    * - ``login``
-     - Exchange credentials for a session token.
+     - Exchange the site key, an email and a password for a session token.
    * - ``authenticate``
      - Verify credentials and mint a one-click login link.
 
-Both are blocked by ``--read-only`` -- see :doc:`configuration`. Passwords
-are always collected via a hidden prompt unless ``--password`` is given
-explicitly.
+``login`` is where every session starts, since the site key cannot
+authenticate requests by itself. Its options:
+
+``--email TEXT``
+    The account email address (required).
+
+``--password TEXT``
+    The account password. Omit it and the command prompts, hidden, on
+    stderr.
+
+``--key TEXT``
+    The site key for the login body. Defaults to the resolved
+    ``--api-key`` / ``GALAXY_API_KEY``; ``--key`` alone is enough to log in
+    even with no ``GALAXY_API_KEY`` set. The command errors out only if
+    neither is available.
+
+``--export``
+    Print exactly one line on stdout --
+    ``export GALAXY_API_TOKEN='<token>'`` -- and nothing else, so the token
+    can be adopted by the current shell:
+
+    .. code-block:: bash
+
+       eval "$(galaxy auth login --email you@example.org --export)"
+
+    Every other message, the password prompt included, goes to stderr.
+
+Without ``--export`` the token is printed in a table, wrapped in full
+rather than truncated, and ``--json`` emits the whole login record for
+scripting.
+
+Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
+Passwords are always collected via a hidden prompt unless ``--password`` is
+given explicitly.
 
 ``users`` -- manage users
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

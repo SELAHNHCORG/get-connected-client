@@ -35,12 +35,13 @@ class State:
         """The API client, constructed on first use.
 
         Building it lazily keeps commands that never touch the network --
-        ``--help``, ``config`` -- working without an API key.
+        ``--help``, ``config`` -- working without any credentials.
         """
         if self._client is None:
             self._client = GalaxyClient(
                 api_key=self.settings.api_key,
                 base_url=self.settings.url,
+                token=self.settings.token,
                 read_only=self.settings.read_only,
             )
         return self._client

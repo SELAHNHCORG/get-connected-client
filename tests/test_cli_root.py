@@ -57,7 +57,15 @@ def test_version():
 
 def test_help_lists_global_options_and_config():
     out = runner.invoke(app, ["--help"]).output
-    for flag in ("--api-key", "--url", "--read-only", "--json", "--yes", "--debug"):
+    for flag in (
+        "--api-key",
+        "--token",
+        "--url",
+        "--read-only",
+        "--json",
+        "--yes",
+        "--debug",
+    ):
         assert flag in out
     assert "config" in out
 
@@ -84,6 +92,9 @@ def test_config_show_json():
     rows = {row["setting"]: row for row in json.loads(out)}
     assert rows["api_key"]["value"] == "…-key"
     assert rows["api_key"]["source"] == "env"
+    # no session token in the mocked environment
+    assert rows["token"]["value"] == "(not set)"
+    assert rows["token"]["source"] == "default"
     assert rows["url"]["value"] == "https://api.galaxydigital.com/api"
     assert rows["url"]["source"] == "default"
     assert rows["read_only"]["value"] is False
@@ -124,6 +135,42 @@ def test_config_show_reports_flag_source_for_api_key():
     lines = result.output.splitlines()
     api_key_row = next(line for line in lines if "api_key" in line)
     assert "flag" in api_key_row
+
+
+def test_config_show_token_from_env_is_redacted(monkeypatch):
+    monkeypatch.setenv("GALAXY_API_TOKEN", "eyJhbGciOiJIUzI1NiJ9-secret-9876")
+    out = runner.invoke(app, ["--json", "config", "show"]).output
+    rows = {row["setting"]: row for row in json.loads(out)}
+    assert rows["token"]["value"] == "…9876"
+    assert rows["token"]["source"] == "env"
+    assert "secret" not in out
+
+
+def test_config_show_short_token_fully_redacted(monkeypatch):
+    monkeypatch.setenv("GALAXY_API_TOKEN", "abc")
+    out = runner.invoke(app, ["config", "show"]).output
+    assert "abc" not in out
+    assert "…redacted" in out
+
+
+def test_config_show_reports_flag_source_for_token():
+    result = runner.invoke(app, ["--token", "flagtoken4321", "config", "show"])
+    assert result.exit_code == 0
+    assert "flagtoken4321" not in result.output
+    assert "…4321" in result.output
+    token_row = next(line for line in result.output.splitlines() if "token" in line)
+    assert "flag" in token_row
+
+
+def test_token_flag_reaches_the_client():
+    """The global --token is what the lazily-built client authenticates with."""
+    from galaxy_digital_cli.cli._state import State
+    from galaxy_digital_cli.config import load_settings
+
+    state = State(settings=load_settings(api_key="k", token="tok"))
+    with state.client as client:
+        assert client.token == "tok"
+        assert client.http.headers["Authorization"] == "Bearer tok"
 
 
 def test_config_show_reports_flag_source_for_url():

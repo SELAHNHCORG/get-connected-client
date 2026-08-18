@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from ..exceptions import MissingAPIKeyError
 from ..models.auth import LoginResult
 from ..models.users import UserOneclick
 from .base import Resource
@@ -35,23 +36,36 @@ class Auth(Resource[LoginResult]):
     def login(
         self, user_email: str, user_password: str, key: str | None = None
     ) -> LoginResult | dict[str, Any] | None:
-        """Exchange credentials (and API *key*) for a session token.
+        """Exchange credentials (and the site *key*) for a session token.
 
-        The spec marks ``key`` required; pass ``None`` (the default) to
-        send an empty string, which most deployments accept.
+        The spec marks ``key`` required, and the API means it -- the body is
+        validated before authentication, so a missing key is a 422 rather
+        than a 401. ``None`` (the default) therefore falls back to the
+        client's ``api_key``, which is what that key exists for.
+
+        Prefer :meth:`~galaxy_digital_cli.client.GalaxyClient.login`: it does
+        the same exchange and then *adopts* the token, so subsequent
+        requests authenticate. This method only returns it.
 
         :return: a :class:`~galaxy_digital_cli.models.auth.LoginResult` when
             the API answers with a ``data`` object; otherwise the raw
             response payload, mirroring
             :meth:`~galaxy_digital_cli.resources.base.CreateMixin.create`.
+        :raises MissingAPIKeyError: no ``key`` was given and the client has
+            no ``api_key`` to fall back on.
         """
+        resolved_key = key or self._client.api_key
+        if not resolved_key:
+            raise MissingAPIKeyError(
+                "login needs the site key: pass key= or set GALAXY_API_KEY"
+            )
         payload = self._client.request(
             "POST",
             self._url("login"),
             json={
                 "user_email": user_email,
                 "user_password": user_password,
-                "key": key or "",
+                "key": resolved_key,
             },
         )
         data = payload.get("data") if isinstance(payload, dict) else None

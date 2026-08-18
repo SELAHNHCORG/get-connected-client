@@ -4,6 +4,10 @@
 
 The scenarios are agreed with the user at run time; this file starts with a
 single reversible round-trip and grows only by explicit agreement.
+
+Requires ``GALAXY_API_TOKEN`` (the session token from ``galaxy auth
+login``), which the client picks up from the environment on its own -- the
+site key in ``GALAXY_API_KEY`` cannot authenticate a request.
 """
 
 import os
@@ -16,7 +20,7 @@ ACK = "I-UNDERSTAND-THIS-WRITES-TO-PROD"
 pytestmark = [
     pytest.mark.live_write,
     pytest.mark.skipif(
-        not os.environ.get("GALAXY_API_KEY"), reason="GALAXY_API_KEY not set"
+        not os.environ.get("GALAXY_API_TOKEN"), reason="GALAXY_API_TOKEN not set"
     ),
     pytest.mark.skipif(
         os.environ.get("GALAXY_LIVE_WRITE_ACK") != ACK,
@@ -31,6 +35,7 @@ def live_client():
 
     # base_url is passed explicitly here because GalaxyClient itself never
     # reads GALAXY_API_URL -- see tests/live/conftest.py's module docstring.
+    # The credential comes from GALAXY_API_TOKEN, read by the constructor.
     with GalaxyClient(base_url=os.environ.get("GALAXY_API_URL", "us1")) as client:
         yield client
 

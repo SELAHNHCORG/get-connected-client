@@ -143,6 +143,10 @@ def api(client):
 def _isolate_env(monkeypatch):
     monkeypatch.delenv("GALAXY_READ_ONLY", raising=False)
     monkeypatch.delenv("GALAXY_API_URL", raising=False)
+    # No session token by default: the mocked suite authenticates with the
+    # site key, and a real GALAXY_API_TOKEN in the developer's environment
+    # must never leak into a test's Authorization header.
+    monkeypatch.delenv("GALAXY_API_TOKEN", raising=False)
     monkeypatch.setenv("GALAXY_API_KEY", "test-key")
     # typer/rich force ANSI escapes into --help output when GITHUB_ACTIONS or
     # FORCE_COLOR are set, breaking plain-text assertions in CI.
