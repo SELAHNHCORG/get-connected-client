@@ -92,6 +92,24 @@ class TrackMini(GalaxyModel):
     created_at: str | None = None
 
 
+class BenchmarkMini(GalaxyModel):
+    """benchmarkMiniObject.
+
+    ``update_at`` is spelled that way in the spec -- the API's own typo, kept
+    verbatim so payloads round-trip.
+    """
+
+    id: int | None = None
+    benchmark_status: str | None = None
+    benchmark_title: str | None = None
+    benchmark_icon: str | None = None
+    benchmark_hours: str | None = None
+    benchmark_date_start: str | None = None
+    benchmark_date_end: str | None = None
+    created_at: str | None = None
+    update_at: str | None = None
+
+
 class UserMini(GalaxyModel):
     """userMiniObject."""
 

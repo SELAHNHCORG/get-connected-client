@@ -9,6 +9,7 @@ import galaxy_digital_cli
 from ..config import load_settings
 from ._state import State
 from .config_cmds import config_app
+from .users import users_app
 
 app = typer.Typer(
     help="CLI for the Galaxy Digital Get Connected API.",
@@ -16,7 +17,8 @@ app = typer.Typer(
     pretty_exceptions_show_locals=False,
 )
 app.add_typer(config_app, name="config")
-# Resource sub-apps are registered here by Tasks 8-13.
+app.add_typer(users_app, name="users")
+# Further resource sub-apps are registered here by Tasks 9-13.
 
 
 def _version(value: bool) -> None:

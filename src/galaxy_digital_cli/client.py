@@ -101,9 +101,11 @@ class GalaxyClient:
         self.timeout = timeout
         self.retries = retries
         self._http: httpx.Client | None = None
-        # Resource namespaces are attached here in later tasks, e.g.:
-        # from .resources.users import Users
-        # self.users = Users(self)
+        # Resource namespaces. Imported here, not at module scope: they import
+        # this module for MAX_PER_PAGE, so a top-level import would cycle.
+        from .resources.users import Users
+
+        self.users = Users(self)
 
     @property
     def read_only(self) -> bool:
