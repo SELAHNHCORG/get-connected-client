@@ -673,6 +673,7 @@ dev = [
     { name = "pyright" },
     { name = "pytest" },
     { name = "pytest-cov" },
+    { name = "pyyaml" },
     { name = "readme-renderer", extra = ["md"] },
     { name = "respx" },
     { name = "ruff" },
@@ -702,6 +703,7 @@ test = [
     { name = "coverage", extra = ["toml"] },
     { name = "pytest" },
     { name = "pytest-cov" },
+    { name = "pyyaml" },
     { name = "respx" },
 ]
 typing = [
@@ -734,6 +736,7 @@ dev = [
     { name = "pyright", specifier = ">=1.1.390" },
     { name = "pytest", specifier = ">=8.3.4" },
     { name = "pytest-cov", specifier = ">=6.0.0" },
+    { name = "pyyaml", specifier = ">=6.0" },
     { name = "readme-renderer", extras = ["md"], specifier = ">=43.0" },
     { name = "respx", specifier = ">=0.21" },
     { name = "ruff", specifier = ">=0.15.0" },
@@ -757,6 +760,7 @@ test = [
     { name = "coverage", extras = ["toml"], specifier = ">=7.6.1" },
     { name = "pytest", specifier = ">=8.3.4" },
     { name = "pytest-cov", specifier = ">=6.0.0" },
+    { name = "pyyaml", specifier = ">=6.0" },
     { name = "respx", specifier = ">=0.21" },
 ]
 typing = [
