@@ -716,10 +716,10 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-coverage = [{ name = "coverage", extras = ["toml"], specifier = ">=7.6.1" }]
+coverage = [{ name = "coverage", extras = ["toml"], specifier = ">=7.15.4" }]
 dev = [
-    { name = "bandit", extras = ["toml", "sarif"], specifier = ">=1.7.10" },
-    { name = "coverage", extras = ["toml"], specifier = ">=7.6.1" },
+    { name = "bandit", extras = ["toml", "sarif"], specifier = ">=1.9.4" },
+    { name = "coverage", extras = ["toml"], specifier = ">=7.15.4" },
     { name = "doc8", specifier = ">=1.1.2" },
     { name = "furo", specifier = ">=2024.1.29" },
     { name = "ipdb", specifier = ">=0.13.13" },
@@ -730,7 +730,7 @@ dev = [
     { name = "pytest", specifier = ">=8.3.4" },
     { name = "pytest-cov", specifier = ">=6.0.0" },
     { name = "pyyaml", specifier = ">=6.0" },
-    { name = "readme-renderer", extras = ["md"], specifier = ">=43.0" },
+    { name = "readme-renderer", extras = ["md"], specifier = ">=45.0" },
     { name = "respx", specifier = ">=0.21" },
     { name = "ruff", specifier = ">=0.15.0" },
     { name = "sphinx", specifier = ">=7.2" },
@@ -743,13 +743,13 @@ docs = [
     { name = "sphinx-autobuild", specifier = ">=2024.2.4" },
 ]
 lint = [
-    { name = "bandit", extras = ["toml", "sarif"], specifier = ">=1.7.10" },
+    { name = "bandit", extras = ["toml", "sarif"], specifier = ">=1.9.4" },
     { name = "doc8", specifier = ">=1.1.2" },
-    { name = "readme-renderer", extras = ["md"], specifier = ">=43.0" },
+    { name = "readme-renderer", extras = ["md"], specifier = ">=45.0" },
     { name = "ruff", specifier = ">=0.15.0" },
 ]
 test = [
-    { name = "coverage", extras = ["toml"], specifier = ">=7.6.1" },
+    { name = "coverage", extras = ["toml"], specifier = ">=7.15.4" },
     { name = "pytest", specifier = ">=8.3.4" },
     { name = "pytest-cov", specifier = ">=6.0.0" },
     { name = "pyyaml", specifier = ">=6.0" },
