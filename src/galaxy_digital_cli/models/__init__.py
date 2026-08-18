@@ -24,6 +24,8 @@ from .common import (
     UserMini,
 )
 from .hours import Hour
+from .needs import Need
+from .responses import Response, ResponseAnswer
 from .users import (
     RegistrationAnswer,
     User,
@@ -47,9 +49,12 @@ __all__ = [
     "Impact",
     "InitiativeMini",
     "Interest",
+    "Need",
     "NeedMini",
     "Question",
     "RegistrationAnswer",
+    "Response",
+    "ResponseAnswer",
     "Shift",
     "Tag",
     "TeamMini",

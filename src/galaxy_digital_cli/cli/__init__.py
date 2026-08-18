@@ -10,6 +10,7 @@ from ..config import load_settings
 from ._state import State
 from .agencies import agencies_app
 from .config_cmds import config_app
+from .needs import needs_app
 from .users import users_app
 
 app = typer.Typer(
@@ -20,7 +21,8 @@ app = typer.Typer(
 app.add_typer(config_app, name="config")
 app.add_typer(users_app, name="users")
 app.add_typer(agencies_app, name="agencies")
-# Further resource sub-apps are registered here by Tasks 10-13.
+app.add_typer(needs_app, name="needs")
+# Further resource sub-apps are registered here by Tasks 11-13.
 
 
 def _version(value: bool) -> None:
