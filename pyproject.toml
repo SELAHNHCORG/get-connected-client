@@ -112,7 +112,7 @@ sphinx = true
 
 [tool.pytest.ini_options]
 python_files = "test*.py"
-norecursedirs = "*.egg .eggs dist build docs .tox .git __pycache__"
+norecursedirs = "*.egg .eggs dist build doc docs .tox .git .worktrees .venv __pycache__"
 addopts = [
     "--strict-markers",
     "--cov=galaxy_digital_cli",
