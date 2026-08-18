@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from .agencies import Agency
+from .auth import LoginResult
 from .base import GalaxyModel
+from .benchmarks import Benchmark
 from .common import (
     AgencyMini,
     BenchmarkMini,
@@ -27,6 +29,7 @@ from .events import Event
 from .groups import Group, GroupUser
 from .hours import Hour
 from .needs import Need
+from .qualifications import Qualification, QualificationUser
 from .responses import Response, ResponseAnswer
 from .teams import Team, TeamMember
 from .users import (
@@ -41,6 +44,7 @@ from .users import (
 __all__ = [
     "Agency",
     "AgencyMini",
+    "Benchmark",
     "BenchmarkMini",
     "Category",
     "Cause",
@@ -55,8 +59,11 @@ __all__ = [
     "Impact",
     "InitiativeMini",
     "Interest",
+    "LoginResult",
     "Need",
     "NeedMini",
+    "Qualification",
+    "QualificationUser",
     "Question",
     "RegistrationAnswer",
     "Response",

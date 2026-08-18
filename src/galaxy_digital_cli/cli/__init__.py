@@ -9,11 +9,21 @@ import galaxy_digital_cli
 from ..config import load_settings
 from ._state import State
 from .agencies import agencies_app
+from .auth import auth_app
+from .benchmarks import benchmarks_app
 from .config_cmds import config_app
 from .events import events_app
 from .groups import groups_app
 from .hours import hours_app
+from .misc import (
+    causes_app,
+    clusters_app,
+    impacts_app,
+    interests_app,
+    registration_questions_app,
+)
 from .needs import needs_app
+from .qualifications import qualifications_app
 from .responses import responses_app
 from .teams import teams_app
 from .users import users_app
@@ -32,7 +42,14 @@ app.add_typer(hours_app, name="hours")
 app.add_typer(responses_app, name="responses")
 app.add_typer(teams_app, name="teams")
 app.add_typer(groups_app, name="groups")
-# Further resource sub-apps are registered here by Task 13.
+app.add_typer(qualifications_app, name="qualifications")
+app.add_typer(benchmarks_app, name="benchmarks")
+app.add_typer(clusters_app, name="clusters")
+app.add_typer(causes_app, name="causes")
+app.add_typer(interests_app, name="interests")
+app.add_typer(impacts_app, name="impacts")
+app.add_typer(registration_questions_app, name="registration-questions")
+app.add_typer(auth_app, name="auth")
 
 
 def _version(value: bool) -> None:

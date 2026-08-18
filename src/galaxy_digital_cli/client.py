@@ -104,10 +104,14 @@ class GalaxyClient:
         # Resource namespaces. Imported here, not at module scope: they import
         # this module for MAX_PER_PAGE, so a top-level import would cycle.
         from .resources.agencies import Agencies
+        from .resources.auth import Auth
+        from .resources.benchmarks import Benchmarks
         from .resources.events import Events
         from .resources.groups import Groups
         from .resources.hours import Hours
+        from .resources.misc import Clusters, Lookups
         from .resources.needs import Needs
+        from .resources.qualifications import Qualifications
         from .resources.responses import Responses
         from .resources.teams import Teams
         from .resources.users import Users
@@ -120,6 +124,11 @@ class GalaxyClient:
         self.responses = Responses(self)
         self.teams = Teams(self)
         self.groups = Groups(self)
+        self.qualifications = Qualifications(self)
+        self.benchmarks = Benchmarks(self)
+        self.clusters = Clusters(self)
+        self.lookups = Lookups(self)
+        self.auth = Auth(self)
 
     @property
     def read_only(self) -> bool:

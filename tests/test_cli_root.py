@@ -238,6 +238,20 @@ def test_output_helpers(capsys):
     assert '"id"' in capsys.readouterr().out
 
 
+def test_missing_api_key_is_clean(monkeypatch, tmp_path):
+    """No API key, no config: MissingAPIKeyError should exit 1, no traceback.
+
+    Deferred here from Task 7 because no resource command existed yet to
+    exercise the lazily-built client -- ``galaxy causes list`` (Task 13) is
+    the first read that actually needs one.
+    """
+    monkeypatch.setenv("GALAXY_CONFIG_FILE", str(tmp_path / "config.toml"))
+    monkeypatch.delenv("GALAXY_API_KEY", raising=False)
+    result = runner.invoke(app, ["causes", "list"])
+    assert result.exit_code == 1
+    assert "Traceback" not in result.output
+
+
 def test_output_accepts_models_and_scalars(capsys):
     from galaxy_digital_cli.cli._output import output
     from galaxy_digital_cli.cli._state import State
