@@ -70,10 +70,17 @@ test = [
     "pytest-cov>=6.0.0",
     "respx>=0.21",
 ]
+docs = [
+    "sphinx>=7.2",
+    "furo>=2024.1.29",
+    "sphinx-autobuild>=2024.2.4",
+    "doc8>=1.1.2",
+]
 dev = [
     { include-group = "typing" },
     { include-group = "test" },
     { include-group = "lint" },
+    { include-group = "docs" },
     "packaging>=24.2",
     "tomlkit>=0.13.3",
     "ipdb>=0.13.13",
