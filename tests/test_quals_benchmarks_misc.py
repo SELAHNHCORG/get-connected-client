@@ -465,14 +465,26 @@ def test_auth_login_without_data_returns_raw_payload(client, api):
     assert result == {"message": "ok"}
 
 
-def test_auth_login_key_defaults_to_empty_string(client, api):
+def test_auth_login_key_defaults_to_client_api_key(client, api):
+    """``key`` is the site key's whole purpose, so it defaults to it."""
     route = api.post("/users/login").respond(json={"data": LOGIN_ROW})
     Auth(client).login("mary@example.com", "hunter2")
     assert json.loads(route.calls.last.request.content) == {
         "user_email": "mary@example.com",
         "user_password": "hunter2",
-        "key": "",
+        "key": "test-key",
     }
+
+
+def test_auth_login_without_any_key_raises(monkeypatch, api):
+    from galaxy_digital_cli.client import GalaxyClient
+    from galaxy_digital_cli.exceptions import MissingAPIKeyError
+
+    monkeypatch.delenv("GALAXY_API_KEY", raising=False)
+    with GalaxyClient(base_url="https://api.test/api", token="tok") as c:
+        with pytest.raises(MissingAPIKeyError):
+            Auth(c).login("mary@example.com", "hunter2")
+    assert not api.calls
 
 
 def test_auth_authenticate_body_and_parse(client, api):
@@ -843,8 +855,115 @@ def test_cli_auth_login_hidden_prompt(api, cli_env):
     assert json.loads(route.calls.last.request.content) == {
         "user_email": "mary@example.com",
         "user_password": "hunter2",
-        "key": "",
+        "key": "test-key",
     }
+
+
+def test_cli_auth_login_prompt_is_not_on_stdout(api, cli_env):
+    """The password prompt is stderr's business: stdout is for the payload."""
+    api.post("/users/login").respond(json={"data": LOGIN_ROW})
+    result = runner.invoke(
+        app,
+        ["auth", "login", "--email", "mary@example.com"],
+        input="hunter2\n",
+    )
+    assert result.exit_code == 0, result.output
+    assert "Password" not in result.stdout
+    assert "Password" in result.stderr
+
+
+def test_cli_auth_login_export_emits_only_the_export_line(api, cli_env):
+    """``eval "$(galaxy auth login ... --export)"`` must see one line and
+    nothing else on stdout -- the hint and any status text go to stderr.
+
+    ``--password`` is passed rather than prompted because click's CliRunner
+    fakes hidden input by writing a newline to *stdout*, which would be an
+    artifact of the test harness, not of the command (real ``getpass``
+    writes to the tty/stderr).
+    """
+    api.post("/users/login").respond(
+        json={"data": {**LOGIN_ROW, "token": "tok123"}},
+    )
+    result = runner.invoke(
+        app,
+        [
+            "auth",
+            "login",
+            "--email",
+            "mary@example.com",
+            "--password",
+            "hunter2",
+            "--export",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert result.stdout == "export GALAXY_API_TOKEN='tok123'\n"
+
+
+def test_cli_auth_login_export_without_token_fails(api, cli_env):
+    api.post("/users/login").respond(json={"message": "ok"})
+    result = runner.invoke(
+        app,
+        ["auth", "login", "--email", "m@e.com", "--password", "p", "--export"],
+    )
+    assert result.exit_code == 1
+    assert result.stdout == ""
+
+
+def test_cli_auth_login_table_shows_the_whole_token(api, cli_env):
+    """Long tokens must wrap, never be truncated to an ellipsis: the value
+    on screen is the value the operator copies."""
+    long_token = "eyJ" + "x" * 300
+    api.post("/users/login").respond(
+        json={"data": {**LOGIN_ROW, "token": long_token}},
+    )
+    result = runner.invoke(
+        app,
+        ["auth", "login", "--email", "mary@example.com", "--password", "hunter2"],
+    )
+    assert result.exit_code == 0, result.output
+    # the table wraps, so join the rendered lines back up before looking
+    assert long_token in "".join(
+        part.strip() for part in result.stdout.replace("│", "").splitlines()
+    )
+    assert "eval" in result.stderr
+
+
+def test_cli_auth_login_key_flag_overrides_settings(api, cli_env):
+    route = api.post("/users/login").respond(json={"data": LOGIN_ROW})
+    result = runner.invoke(
+        app,
+        [
+            "auth",
+            "login",
+            "--email",
+            "mary@example.com",
+            "--password",
+            "hunter2",
+            "--key",
+            "other-site",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert json.loads(route.calls.last.request.content)["key"] == "other-site"
+
+
+def test_cli_auth_login_json_carries_the_full_token(api, cli_env):
+    api.post("/users/login").respond(json={"data": {**LOGIN_ROW, "token": "tok123"}})
+    result = runner.invoke(
+        app,
+        [
+            "--json",
+            "auth",
+            "login",
+            "--email",
+            "mary@example.com",
+            "--password",
+            "hunter2",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert json.loads(result.stdout)["token"] == "tok123"
 
 
 def test_cli_auth_login_blocked_read_only(api, cli_env, monkeypatch):

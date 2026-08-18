@@ -12,40 +12,97 @@ highest first:
    * - Order
      - Source
    * - 1
-     - Explicit arguments -- the CLI flags ``--api-key``, ``--url`` and
-       ``--read-only``.
+     - Explicit arguments -- the CLI flags ``--api-key``, ``--token``,
+       ``--url`` and ``--read-only``.
    * - 2
-     - Environment variables -- ``GALAXY_API_KEY``, ``GALAXY_API_URL``,
-       ``GALAXY_READ_ONLY``.
+     - Environment variables -- ``GALAXY_API_KEY``, ``GALAXY_API_TOKEN``,
+       ``GALAXY_API_URL``, ``GALAXY_READ_ONLY``.
    * - 3
-     - Built-in defaults -- server ``us1``, ``read_only`` off, no API key.
+     - Built-in defaults -- server ``us1``, ``read_only`` off, no
+       credentials.
 
 There is no configuration file: nothing is persisted to disk, and no
-plaintext API key is ever written anywhere by this tool. A source that
+plaintext key or token is ever written anywhere by this tool. A source that
 provides a value wins outright; it is not merged with lower sources for
 that same setting. ``read_only`` is the one exception at the client level:
 see `Read-only modes`_ below.
+
+Two credentials, two jobs
+--------------------------
+
+The site API key does **not** authenticate requests. Sent as an
+``Authorization`` value -- raw or ``Bearer``-prefixed -- it is answered with
+a 401. What it *is* good for is identifying the site in the body of a
+login, which is where the credential that does authenticate comes from:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 70
+
+   * - Credential
+     - Role
+   * - ``GALAXY_API_KEY`` (site key)
+     - A UUID issued by your site. Sent only as the ``key`` field of the
+       ``POST /users/login`` body. Never authenticates anything on its own.
+   * - ``GALAXY_API_TOKEN`` (session token)
+     - What that login returns: a JWT valid for roughly a year, sent on
+       every request as ``Authorization: Bearer <token>``.
+
+So a session begins by trading the site key plus an email and password for
+a token:
+
+.. code-block:: bash
+
+   export GALAXY_API_KEY=YOUR_SITE_KEY
+   eval "$(galaxy auth login --email you@example.org --export)"
+
+``--export`` writes exactly one line to stdout --
+``export GALAXY_API_TOKEN='<token>'`` -- and routes the password prompt and
+every other message to stderr, which is what makes the ``eval`` safe. See
+:doc:`cli` for the rest of the ``auth`` sub-app.
+
+The wire format is the same either way: the client prefixes whichever
+credential it has with ``Bearer `` (and leaves a value that already starts
+with ``Bearer `` alone, so exporting a whole header value works too). A
+client holding both sends the *token*; one holding only a site key still
+sends it -- harmlessly, since login is the only thing it can accomplish --
+and the resulting 401 is the API telling you to run
+``galaxy auth login``.
 
 Library behavior
 ----------------
 
 The table above describes the CLI. :class:`~galaxy_digital_cli.client.GalaxyClient`
-deliberately implements *none* of that chain except the API key's env var
-fallback: it takes what you pass it, and reads ``GALAXY_API_KEY`` when
-``api_key`` is omitted. ``GALAXY_API_URL`` is never consulted by the
-client, so ``base_url`` defaults to ``us1`` regardless of what the CLI
-would have resolved. (``GALAXY_READ_ONLY`` is the one env var the client
-does honor, and only in one direction -- see `Read-only modes`_.)
+deliberately implements *none* of that chain except the two credentials'
+env var fallbacks: it takes what you pass it, and reads ``GALAXY_API_KEY``
+and ``GALAXY_API_TOKEN`` when ``api_key`` and ``token`` are omitted.
+``GALAXY_API_URL`` is never consulted by the client, so ``base_url``
+defaults to ``us1`` regardless of what the CLI would have resolved.
+(``GALAXY_READ_ONLY`` is the one other env var the client does honor, and
+only in one direction -- see `Read-only modes`_.)
 
 .. code-block:: python
 
    from galaxy_digital_cli import GalaxyClient
 
    # explicit arguments; base_url accepts the same aliases as --url
-   GalaxyClient(api_key="...", base_url="us2")
+   GalaxyClient(token="eyJ...", base_url="us2")
 
-   # api_key omitted -> GALAXY_API_KEY; server stays us1
+   # both omitted -> GALAXY_API_TOKEN / GALAXY_API_KEY; server stays us1
    GalaxyClient()
+
+At least one of the two must be resolvable, or the constructor raises
+:class:`~galaxy_digital_cli.exceptions.MissingAPIKeyError`.
+:meth:`GalaxyClient.login <galaxy_digital_cli.client.GalaxyClient.login>` is
+the library counterpart of ``galaxy auth login``: it defaults the ``key``
+field from ``api_key``, and on success adopts the returned token, so every
+later request carries it.
+
+.. code-block:: python
+
+   with GalaxyClient(api_key="SITE-KEY") as client:
+       client.login("you@example.org", "hunter2")
+       client.users.get(5)          # authenticated with the new token
 
 Library callers who *want* the CLI's full resolution can opt into it by
 running it themselves and handing the result to the constructor:
@@ -56,17 +113,25 @@ running it themselves and handing the result to the constructor:
    from galaxy_digital_cli.config import load_settings
 
    s = load_settings()
-   client = GalaxyClient(api_key=s.api_key, base_url=s.url, read_only=s.read_only)
+   client = GalaxyClient(
+       api_key=s.api_key, token=s.token, base_url=s.url, read_only=s.read_only
+   )
 
 :func:`~galaxy_digital_cli.config.load_settings` also accepts the same
-three overrides the CLI passes it (``api_key``, ``url``, ``read_only``),
-which slot in at level 1 of the table.
+four overrides the CLI passes it (``api_key``, ``token``, ``url``,
+``read_only``), which slot in at level 1 of the table.
 
 Environment variables
 ----------------------
 
 ``GALAXY_API_KEY``
-    The API key sent as the ``Authorization`` header.
+    The site key, sent as the ``key`` field of the login body. It cannot
+    authenticate requests -- see `Two credentials, two jobs`_.
+
+``GALAXY_API_TOKEN``
+    The session token from ``galaxy auth login``, sent as
+    ``Authorization: Bearer <token>``. This is the credential that
+    authenticates.
 
 ``GALAXY_API_URL``
     The server URL or alias (``us1``, ``us2``, ``ca``).
@@ -81,23 +146,26 @@ Set them for the session, or add them to your shell profile
 
 .. code-block:: bash
 
-   export GALAXY_API_KEY=YOUR_API_KEY
+   export GALAXY_API_KEY=YOUR_SITE_KEY
    export GALAXY_API_URL=us1        # us1 (default), us2, or ca
    export GALAXY_READ_ONLY=1        # optional: block every write
+
+   # the token is minted, not typed -- re-run when it expires (~1 year)
+   eval "$(galaxy auth login --email you@example.org --export)"
 
 Inspecting the result
 ---------------------
 
 ``galaxy config show`` reports what the chain above actually resolved, and
-where each value came from -- ``env`` or ``default``:
+where each value came from -- ``flag``, ``env`` or ``default``:
 
 .. code-block:: bash
 
-   galaxy config show          # api_key is redacted to its last 4 characters
+   galaxy config show          # credentials redacted to their last 4 characters
    galaxy --json config show   # same values, as JSON
 
-The API key is never printed in full, by either renderer, so the output is
-safe to paste into a bug report.
+Neither the key nor the token is ever printed in full, by either renderer,
+so the output is safe to paste into a bug report.
 
 Server aliases
 --------------

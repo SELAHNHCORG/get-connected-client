@@ -20,6 +20,7 @@ from .exceptions import (
     NotFoundError,
     ReadOnlyError,
 )
+from .models.auth import LoginResult
 
 _WRITE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
 #: Methods whose repetition is harmless, so they may be retried after a 5xx or
@@ -49,6 +50,17 @@ def _backoff(response: httpx.Response, attempt: int) -> float:
     return 0.5 * 2**attempt
 
 
+def _bearer(value: str) -> str:
+    """The ``Authorization`` header value for *value*.
+
+    The API's scheme is ``Bearer``, so the credential is prefixed unless the
+    caller already did it -- somebody who exported the whole header value
+    (``GALAXY_API_TOKEN="Bearer eyJ..."``) should not end up sending
+    ``Bearer Bearer eyJ...``.
+    """
+    return value if value.startswith("Bearer ") else f"Bearer {value}"
+
+
 def _row_id(row: Any) -> int | None:
     """The integer ``id`` of a payload row, or None if it has no usable one."""
     if not isinstance(row, dict) or row.get("id") is None:
@@ -72,6 +84,19 @@ class GalaxyClient:
     All requests funnel through :meth:`request`, which enforces read-only
     mode before anything reaches the network.
 
+    Two credentials, two jobs. The **site API key** (``api_key``, a UUID) is
+    *not* an access credential: the API rejects it as an ``Authorization``
+    value, raw or ``Bearer``-prefixed. Its only job is to identify the site
+    in the body of :meth:`login`. What authenticates ordinary requests is
+    the **session token** (``token``) that :meth:`login` returns -- a
+    long-lived JWT (roughly a year) sent as ``Authorization: Bearer
+    <token>``.
+
+    A client built with only an ``api_key`` is therefore useful for exactly
+    one thing: calling :meth:`login` to obtain a token. It is still allowed
+    (and sends the key Bearer-prefixed, so nothing breaks for callers who
+    have not migrated), but the server will answer 401 for anything else.
+
     ``retries`` counts *retries*, not attempts: ``retries=3`` means up to four
     requests (the original plus three), with exponential backoff of 0.5s, 1s
     and 2s between them -- roughly 3.5s of sleeping in the worst case. Only
@@ -84,18 +109,29 @@ class GalaxyClient:
         api_key: str | None = None,
         base_url: str = US1,
         *,
+        token: str | None = None,
         read_only: bool = False,
         timeout: float = 30.0,
         retries: int = 3,
     ):
         """Construct a client.
 
+        :param api_key: the site key, falling back to ``GALAXY_API_KEY``.
+            Used as the ``key`` field of the :meth:`login` body.
+        :param token: the session token, falling back to
+            ``GALAXY_API_TOKEN``. This is what authenticates requests.
         :param retries: how many times to retry a retryable failure, so
             ``retries=3`` allows up to four attempts and ~3.5s of backoff.
+        :raises MissingAPIKeyError: neither credential is available.
         """
         self.api_key = api_key or os.environ.get("GALAXY_API_KEY") or ""
-        if not self.api_key:
-            raise MissingAPIKeyError("No API key: pass api_key= or set GALAXY_API_KEY")
+        self.token = token or os.environ.get("GALAXY_API_TOKEN") or ""
+        if not (self.api_key or self.token):
+            raise MissingAPIKeyError(
+                "No credentials: set GALAXY_API_TOKEN (from `galaxy auth login`) "
+                "or GALAXY_API_KEY (the site key, which only logs in), or pass "
+                "token=/api_key="
+            )
         self.base_url = resolve_url(base_url)
         self._read_only = read_only
         self.timeout = timeout
@@ -169,13 +205,17 @@ class GalaxyClient:
         base URL, and writes issued through it are *still* refused in
         read-only mode by the :meth:`_guard` request hook -- but it does not
         retry, unwrap envelopes, or map statuses onto exceptions.
+
+        Built lazily and cached, which is also how a fresh token takes
+        effect: :meth:`login` drops the cached transport so the next access
+        rebuilds it around the new credential.
         """
         if self._http is None:
             self._http = httpx.Client(
                 base_url=self.base_url,
                 timeout=self.timeout,
                 headers={
-                    "Authorization": self.api_key,
+                    "Authorization": _bearer(self.token or self.api_key),
                     "Accept": "application/json",
                 },
                 event_hooks={"request": [self._guard]},
@@ -258,6 +298,34 @@ class GalaxyClient:
             return response.json()
         except ValueError:
             return None
+
+    def login(
+        self, user_email: str, user_password: str, key: str | None = None
+    ) -> LoginResult | dict[str, Any] | None:
+        """Exchange credentials for a session token and start using it.
+
+        ``key`` defaults to :attr:`api_key` -- the site key's whole purpose.
+        On success the returned token becomes this client's credential:
+        :attr:`token` is replaced and the cached transport is dropped, so
+        the next request is built with ``Authorization: Bearer <token>``.
+
+        This is a POST, so it goes through :meth:`request` like any other
+        write and is refused in read-only mode.
+
+        :raises MissingAPIKeyError: no ``key`` was given and the client has
+            no ``api_key`` to fall back on.
+        """
+        if not (key or self.api_key):
+            raise MissingAPIKeyError(
+                "login needs the site key: pass key= or set GALAXY_API_KEY"
+            )
+        result = self.auth.login(user_email, user_password, key=key or self.api_key)
+        if isinstance(result, LoginResult) and result.token:
+            self.token = result.token
+            # Drop the cached transport: the next access to `http` rebuilds
+            # it -- guard hook and all -- around the new credential.
+            self.close()
+        return result
 
     def get_data(self, path: str, params: dict[str, Any] | None = None) -> Any:
         """GET ``path`` and return the unwrapped payload."""

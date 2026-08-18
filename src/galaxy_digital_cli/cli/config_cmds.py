@@ -1,10 +1,11 @@
 """``galaxy config`` -- show the settings the CLI resolved for this run.
 
 There is no configuration file to manage. Settings come from the global
-flags (``--api-key``, ``--url``, ``--read-only``), then the environment
-variables ``GALAXY_API_KEY``, ``GALAXY_API_URL`` and ``GALAXY_READ_ONLY``,
-then the built-in defaults. This sub-app only reports what that chain
-produced, so it is a diagnostic, not an editor.
+flags (``--api-key``, ``--token``, ``--url``, ``--read-only``), then the
+environment variables ``GALAXY_API_KEY``, ``GALAXY_API_TOKEN``,
+``GALAXY_API_URL`` and ``GALAXY_READ_ONLY``, then the built-in defaults.
+This sub-app only reports what that chain produced, so it is a diagnostic,
+not an editor.
 """
 
 from __future__ import annotations
@@ -20,15 +21,15 @@ from ._state import get_state
 
 config_app = typer.Typer(
     help=(
-        "Inspect the resolved configuration "
-        "(GALAXY_API_KEY, GALAXY_API_URL, GALAXY_READ_ONLY)."
+        "Inspect the resolved configuration (GALAXY_API_KEY, "
+        "GALAXY_API_TOKEN, GALAXY_API_URL, GALAXY_READ_ONLY)."
     ),
     no_args_is_help=True,
 )
 
 
 def _redact(value: str | None) -> str:
-    """Mask the API key so ``config show`` is safe to paste into a bug report."""
+    """Mask a credential so ``config show`` is safe to paste into a bug report."""
     if not value:
         return "(not set)"
     if len(value) <= 4:
@@ -49,6 +50,13 @@ def show(ctx: typer.Context) -> None:
     else:
         api_key_source = "default"
 
+    if root_params.get("token") is not None:
+        token_source = "flag"
+    elif os.environ.get("GALAXY_API_TOKEN"):
+        token_source = "env"
+    else:
+        token_source = "default"
+
     if root_params.get("url") is not None:
         url_source = "flag"
     elif os.environ.get("GALAXY_API_URL"):
@@ -68,6 +76,11 @@ def show(ctx: typer.Context) -> None:
             "setting": "api_key",
             "value": _redact(settings.api_key),
             "source": api_key_source,
+        },
+        {
+            "setting": "token",
+            "value": _redact(settings.token),
+            "source": token_source,
         },
         {
             "setting": "url",

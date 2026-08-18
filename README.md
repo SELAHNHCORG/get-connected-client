@@ -33,70 +33,99 @@ pip install galaxy-digital-cli
 
 ## Quick Start
 
+Two credentials are involved, and they are not interchangeable:
+
+- the **site API key** (a UUID from your Galaxy Digital site) identifies
+  the site when you log in. It cannot authenticate requests -- the API
+  answers 401 for it, with or without a `Bearer ` prefix.
+- the **session token** returned by logging in is what every request is
+  actually authenticated with, as `Authorization: Bearer <token>`. It is a
+  JWT and lives about a year.
+
+### CLI
+
+```bash
+export GALAXY_API_KEY=YOUR_SITE_KEY          # step 1: the site key
+
+eval "$(galaxy auth login --email you@example.org --export)"   # step 2
+
+galaxy config show               # step 3: both credentials, redacted
+galaxy users list --per-page 10
+galaxy --json needs get 123
+```
+
+`galaxy auth login --export` prints exactly one line --
+`export GALAXY_API_TOKEN='<token>'` -- on stdout and nothing else, so
+`eval` can adopt it into the current shell. The password is prompted for
+on stderr. Without `--export` the command prints a table (the token in
+full, wrapped, never truncated), and `--json` gives you the raw token for
+scripting:
+
+```bash
+GALAXY_API_TOKEN=$(galaxy --json auth login --email you@example.org | jq -r .token)
+```
+
+Put `GALAXY_API_KEY` in your shell profile (`~/.bashrc`, `~/.zshrc`, ...)
+and re-run the `eval` line whenever the token expires -- nothing is
+persisted to disk by the CLI.
+
+`--json` emits raw JSON instead of a formatted table, for scripting. It
+is a root option, so it goes before the sub-app name.
+
 ### Library
 
 ```python
 from galaxy_digital_cli import GalaxyClient
 
-with GalaxyClient(api_key="...") as client:
+# the site key alone gets you exactly one thing: a token
+with GalaxyClient(api_key="SITE-KEY") as client:
+    client.login("you@example.org", "hunter2")  # adopts the token
     for user in client.users.list(per_page=50):
         print(user.id, user.user_email)
 
+# or start from a token you already have
+with GalaxyClient(token="eyJ...") as client:
     need = client.needs.get(123)
     print(need.need_title)
 ```
 
-The API key can also come from the `GALAXY_API_KEY` environment variable,
-in which case `GalaxyClient()` needs no arguments.
-
-### CLI
-
-```bash
-export GALAXY_API_KEY=YOUR_API_KEY
-export GALAXY_API_URL=us1        # us1 (default), us2, or ca
-
-galaxy config show               # what got resolved; the key is redacted
-galaxy users list --per-page 10
-galaxy --json needs get 123
-```
-
-Put the `export` lines in your shell profile (`~/.bashrc`, `~/.zshrc`, ...)
-to keep them across sessions -- nothing is persisted to disk by the CLI.
-
-`--json` emits raw JSON instead of a formatted table, for scripting. It
-is a root option, so it goes before the sub-app name.
+`client.login()` stores the returned token on the client and rebuilds its
+HTTP transport around it, so every later call is authenticated. Both
+credentials can also come from the environment (`GALAXY_API_KEY`,
+`GALAXY_API_TOKEN`), in which case `GalaxyClient()` needs no arguments.
 
 ## Configuration
 
 The **CLI** resolves settings with this precedence, highest first:
 
-1. **Explicit arguments** -- the CLI flags `--api-key`, `--url` and
-   `--read-only`.
-2. **Environment variables** -- `GALAXY_API_KEY`, `GALAXY_API_URL`,
-   `GALAXY_READ_ONLY`.
-3. **Defaults** -- server `us1`, `read_only` off, no API key.
+1. **Explicit arguments** -- the CLI flags `--api-key`, `--token`, `--url`
+   and `--read-only`.
+2. **Environment variables** -- `GALAXY_API_KEY`, `GALAXY_API_TOKEN`,
+   `GALAXY_API_URL`, `GALAXY_READ_ONLY`.
+3. **Defaults** -- server `us1`, `read_only` off, no credentials.
 
-There is no config file: nothing is written to disk, so a plaintext API
-key never lands in one. `galaxy config show` prints what the chain above
-resolved (key redacted) and whether each value came from the environment
-or the default.
+There is no config file: nothing is written to disk, so a plaintext key or
+token never lands in one. `galaxy config show` prints what the chain above
+resolved (key and token redacted to their last four characters) and
+whether each value came from a flag, the environment, or the default.
 
 ### Library behavior
 
 `GalaxyClient` does *not* implement that chain. It takes explicit
-arguments and falls back to `GALAXY_API_KEY` for the key only.
-`GALAXY_API_URL` is the CLI's doing, not the client's, so `base_url`
-defaults to `us1` no matter what the CLI would have resolved.
-(`GALAXY_READ_ONLY` is the one env var the client does honor, and only in
-one direction: it can turn read-only on, never off.)
+arguments and falls back to `GALAXY_API_KEY` and `GALAXY_API_TOKEN` for
+the two credentials only. `GALAXY_API_URL` is the CLI's doing, not the
+client's, so `base_url` defaults to `us1` no matter what the CLI would
+have resolved. (`GALAXY_READ_ONLY` is the one other env var the client
+does honor, and only in one direction: it can turn read-only on, never
+off.)
 
 ```python
 from galaxy_digital_cli import GalaxyClient
 
 # explicit arguments; base_url accepts the same aliases as --url
-GalaxyClient(api_key="...", base_url="us2")
+GalaxyClient(token="eyJ...", base_url="us2")
 
-# api_key omitted -> GALAXY_API_KEY; the server stays us1
+# both omitted -> GALAXY_API_TOKEN / GALAXY_API_KEY; the server stays us1
 GalaxyClient()
 ```
 
@@ -108,7 +137,9 @@ from galaxy_digital_cli import GalaxyClient
 from galaxy_digital_cli.config import load_settings
 
 s = load_settings()
-client = GalaxyClient(api_key=s.api_key, base_url=s.url, read_only=s.read_only)
+client = GalaxyClient(
+    api_key=s.api_key, token=s.token, base_url=s.url, read_only=s.read_only
+)
 ```
 
 See the full configuration reference in the documentation for env var
@@ -138,9 +169,10 @@ core design constraint, not an afterthought:
   default. Two pytest markers exist for exercising the real API and are
   never run in CI or by `just test`:
   - `live` -- read-only smoke tests against production. Requires
-    `GALAXY_API_KEY` and is run explicitly: `uv run pytest -m live`.
+    `GALAXY_API_TOKEN` (the site key cannot authenticate) and is run
+    explicitly: `uv run pytest -m live`.
   - `live_write` -- writes to production. Requires both
-    `GALAXY_API_KEY` and an explicit acknowledgment env var:
+    `GALAXY_API_TOKEN` and an explicit acknowledgment env var:
     ```bash
     GALAXY_LIVE_WRITE_ACK=I-UNDERSTAND-THIS-WRITES-TO-PROD uv run pytest -m live_write
     ```

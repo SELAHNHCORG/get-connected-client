@@ -45,7 +45,10 @@ def output_one(state: Any, row: Any) -> None:
         return
     table = Table(show_header=False)
     table.add_column("field", style="bold")
-    table.add_column("value")
+    # fold, not the default ellipsis: a value the operator needs to copy --
+    # a session token above all -- must be printed in full, wrapped across
+    # as many lines as it takes, never truncated to "eyJ0eXAi…".
+    table.add_column("value", overflow="fold", no_wrap=False)
     for key, value in item.items():
         table.add_row(key, str(value))
     console.print(table)

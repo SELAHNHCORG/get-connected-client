@@ -62,7 +62,12 @@ def _version(value: bool) -> None:
 def main(
     ctx: typer.Context,
     api_key: str | None = typer.Option(
-        None, "--api-key", help="API key (or GALAXY_API_KEY)."
+        None, "--api-key", help="Site API key, used to log in (or GALAXY_API_KEY)."
+    ),
+    token: str | None = typer.Option(
+        None,
+        "--token",
+        help="Session token from `galaxy auth login` (or GALAXY_API_TOKEN).",
     ),
     url: str | None = typer.Option(
         None, "--url", help="Server URL or alias us1/us2/ca."
@@ -77,7 +82,9 @@ def main(
 ) -> None:
     """Galaxy Digital API command line interface."""
     ctx.obj = State(
-        settings=load_settings(api_key=api_key, url=url, read_only=read_only or None),
+        settings=load_settings(
+            api_key=api_key, url=url, read_only=read_only or None, token=token
+        ),
         json_output=json_output,
         assume_yes=yes,
         debug=debug,

@@ -44,8 +44,9 @@ class Users(
 
     This namespace covers every ``/users`` endpoint in ``doc/api.yml``
     except the credential-exchange pair -- ``/users/authenticate`` and
-    ``/users/login`` -- which key-based auth makes moot: 21 of 23 paths, 32
-    of 34 operations, one method apiece. Rather than enumerate the rest here
+    ``/users/login`` -- which live on
+    :class:`~galaxy_digital_cli.resources.auth.Auth` instead: 21 of 23
+    paths, 32 of 34 operations, one method apiece. Rather than enumerate the rest here
     (a list that rots the moment one is added), they group as:
 
     * **CRUD** on the collection and the row -- :meth:`list`, :meth:`get`,

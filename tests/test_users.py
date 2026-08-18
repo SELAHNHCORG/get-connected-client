@@ -407,8 +407,10 @@ def test_users_covers_every_spec_path_except_credential_exchange():
     Parses ``doc/api.yml`` directly rather than trusting the docstring: the
     only ``/users`` paths this namespace may legitimately leave uncovered
     are the credential-exchange pair, ``/users/authenticate`` and
-    ``/users/login`` -- key-based auth makes both moot. If the spec grows a
-    new ``/users`` path, this fails until :mod:`galaxy_digital_cli.resources
+    ``/users/login`` -- they belong to
+    :class:`~galaxy_digital_cli.resources.auth.Auth`, which covers both, so
+    the split is one of ownership, not of coverage. If the spec grows a new
+    ``/users`` path, this fails until :mod:`galaxy_digital_cli.resources
     .users` (and ``_COVERED_USERS_PATHS`` above) catch up.
     """
     spec_path = Path(__file__).resolve().parent.parent / "doc" / "api.yml"

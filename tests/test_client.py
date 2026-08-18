@@ -1,3 +1,5 @@
+import json
+
 import httpx
 import pytest
 
@@ -8,15 +10,109 @@ from .conftest import BASE
 
 
 def test_missing_key(monkeypatch):
+    """No credential of either kind: the error must name both env vars."""
     monkeypatch.delenv("GALAXY_API_KEY", raising=False)
-    with pytest.raises(exc.MissingAPIKeyError):
+    monkeypatch.delenv("GALAXY_API_TOKEN", raising=False)
+    with pytest.raises(exc.MissingAPIKeyError) as caught:
         GalaxyClient(api_key=None, base_url=BASE)
+    message = str(caught.value)
+    assert "GALAXY_API_TOKEN" in message
+    assert "GALAXY_API_KEY" in message
+    assert "galaxy auth login" in message
+
+
+def test_api_key_alone_is_accepted_and_bearer_prefixed(monkeypatch, api):
+    """A key-only client still works (it is how you reach login), and the
+    key goes out Bearer-prefixed like any other credential."""
+    monkeypatch.delenv("GALAXY_API_TOKEN", raising=False)
+    route = api.get("/causes").respond(json={"data": []})
+    with GalaxyClient(api_key="site-key", base_url=BASE) as c:
+        c.get_data("/causes")
+    assert route.calls.last.request.headers["Authorization"] == "Bearer site-key"
 
 
 def test_auth_header_and_unwrap(client, api):
     route = api.get("/causes").respond(json={"data": [{"id": 1, "name": "x"}]})
     assert client.get_data("/causes") == [{"id": 1, "name": "x"}]
-    assert route.calls.last.request.headers["Authorization"] == "test-key"
+    assert route.calls.last.request.headers["Authorization"] == "Bearer test-key"
+
+
+def test_token_beats_api_key_in_header(client, api):
+    """Both credentials present: the session token is the one that goes out."""
+    route = api.get("/causes").respond(json={"data": []})
+    with GalaxyClient(api_key="site-key", base_url=BASE, token="jwt-token") as c:
+        c.get_data("/causes")
+    assert route.calls.last.request.headers["Authorization"] == "Bearer jwt-token"
+
+
+def test_token_from_env(monkeypatch, api):
+    monkeypatch.setenv("GALAXY_API_TOKEN", "env-token")
+    route = api.get("/causes").respond(json={"data": []})
+    with GalaxyClient(base_url=BASE) as c:
+        assert c.token == "env-token"
+        c.get_data("/causes")
+    assert route.calls.last.request.headers["Authorization"] == "Bearer env-token"
+
+
+def test_token_kwarg_beats_env(monkeypatch):
+    monkeypatch.setenv("GALAXY_API_TOKEN", "env-token")
+    with GalaxyClient(base_url=BASE, token="arg-token") as c:
+        assert c.token == "arg-token"
+
+
+def test_already_prefixed_credential_is_not_doubled(api):
+    """Somebody who exported the whole header value gets one Bearer, not two."""
+    route = api.get("/causes").respond(json={"data": []})
+    with GalaxyClient(base_url=BASE, token="Bearer already") as c:
+        c.get_data("/causes")
+    assert route.calls.last.request.headers["Authorization"] == "Bearer already"
+
+
+def test_login_posts_body_stores_token_and_reauthenticates(client, api):
+    """login() defaults key from api_key, adopts the token, and the *next*
+    request goes out with the new credential -- two routes prove it."""
+    login_route = api.post("/users/login").respond(
+        json={"data": {"token": "fresh-token", "expires": "2026-01-01"}}
+    )
+    causes_route = api.get("/causes").respond(json={"data": []})
+
+    result = client.login("mary@example.com", "hunter2")
+
+    assert result.token == "fresh-token"
+    assert client.token == "fresh-token"
+    assert json.loads(login_route.calls.last.request.content) == {
+        "user_email": "mary@example.com",
+        "user_password": "hunter2",
+        "key": "test-key",
+    }
+    # the login itself still went out under the old credential
+    assert login_route.calls.last.request.headers["Authorization"] == "Bearer test-key"
+
+    client.get_data("/causes")
+    assert causes_route.calls.last.request.headers["Authorization"] == (
+        "Bearer fresh-token"
+    )
+
+
+def test_login_explicit_key_overrides_api_key(client, api):
+    route = api.post("/users/login").respond(json={"data": {"token": "t"}})
+    client.login("mary@example.com", "hunter2", key="other-site")
+    assert json.loads(route.calls.last.request.content)["key"] == "other-site"
+
+
+def test_login_without_any_key_raises(monkeypatch, api):
+    monkeypatch.delenv("GALAXY_API_KEY", raising=False)
+    with GalaxyClient(base_url=BASE, token="tok") as c:
+        with pytest.raises(exc.MissingAPIKeyError):
+            c.login("mary@example.com", "hunter2")
+    assert not api.calls
+
+
+def test_login_without_token_in_payload_leaves_credential_alone(client, api):
+    """A payload with no ``data`` object is returned raw and changes nothing."""
+    api.post("/users/login").respond(json={"message": "ok"})
+    assert client.login("mary@example.com", "hunter2") == {"message": "ok"}
+    assert client.token == ""
 
 
 def test_server_alias():
