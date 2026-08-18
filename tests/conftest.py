@@ -140,8 +140,7 @@ def api(client):
 
 
 @pytest.fixture(autouse=True)
-def _isolate_env(monkeypatch, tmp_path):
-    monkeypatch.setenv("GALAXY_CONFIG_FILE", str(tmp_path / "config.toml"))
+def _isolate_env(monkeypatch):
     monkeypatch.delenv("GALAXY_READ_ONLY", raising=False)
     monkeypatch.delenv("GALAXY_API_URL", raising=False)
     monkeypatch.setenv("GALAXY_API_KEY", "test-key")

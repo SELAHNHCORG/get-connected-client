@@ -18,14 +18,13 @@ highest first:
      - Environment variables -- ``GALAXY_API_KEY``, ``GALAXY_API_URL``,
        ``GALAXY_READ_ONLY``.
    * - 3
-     - The config file (``~/.config/galaxy-digital/config.toml`` by
-       default, or wherever ``GALAXY_CONFIG_FILE`` points).
-   * - 4
      - Built-in defaults -- server ``us1``, ``read_only`` off, no API key.
 
-A source that provides a value wins outright; it is not merged with lower
-sources for that same setting. ``read_only`` is the one exception at the
-client level: see `Read-only modes`_ below.
+There is no configuration file: nothing is persisted to disk, and no
+plaintext API key is ever written anywhere by this tool. A source that
+provides a value wins outright; it is not merged with lower sources for
+that same setting. ``read_only`` is the one exception at the client level:
+see `Read-only modes`_ below.
 
 Library behavior
 ----------------
@@ -33,11 +32,10 @@ Library behavior
 The table above describes the CLI. :class:`~galaxy_digital_cli.client.GalaxyClient`
 deliberately implements *none* of that chain except the API key's env var
 fallback: it takes what you pass it, and reads ``GALAXY_API_KEY`` when
-``api_key`` is omitted. ``GALAXY_API_URL`` and the config file are never
-consulted by the client, so ``base_url`` defaults to ``us1`` regardless of
-what the CLI would have resolved. (``GALAXY_READ_ONLY`` is the one env var
-the client does honor, and only in one direction -- see `Read-only
-modes`_.)
+``api_key`` is omitted. ``GALAXY_API_URL`` is never consulted by the
+client, so ``base_url`` defaults to ``us1`` regardless of what the CLI
+would have resolved. (``GALAXY_READ_ONLY`` is the one env var the client
+does honor, and only in one direction -- see `Read-only modes`_.)
 
 .. code-block:: python
 
@@ -75,38 +73,31 @@ Environment variables
 
 ``GALAXY_READ_ONLY``
     A tri-state flag. Unset (or empty) means "no opinion" and falls through
-    to the config file. Any of ``1``, ``true``, ``yes``, ``on``
+    to the default (off). Any of ``1``, ``true``, ``yes``, ``on``
     (case-insensitive) means true; anything else means false.
 
-``GALAXY_CONFIG_FILE``
-    Overrides the config file path used by :func:`~galaxy_digital_cli.config.config_file`.
-
-Config file
------------
-
-Location
-   ``user_config_path("galaxy-digital") / "config.toml"`` -- typically
-   ``~/.config/galaxy-digital/config.toml`` on Linux/macOS, or the platform
-   equivalent via `platformdirs`. Override with ``GALAXY_CONFIG_FILE``.
-
-Keys
-   ``api_key``, ``url``, ``read_only`` -- the same three settings, as plain
-   TOML values.
-
-Permissions
-   The file is created (and any existing file re-chmod'd) to mode ``0600``
-   on every write, since it may hold a plaintext API key.
-
-Manage it with the CLI rather than editing it by hand:
+Set them for the session, or add them to your shell profile
+(``~/.bashrc``, ``~/.zshrc``, ...) to persist them:
 
 .. code-block:: bash
 
-   galaxy config set api_key YOUR_API_KEY
-   galaxy config set url us1
-   galaxy config set read_only true
-   galaxy config show     # api_key is redacted to its last 4 characters
-   galaxy config path
-   galaxy config unset read_only
+   export GALAXY_API_KEY=YOUR_API_KEY
+   export GALAXY_API_URL=us1        # us1 (default), us2, or ca
+   export GALAXY_READ_ONLY=1        # optional: block every write
+
+Inspecting the result
+---------------------
+
+``galaxy config show`` reports what the chain above actually resolved, and
+where each value came from -- ``env`` or ``default``:
+
+.. code-block:: bash
+
+   galaxy config show          # api_key is redacted to its last 4 characters
+   galaxy --json config show   # same values, as JSON
+
+The API key is never printed in full, by either renderer, so the output is
+safe to paste into a bug report.
 
 Server aliases
 --------------
@@ -134,9 +125,9 @@ account, blocking writes is a first-class feature, not an afterthought.
 There are three independent ways to turn it on:
 
 1. **Constructor**: ``GalaxyClient(read_only=True)``.
-2. **CLI flag**: ``galaxy --read-only ...``, or persist it with
-   ``galaxy config set read_only true``.
-3. **Environment**: ``GALAXY_READ_ONLY=1``.
+2. **CLI flag**: ``galaxy --read-only ...``.
+3. **Environment**: ``GALAXY_READ_ONLY=1`` (export it to make it stick for
+   the whole session).
 
 :attr:`GalaxyClient.read_only <galaxy_digital_cli.client.GalaxyClient.read_only>`
 is the boolean OR of the constructor flag and the environment variable --
