@@ -23,7 +23,10 @@ parent's.
 Net effect: live tests see the real process environment untouched, so
 ``GALAXY_API_KEY`` (if the user exported it) and ``GALAXY_API_URL`` (if the
 user wants something other than the production default) pass straight
-through to :class:`~galaxy_digital_cli.client.GalaxyClient`.
+through to :class:`~galaxy_digital_cli.client.GalaxyClient`. This works
+because the ``live_client`` fixtures in ``test_live_read.py`` and
+``test_live_write.py`` read ``GALAXY_API_URL`` themselves and pass it as
+``base_url=`` explicitly -- ``GalaxyClient`` itself never reads that env var.
 
 This does not affect gating. The ``pytest.mark.skipif`` conditions in
 ``test_live_read.py`` and ``test_live_write.py`` read ``os.environ`` at

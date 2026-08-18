@@ -20,12 +20,19 @@ pytestmark = [
 def live_client():
     from galaxy_digital_cli.client import GalaxyClient
 
+    # base_url is passed explicitly here because GalaxyClient itself never
+    # reads GALAXY_API_URL -- see tests/live/conftest.py's module docstring.
     # read_only=True: belt and suspenders -- these tests must never write.
-    with GalaxyClient(read_only=True) as client:
+    with GalaxyClient(
+        base_url=os.environ.get("GALAXY_API_URL", "us1"), read_only=True
+    ) as client:
         yield client
 
 
 def test_auth_and_causes(live_client):
+    # A successful call is itself the confirmation that the raw-key
+    # Authorization header format is correct -- a wrong scheme would 401 and
+    # raise AuthError instead of returning here.
     causes = live_client.lookups.causes()
     assert isinstance(causes, list)
 
