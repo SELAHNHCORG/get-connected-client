@@ -274,8 +274,8 @@ def remove_cause(
 
 _SUBSET = typer.Option(None, "--subset", help="regExtra (default) or profile.")
 #: The subset the API stores under when the parameter is omitted, per
-#: doc/api.yml. Shown in the confirm prompt so the operator sees where the
-#: write is actually going.
+#: doc/api.yml. Named in the confirm prompt so the operator sees where the
+#: write is actually going, even though no ``?subset=`` is actually sent.
 DEFAULT_SUBSET = "regExtra"
 
 
@@ -309,12 +309,11 @@ def set_extras(
     pairs = fields.get("extras")
     if not isinstance(pairs, list):
         raise typer.BadParameter('--data must be an object with an "extras" array')
-    confirm_write(
-        state,
-        f"POST {state.client.users.url(id, 'extras')}"
-        f"?subset={subset or DEFAULT_SUBSET}",
-        fields,
+    url = f"POST {state.client.users.url(id, 'extras')}"
+    url += (
+        f"?subset={subset}" if subset else f" (server default subset: {DEFAULT_SUBSET})"
     )
+    confirm_write(state, url, fields)
     output_result(state, state.client.users.set_extras(id, pairs, subset=subset))
 
 

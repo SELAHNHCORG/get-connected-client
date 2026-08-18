@@ -42,8 +42,10 @@ class Users(
 ):
     """Users and everything hanging off them.
 
-    This namespace covers every ``/users`` endpoint in ``doc/api.yml``: 21
-    paths, 32 operations, one method apiece. Rather than enumerate them here
+    This namespace covers every ``/users`` endpoint in ``doc/api.yml``
+    except the credential-exchange pair -- ``/users/authenticate`` and
+    ``/users/login`` -- which key-based auth makes moot: 21 of 23 paths, 32
+    of 34 operations, one method apiece. Rather than enumerate the rest here
     (a list that rots the moment one is added), they group as:
 
     * **CRUD** on the collection and the row -- :meth:`list`, :meth:`get`,
@@ -123,7 +125,7 @@ class Users(
         return self._get_list(
             self._url(id, "extras"),
             Extra,
-            params={"subset": subset} if subset else None,
+            params={"subset": subset} if subset is not None else None,
         )
 
     def set_extras(

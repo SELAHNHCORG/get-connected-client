@@ -6,8 +6,10 @@ the production API.
 
 import inspect
 import json
+from pathlib import Path
 
 import pytest
+import yaml
 from typer.testing import CliRunner
 
 from galaxy_digital_cli.cli import app
@@ -357,6 +359,60 @@ def test_users_covers_every_spec_operation():
     assert len(endpoints) == 32
 
 
+#: The paths this namespace covers, taken straight from the (callable,
+#: method, path) tables in ``test_sublists`` and ``test_relationship_writes``
+#: above, plus the CRUD/get-one/singleton paths those tables don't need a
+#: parametrization row for.
+_COVERED_USERS_PATHS = {
+    "/users",
+    "/users/{id}",
+    "/users/{id}/agencies",
+    "/users/{id}/agencies/{agency_id}",
+    "/users/{id}/benchmarks",
+    "/users/{id}/benchmarks/{benchmark_id}",
+    "/users/{id}/causes",
+    "/users/{id}/causes/{cause_id}",
+    "/users/{id}/extras",
+    "/users/{id}/hours",
+    "/users/{id}/interests",
+    "/users/{id}/interests/{interest_id}",
+    "/users/{id}/oneclick",
+    "/users/{id}/optouts",
+    "/users/{id}/qualifications",
+    "/users/{id}/registrationQuestions",
+    "/users/{id}/responses",
+    "/users/{id}/tags",
+    "/users/{id}/tags/{tag_id}",
+    "/users/{id}/tracks",
+    "/users/{id}/welcomeEmail",
+}
+
+
+def test_users_covers_every_spec_path_except_credential_exchange():
+    """Guard the class docstring's "21 of 23 paths" claim against spec drift.
+
+    Parses ``doc/api.yml`` directly rather than trusting the docstring: the
+    only ``/users`` paths this namespace may legitimately leave uncovered
+    are the credential-exchange pair, ``/users/authenticate`` and
+    ``/users/login`` -- key-based auth makes both moot. If the spec grows a
+    new ``/users`` path, this fails until :mod:`galaxy_digital_cli.resources
+    .users` (and ``_COVERED_USERS_PATHS`` above) catch up.
+    """
+    spec_path = Path(__file__).resolve().parent.parent / "doc" / "api.yml"
+    spec = yaml.safe_load(spec_path.read_text())
+    spec_users_paths = {
+        path for path in spec["paths"] if path == "/users" or path.startswith("/users/")
+    }
+
+    assert _COVERED_USERS_PATHS <= spec_users_paths, (
+        "a covered path no longer exists in the spec"
+    )
+    assert spec_users_paths - _COVERED_USERS_PATHS == {
+        "/users/authenticate",
+        "/users/login",
+    }
+
+
 # --------------------------------------------------------------------------
 # CLI
 # --------------------------------------------------------------------------
@@ -630,21 +686,30 @@ def test_cli_confirm_prompt_shows_the_wire_path(api, cli_env):
 
 
 def test_cli_set_extras_prompt_names_the_subset(api, cli_env):
-    """The subset decides where the write lands, so the prompt must show it."""
+    """The subset decides where the write lands, so the prompt must show it.
+
+    With ``--subset`` omitted, the resource sends no ``subset`` param at all
+    -- the server defaults to ``regExtra`` -- so the prompt must match the
+    wire exactly rather than claim a query param that is never sent.
+    """
     body = '{"extras": [{"key": "Language", "value": "Spanish"}]}'
     declined = runner.invoke(
         app, ["users", "set-extras", "5", "--data", body], input="n\n"
     )
     assert declined.exit_code != 0
     assert not api.calls
-    assert "POST /users/5/extras?subset=regExtra" in declined.output
+    # rich wraps the prompt to terminal width, so compare on collapsed
+    # whitespace rather than an exact substring.
+    output = " ".join(declined.output.split())
+    assert "POST /users/5/extras (server default subset: regExtra)" in output
 
     declined = runner.invoke(
         app,
         ["users", "set-extras", "5", "--data", body, "--subset", "profile"],
         input="n\n",
     )
-    assert "POST /users/5/extras?subset=profile" in declined.output
+    output = " ".join(declined.output.split())
+    assert "POST /users/5/extras?subset=profile" in output
 
 
 def test_cli_set_extras_requires_extras_array(api, cli_env):

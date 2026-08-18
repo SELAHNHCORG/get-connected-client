@@ -55,12 +55,13 @@ def output_result(state: Any, result: Any = None) -> None:
     """Report the outcome of a write.
 
     Many write endpoints answer 204, or a bare message with nothing to
-    render. Under ``--json`` those must still emit *something* parseable --
-    a script piping us into ``jq`` should never get an empty stdout on
-    success -- so they print ``{"ok": true}``. When the API did return a
-    model or dict, it is printed by :func:`output_one` as usual.
+    render -- some as ``None``/``""``, others as an empty list. Under
+    ``--json`` those must still emit *something* parseable -- a script
+    piping us into ``jq`` should never get an empty stdout on success -- so
+    they print ``{"ok": true}``. When the API did return a model or dict, it
+    is printed by :func:`output_one` as usual.
     """
-    if result is None or result == "":
+    if result is None or result == "" or result == []:
         if state.json_output:
             console.print_json(json.dumps({"ok": True}))
         else:
