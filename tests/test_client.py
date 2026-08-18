@@ -115,6 +115,46 @@ def test_login_without_token_in_payload_leaves_credential_alone(client, api):
     assert client.token == ""
 
 
+def test_login_read_only_blocked_before_missing_key_check(api):
+    """A read-only, token-only client (no api_key at all) must be told it is
+    read-only, not that it is missing a site key it was never going to use:
+    the read-only guard is checked first."""
+    with GalaxyClient(base_url=BASE, token="tok", read_only=True) as c:
+        with pytest.raises(exc.ReadOnlyError):
+            c.login("mary@example.com", "hunter2")
+    assert not api.calls
+
+
+def test_login_adopts_token_from_raw_dict_payload(client, api):
+    """A login response with no ``data`` envelope -- just a bare
+    ``{"token": ...}`` -- must still be adopted, exactly like the wrapped
+    shape: ``Auth.login`` only parses into ``LoginResult`` when it sees a
+    ``data`` object, and this payload does not have one."""
+    api.post("/users/login").respond(json={"token": "raw", "expires": "2026-01-01"})
+    causes_route = api.get("/causes").respond(json={"data": []})
+
+    result = client.login("mary@example.com", "hunter2")
+
+    assert result == {"token": "raw", "expires": "2026-01-01"}
+    assert client.token == "raw"
+
+    client.get_data("/causes")
+    assert causes_route.calls.last.request.headers["Authorization"] == "Bearer raw"
+
+
+def test_guard_hook_survives_transport_rebuild_after_login(client, api, monkeypatch):
+    """The read-only guard is installed as an event hook on the httpx
+    transport; login() rebuilds that transport (to pick up the new token),
+    so this pins that the hook comes back too, not just the credential."""
+    api.post("/users/login").respond(json={"data": {"token": "fresh-token"}})
+    client.login("mary@example.com", "hunter2")
+    assert client.token == "fresh-token"
+
+    monkeypatch.setenv("GALAXY_READ_ONLY", "1")
+    with pytest.raises(exc.ReadOnlyError):
+        client.http.post("/users", json={})
+
+
 def test_server_alias():
     c = GalaxyClient(api_key="k", base_url="ca")
     assert c.base_url == "https://ca.volunteerapi.com/api"

@@ -50,6 +50,22 @@ def _backoff(response: httpx.Response, attempt: int) -> float:
     return 0.5 * 2**attempt
 
 
+def _token_of(result: Any) -> str | None:
+    """The token in a login result, whether it parsed into a model or not.
+
+    ``Auth.login`` returns a parsed :class:`~galaxy_digital_cli.models.auth.
+    LoginResult` when the payload came wrapped in a ``data`` envelope, but
+    falls back to the raw payload (a plain ``dict``, or anything else the
+    server sent) when it did not. Both shapes carry the token under the same
+    key, so this is the one place that knows how to pull it out of either --
+    the CLI's ``--export`` path imports it rather than duplicating the logic.
+    """
+    if isinstance(result, dict):
+        token = result.get("token")
+        return token if isinstance(token, str) else None
+    return getattr(result, "token", None)
+
+
 def _bearer(value: str) -> str:
     """The ``Authorization`` header value for *value*.
 
@@ -312,16 +328,23 @@ class GalaxyClient:
         This is a POST, so it goes through :meth:`request` like any other
         write and is refused in read-only mode.
 
+        :raises ReadOnlyError: the client is in read-only mode. Checked
+            *before* the missing-key error below: a read-only client with
+            only a token and no site key should be told it is read-only,
+            not that it is missing a key it was never going to use.
         :raises MissingAPIKeyError: no ``key`` was given and the client has
             no ``api_key`` to fall back on.
         """
+        if self.read_only:
+            raise ReadOnlyError("POST /users/login blocked: read-only mode is on")
         if not (key or self.api_key):
             raise MissingAPIKeyError(
                 "login needs the site key: pass key= or set GALAXY_API_KEY"
             )
         result = self.auth.login(user_email, user_password, key=key or self.api_key)
-        if isinstance(result, LoginResult) and result.token:
-            self.token = result.token
+        token = _token_of(result)
+        if token:
+            self.token = token
             # Drop the cached transport: the next access to `http` rebuilds
             # it -- guard hook and all -- around the new credential.
             self.close()

@@ -27,10 +27,11 @@ at the operator's own risk).
 
 from __future__ import annotations
 
-from typing import Any
+import shlex
 
 import typer
 
+from ..client import _token_of
 from ..exceptions import GalaxyError
 from ._output import err_console, output, output_one
 from ._state import get_state, handle_errors
@@ -45,14 +46,6 @@ _PASSWORD = typer.Option(
     hide_input=True,
     help="Account password (prompted for, hidden, if not given).",
 )
-
-
-def _token_of(result: Any) -> str | None:
-    """The token in a login result, whether it parsed into a model or not."""
-    if isinstance(result, dict):
-        token = result.get("token")
-        return token if isinstance(token, str) else None
-    return getattr(result, "token", None)
 
 
 @auth_app.command("login")
@@ -80,6 +73,13 @@ def login(
     worth gating like any other write.
     """
     state = get_state(ctx)
+    if key:
+        # Fold --key into settings *before* state.client is first touched:
+        # the client is built eagerly from settings.api_key, and a
+        # standalone `--key` login (no GALAXY_API_KEY / GALAXY_API_TOKEN in
+        # the environment) must still be able to construct a client to log
+        # in with. Settings is a plain, mutable dataclass, so this is safe.
+        state.settings.api_key = key
     # Prompted here, not via typer.Option(prompt=True), so the prompt lands
     # on stderr and --export's stdout stays a single clean line.
     secret: str = (
@@ -93,8 +93,11 @@ def login(
         if not token:
             raise GalaxyError("login succeeded but returned no token")
         # Deliberately not the rich console: this line must reach stdout
-        # verbatim, unwrapped and unstyled, for `eval` to consume.
-        typer.echo(f"export GALAXY_API_TOKEN='{token}'")
+        # verbatim, unwrapped and unstyled, for `eval` to consume. JWTs are
+        # base64url + dots, so shlex.quote is normally a no-op on them, but
+        # a hostile or unexpected token must never be able to break out of
+        # the `eval "$(...)"` this line is designed to be fed into.
+        typer.echo(f"export GALAXY_API_TOKEN={shlex.quote(token)}")
         return
     output_one(state, result)
     if not state.json_output:

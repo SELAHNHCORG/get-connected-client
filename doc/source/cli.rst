@@ -85,8 +85,9 @@ authenticate requests by itself. Its options:
 
 ``--key TEXT``
     The site key for the login body. Defaults to the resolved
-    ``--api-key`` / ``GALAXY_API_KEY``; the command errors out if neither
-    is available.
+    ``--api-key`` / ``GALAXY_API_KEY``; ``--key`` alone is enough to log in
+    even with no ``GALAXY_API_KEY`` set. The command errors out only if
+    neither is available.
 
 ``--export``
     Print exactly one line on stdout --

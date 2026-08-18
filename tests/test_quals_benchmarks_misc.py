@@ -7,6 +7,7 @@ the production API.
 
 import inspect
 import json
+import shlex
 from pathlib import Path
 
 import pytest
@@ -897,7 +898,37 @@ def test_cli_auth_login_export_emits_only_the_export_line(api, cli_env):
         ],
     )
     assert result.exit_code == 0, result.output
-    assert result.stdout == "export GALAXY_API_TOKEN='tok123'\n"
+    # shlex.quote leaves an ordinary token like a JWT unquoted -- it is
+    # base64url + dots, none of which are shell metacharacters.
+    assert result.stdout == "export GALAXY_API_TOKEN=tok123\n"
+
+
+def test_cli_auth_login_export_quotes_a_hostile_token(api, cli_env):
+    """A token containing a shell metacharacter (here, a single quote) must
+    come out safely quoted, so ``eval "$(galaxy auth login ... --export)"``
+    can never be tricked into running anything beyond the assignment
+    itself. A real JWT (base64url + dots) would never need this, but a
+    hostile or unexpected token must not be able to break out of the eval.
+    """
+    hostile = "tok'; rm -rf /;'123"
+    api.post("/users/login").respond(json={"data": {**LOGIN_ROW, "token": hostile}})
+    result = runner.invoke(
+        app,
+        [
+            "auth",
+            "login",
+            "--email",
+            "mary@example.com",
+            "--password",
+            "hunter2",
+            "--export",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert result.stdout == f"export GALAXY_API_TOKEN={shlex.quote(hostile)}\n"
+    # sanity: the naive `'{token}'` form this replaces would have let the
+    # embedded quote close the string early -- confirm we did not do that.
+    assert result.stdout != f"export GALAXY_API_TOKEN='{hostile}'\n"
 
 
 def test_cli_auth_login_export_without_token_fails(api, cli_env):
@@ -946,6 +977,40 @@ def test_cli_auth_login_key_flag_overrides_settings(api, cli_env):
     )
     assert result.exit_code == 0, result.output
     assert json.loads(route.calls.last.request.content)["key"] == "other-site"
+
+
+def test_cli_auth_login_key_alone_works_standalone(monkeypatch, api, cli_env):
+    """``--key`` alone must be enough to log in, with no GALAXY_API_KEY or
+    GALAXY_API_TOKEN in the environment at all.
+
+    ``State.client`` used to be built from ``settings.api_key`` before
+    ``--key`` was ever folded in, so a clean-env, ``--key``-only login
+    raised ``MissingAPIKeyError`` before the key was ever used.
+    """
+    # The autouse _isolate_env fixture sets GALAXY_API_KEY=test-key; undo
+    # that here so --key is truly the only credential in play.
+    monkeypatch.delenv("GALAXY_API_KEY", raising=False)
+    monkeypatch.delenv("GALAXY_API_TOKEN", raising=False)
+    route = api.post("/users/login").respond(
+        json={"data": {**LOGIN_ROW, "token": "tok123"}}
+    )
+    result = runner.invoke(
+        app,
+        [
+            "auth",
+            "login",
+            "--email",
+            "mary@example.com",
+            "--password",
+            "hunter2",
+            "--key",
+            "sitekey",
+            "--export",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert result.stdout == "export GALAXY_API_TOKEN=tok123\n"
+    assert json.loads(route.calls.last.request.content)["key"] == "sitekey"
 
 
 def test_cli_auth_login_json_carries_the_full_token(api, cli_env):
