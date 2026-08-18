@@ -17,7 +17,6 @@ from galaxy_digital_cli.models.agencies import Agency
 from galaxy_digital_cli.models.common import Cause, Cluster, Tag, UserMini
 from galaxy_digital_cli.resources.agencies import Agencies
 
-from .conftest import BASE
 
 runner = CliRunner()
 
