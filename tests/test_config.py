@@ -3,7 +3,16 @@
 import os
 import stat
 
+import pytest
+
 from galaxy_digital_cli import config
+
+# POSIX permission bits are not meaningful on Windows: chmod(0o600) leaves the
+# file world-readable per NTFS semantics, so the 0o600 assertions only run on
+# POSIX platforms.
+requires_posix_perms = pytest.mark.skipif(
+    os.name == "nt", reason="POSIX permission bits are not enforced on Windows"
+)
 
 
 def test_defaults(monkeypatch, tmp_path):
@@ -41,13 +50,20 @@ def test_read_only_env_values(monkeypatch, tmp_path):
     assert config.load_settings().read_only is False
 
 
-def test_save_config_permissions(monkeypatch, tmp_path):
+def test_save_config_roundtrip(monkeypatch, tmp_path):
     cfg = tmp_path / "sub" / "config.toml"
     monkeypatch.setenv("GALAXY_CONFIG_FILE", str(cfg))
     config.save_config({"api_key": "k"})
     assert cfg.exists()
-    assert stat.S_IMODE(os.stat(cfg).st_mode) == 0o600
     assert config.read_config()["api_key"] == "k"
+
+
+@requires_posix_perms
+def test_save_config_permissions(monkeypatch, tmp_path):
+    cfg = tmp_path / "sub" / "config.toml"
+    monkeypatch.setenv("GALAXY_CONFIG_FILE", str(cfg))
+    config.save_config({"api_key": "k"})
+    assert stat.S_IMODE(os.stat(cfg).st_mode) == 0o600
 
 
 def test_read_only_kwarg_overrides_env(monkeypatch, tmp_path):
@@ -64,6 +80,7 @@ def test_save_config_replaces_contents(monkeypatch, tmp_path):
     assert config.read_config() == {"api_key": "k2"}
 
 
+@requires_posix_perms
 def test_save_config_tightens_existing_perms(monkeypatch, tmp_path):
     cfg = tmp_path / "config.toml"
     monkeypatch.setenv("GALAXY_CONFIG_FILE", str(cfg))
