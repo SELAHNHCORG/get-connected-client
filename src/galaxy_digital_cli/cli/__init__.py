@@ -24,6 +24,7 @@ from .misc import (
 )
 from .needs import needs_app
 from .qualifications import qualifications_app
+from .reports import reports_app
 from .responses import responses_app
 from .teams import teams_app
 from .users import users_app
@@ -50,6 +51,7 @@ app.add_typer(interests_app, name="interests")
 app.add_typer(impacts_app, name="impacts")
 app.add_typer(registration_questions_app, name="registration-questions")
 app.add_typer(auth_app, name="auth")
+app.add_typer(reports_app, name="reports")
 
 
 def _version(value: bool) -> None:

@@ -17,13 +17,15 @@ plus a `galaxy` command that mirrors it with one sub-app apiece:
 ```
 config  users  agencies  needs  events  hours  responses  teams  groups
 qualifications  benchmarks  clusters  causes  interests  impacts
-registration-questions  auth
+registration-questions  auth  reports
 ```
 
 `config` reports the resolved settings and has no library
 counterpart; conversely the library's `client.lookups` namespace is split
 on the CLI into the `causes`, `interests`, `impacts` and
-`registration-questions` sub-apps.
+`registration-questions` sub-apps. `reports` is the other odd one out: it
+mirrors no endpoint, aggregating records the API returns into answers it
+will not compute for you.
 
 ## Installation
 
@@ -71,6 +73,21 @@ persisted to disk by the CLI.
 
 `--json` emits raw JSON instead of a formatted table, for scripting. It
 is a root option, so it goes before the sub-app name.
+
+### Reports
+
+`galaxy reports` answers questions the API has no endpoint for. The
+attendance report ranks a program's volunteers by how many of its sessions
+they turned up to, highest first:
+
+```bash
+galaxy reports attendance --program "hollywood" --year 2026
+```
+
+Attendance comes from hour records (two entries on one day count as one
+program attended). Pin exact needs with `--need-id` instead of a title,
+narrow by `--status`, and use `--start`/`--end` for a period that is not a
+whole calendar year. Reports only read, so `--read-only` never blocks them.
 
 ### Library
 
