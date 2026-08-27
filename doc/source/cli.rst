@@ -445,6 +445,68 @@ Small, mostly read-only lookup endpoints:
    * - ``registration-questions list``
      - List the site's custom registration questions.
 
+``reports`` -- aggregate answers the API will not compute
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 75
+
+   * - Command
+     - Description
+   * - ``attendance``
+     - Rank a program's volunteers by how many of its sessions they
+       attended, highest first.
+
+Every command here only reads, so none of them prompts and all of them work
+under ``--read-only``.
+
+``attendance`` takes attendance from hour records: a volunteer counts as
+having attended on every distinct date they logged time against the matched
+needs, so two entries on one day are one program attended. The table adds a
+1-based ``rank``, sorted by programs attended, then total hours, then name.
+Its options:
+
+``--program TEXT``
+    Match needs whose title contains this text, case-insensitively. The
+    ``/needs`` endpoint's own ``need_title`` filter is tried first, and the
+    full need list (inactive included) is scanned as a fallback when that
+    returns nothing.
+
+``--need-id INT``
+    Count this need id exactly, skipping title resolution. Repeatable, and
+    may be combined with ``--program``. At least one of ``--program`` and
+    ``--need-id`` is required.
+
+``--start YYYY-MM-DD`` / ``--end YYYY-MM-DD``
+    Inclusive bounds on the attendance date. Both are optional; omitting
+    them counts everything.
+
+``--year INT``
+    Shorthand for ``--start YEAR-01-01 --end YEAR-12-31``. It may not be
+    combined with ``--start`` or ``--end``.
+
+``--status TEXT``
+    Only count hour records with this status, e.g. ``approved``
+    (case-insensitive, repeatable). By default every status counts.
+
+``--full-scan``
+    Page through every hour record. ``/hours`` has no need, user or
+    attendance-date filter, so the report scans and narrows client-side; by
+    default a ``--start`` bound also sends ``since_created``, which skips the
+    pages of hours logged before the period and makes that scan far shorter.
+    That trades completeness for speed -- hours logged *before* the date they
+    were served would be missed -- so pass ``--full-scan`` when the report
+    must be exhaustive.
+
+With ``--json`` the output is a single object with a ``needs`` key (what the
+program name matched) and a ``rows`` key (the ranking), because which needs
+were counted is half the answer.
+
+.. code-block:: bash
+
+   galaxy reports attendance --program "hollywood" --year 2026
+
 Soft deletes
 ------------
 
