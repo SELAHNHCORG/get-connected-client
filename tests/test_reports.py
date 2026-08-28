@@ -5,6 +5,7 @@ production API, and nothing in this module writes anyway: the report is a
 read-only aggregation.
 """
 
+import csv
 import json
 
 import httpx
@@ -562,3 +563,272 @@ def test_reports_makes_no_write_requests(api, cli_env):
     result = runner.invoke(app, ["reports", "attendance", "--program", "hollywood"])
     assert result.exit_code == 0, result.output
     assert {call.request.method for call in api.calls} == {"GET"}
+
+
+# --------------------------------------------------------------------------
+# --local: merging VolunteerLocal in
+# --------------------------------------------------------------------------
+
+LOCAL_HEADERS = [
+    "Total shifts",
+    "Total Hours (by shift time)",
+    "Total Hours (by check-in time)",
+    "Total events",
+    "Non-outreach",
+    "Outreach",
+    "Date of first shift",
+    "Date of last shift",
+    "Email",
+    "First Name",
+    "Last Name",
+    "Mobile Phone",
+]
+
+
+def local_row(email="", first="", last="", shifts="", events="", hours=""):
+    """One row of a VolunteerLocal export, unset columns left blank."""
+    blank = dict.fromkeys(LOCAL_HEADERS, "")
+    return {
+        **blank,
+        "Total shifts": shifts,
+        "Total Hours (by shift time)": hours,
+        "Total events": events,
+        "Email": email,
+        "First Name": first,
+        "Last Name": last,
+    }
+
+
+def local_csv(tmp_path, *rows, name="vol_db.csv"):
+    """*rows* written out as an export, BOM and all. Returns the path."""
+    path = tmp_path / name
+    with path.open("w", newline="", encoding="utf-8-sig") as handle:
+        writer = csv.DictWriter(handle, LOCAL_HEADERS)
+        writer.writeheader()
+        writer.writerows(rows)
+    return str(path)
+
+
+def test_local_matches_on_email_case_insensitively(api, cli_env, tmp_path):
+    api.get("/hours").mock(side_effect=pages([hour(1, 7, "2026-01-05")]))
+    path = local_csv(
+        tmp_path,
+        local_row(
+            email="MARY@Example.ORG",
+            first="Mary",
+            last="Shelley",
+            shifts="4",
+            events="3",
+            hours="12.5",
+        ),
+    )
+    result = runner.invoke(
+        app,
+        ["--json", "reports", "attendance", "--need-id", "42", "--local", path],
+    )
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    (row,) = payload["rows"]
+    assert row["volunteer"] == "Mary Shelley"
+    assert row["volunteerlocal"]["total_shifts"] == 4
+    assert row["volunteerlocal"]["total_events"] == 3
+    assert row["volunteerlocal"]["total_hours"] == 12.5
+    # matching used the email, it did not publish it as a new report column
+    assert "email" not in row
+    # everybody in the export was matched
+    assert payload["local_only"] == []
+
+
+def test_local_falls_back_to_the_full_name(api, cli_env, tmp_path):
+    """A VolunteerLocal record with no email still matches by name."""
+    api.get("/hours").mock(
+        side_effect=pages([hour(1, 8, "2026-01-05", fname="Ada", lname="Lovelace")])
+    )
+    path = local_csv(tmp_path, local_row(first="ADA", last="lovelace", shifts="6"))
+    result = runner.invoke(
+        app,
+        ["--json", "reports", "attendance", "--need-id", "42", "--local", path],
+    )
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["rows"][0]["volunteerlocal"]["total_shifts"] == 6
+    assert payload["local_only"] == []
+
+
+def test_local_unmatched_galaxy_row_is_null(api, cli_env, tmp_path):
+    api.get("/hours").mock(side_effect=pages([hour(1, 7, "2026-01-05")]))
+    path = local_csv(
+        tmp_path, local_row(email="grace@example.org", first="Grace", last="Hopper")
+    )
+    result = runner.invoke(
+        app,
+        ["--json", "reports", "attendance", "--need-id", "42", "--local", path],
+    )
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["rows"][0]["volunteerlocal"] is None
+    assert [v["email"] for v in payload["local_only"]] == ["grace@example.org"]
+
+
+def test_local_only_volunteers_are_listed_after_the_ranking(api, cli_env, tmp_path):
+    api.get("/hours").mock(side_effect=pages([hour(1, 7, "2026-01-05")]))
+    path = local_csv(
+        tmp_path,
+        local_row(email="grace@example.org", first="Grace", last="Hopper", shifts="2"),
+        local_row(email="ada@example.org", first="Ada", last="Lovelace", shifts="9"),
+        local_row(email="zoe@example.org", first="Zoe", last="Zed"),
+        local_row(email="mary@example.org", first="Mary", last="Shelley", shifts="1"),
+    )
+    result = runner.invoke(
+        app,
+        ["--json", "reports", "attendance", "--need-id", "42", "--local", path],
+    )
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    # Mary was matched, so she is a row and not a leftover; the rest sort by
+    # shifts desc, and the volunteer with no shift count sorts last
+    assert [v["first_name"] for v in payload["local_only"]] == ["Ada", "Grace", "Zoe"]
+    assert payload["rows"][0]["volunteerlocal"]["total_shifts"] == 1
+
+
+def test_local_table_columns_and_appended_rows(api, cli_env, tmp_path, monkeypatch):
+    monkeypatch.setenv("COLUMNS", "200")
+    api.get("/needs").mock(side_effect=pages([HOLLYWOOD]))
+    api.get("/hours").mock(
+        side_effect=pages(
+            [
+                hour(1, 7, "2026-01-05"),
+                hour(2, 8, "2026-01-06", fname="Ada", lname="Lovelace", email=None),
+            ]
+        )
+    )
+    path = local_csv(
+        tmp_path,
+        local_row(
+            email="mary@example.org",
+            first="Mary",
+            last="Shelley",
+            shifts="4",
+            events="3",
+            hours="12.5",
+        ),
+        local_row(email="grace@example.org", first="Grace", last="Hopper", shifts="9"),
+    )
+    result = runner.invoke(
+        app, ["reports", "attendance", "--program", "hollywood", "--local", path]
+    )
+    assert result.exit_code == 0, result.output
+    out = result.output
+    for column in ("vl_shifts", "vl_events", "vl_hours"):
+        assert column in out
+    assert "VolunteerLocal" in out  # the title names both sources
+    # the local-only volunteer is appended after the ranked rows
+    assert out.index("Mary Shelley") < out.index("Grace Hopper")
+    assert out.index("Ada Lovelace") < out.index("Grace Hopper")
+    assert "12.5" in out
+    # a Galaxy volunteer nobody in the export matches gets blank vl_ cells,
+    # not the word "None"
+    assert "None" not in out
+
+
+def test_local_notes_that_its_totals_are_lifetime(api, cli_env, tmp_path):
+    api.get("/hours").mock(side_effect=pages([hour(1, 7, "2026-01-05")]))
+    path = local_csv(tmp_path, local_row(email="mary@example.org", shifts="4"))
+    result = runner.invoke(
+        app,
+        [
+            "reports",
+            "attendance",
+            "--need-id",
+            "42",
+            "--year",
+            "2026",
+            "--local",
+            path,
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert "lifetime" in result.output
+    assert "2026-01-01 to 2026-12-31" in result.output
+
+
+def test_no_lifetime_note_without_a_period(api, cli_env, tmp_path):
+    api.get("/hours").mock(side_effect=pages([hour(1, 7, "2026-01-05")]))
+    path = local_csv(tmp_path, local_row(email="mary@example.org", shifts="4"))
+    result = runner.invoke(
+        app, ["reports", "attendance", "--need-id", "42", "--local", path]
+    )
+    assert result.exit_code == 0, result.output
+    assert "lifetime" not in result.output
+
+
+def test_local_reads_a_sqlite_database(api, cli_env, tmp_path):
+    from tests.test_vollocal import make_db
+
+    api.get("/hours").mock(side_effect=pages([hour(1, 7, "2026-01-05")]))
+    db = make_db(
+        tmp_path / "db.sqlite3",
+        [
+            (
+                "Mary",
+                "Shelley",
+                "mary@example.org",
+                1,
+                "yes",
+                "2026-01-05",
+                "2026-03-02",
+                4,
+                12.5,
+                None,
+            ),
+        ],
+    )
+    result = runner.invoke(
+        app,
+        ["--json", "reports", "attendance", "--need-id", "42", "--local", str(db)],
+    )
+    assert result.exit_code == 0, result.output
+    local = json.loads(result.output)["rows"][0]["volunteerlocal"]
+    assert local["total_shifts"] == 4
+    assert local["total_hours"] == 12.5
+    # the database has no event count or outreach split
+    assert local["total_events"] is None
+    assert local["outreach"] is None
+
+
+def test_local_missing_file_is_a_clean_error(api, cli_env, tmp_path):
+    result = runner.invoke(
+        app,
+        [
+            "reports",
+            "attendance",
+            "--need-id",
+            "42",
+            "--local",
+            str(tmp_path / "nope.sqlite3"),
+        ],
+    )
+    assert result.exit_code == 1
+    assert "no such VolunteerLocal file" in result.stderr
+    assert "Traceback" not in result.stderr
+    # the bad path was caught before any of the hours were paged through
+    assert not api.calls
+
+
+def test_local_unknown_suffix_is_a_clean_error(api, cli_env, tmp_path):
+    path = tmp_path / "export.xlsx"
+    path.write_bytes(b"PK\x03\x04")
+    result = runner.invoke(
+        app, ["reports", "attendance", "--need-id", "42", "--local", str(path)]
+    )
+    assert result.exit_code == 1
+    assert "Traceback" not in result.stderr
+    assert not api.calls
+
+
+def test_local_help_mentions_volunteerlocal_and_lifetime():
+    result = runner.invoke(app, ["reports", "attendance", "--help"])
+    assert result.exit_code == 0, result.output
+    assert "--local" in result.output
+    assert "VolunteerLocal" in result.output
+    assert "LIFETIME" in result.output
