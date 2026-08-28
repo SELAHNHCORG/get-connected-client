@@ -252,6 +252,9 @@ def test_unparseable_row_names_its_line(tmp_path):
     path.write_text(
         '"Total shifts","Email"\r\n3,ada@example.org\r\n1,' + "x" * 200 + "\r\n",
         encoding="utf-8",
+        # verbatim: without this, Windows' newline translation turns each
+        # \r\n into \r\r\n and shifts the csv reader's line numbering
+        newline="",
     )
     limit = csv.field_size_limit(20)
     try:
