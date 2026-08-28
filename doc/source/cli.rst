@@ -532,8 +532,13 @@ this reads. A missing path, an unreadable file or a suffix that is neither
 of the above is a plain error, and it is reported before the hours scan
 starts rather than after it.
 
-Volunteers are matched on **email**, lowercased, and on the full
-``first last`` name for the records that have no email. Matched Galaxy rows
+Volunteers are matched on **email** first, case-insensitively. When the
+emails do not line up -- either side is missing one, or they simply differ,
+which happens when someone uses different addresses in the two systems -- a
+fallback is tried against the volunteer's full ``first last`` name, checked
+against every VolunteerLocal record. Name-only matches are best-effort: two
+volunteers who share a full name can occasionally attach the wrong record,
+so verify by email when it matters. Matched Galaxy rows
 gain ``vl_shifts``, ``vl_events`` and ``vl_hours`` columns (blank where
 VolunteerLocal knows nothing about that volunteer, and ``vl_events`` is
 always blank for the sqlite source, which has no event count). Volunteers

@@ -306,3 +306,32 @@ def test_unknown_suffix(tmp_path):
 def test_local_data_error_is_a_galaxy_error():
     """So the CLI's handler turns it into a message, not a traceback."""
     assert issubclass(LocalDataError, GalaxyError)
+
+
+# --------------------------------------------------------------------------
+# non-finite numerics
+# --------------------------------------------------------------------------
+
+
+def test_int_rejects_infinity_and_nan():
+    """``int(float("inf"))`` raises OverflowError -- junk, not a crash."""
+    assert vollocal._int("inf") is None
+    assert vollocal._int("nan") is None
+
+
+def test_float_rejects_infinity_and_nan():
+    assert vollocal._float("inf") is None
+    assert vollocal._float("nan") is None
+
+
+def test_csv_row_with_infinite_total_shifts_parses_with_that_field_none(tmp_path):
+    """A junk cell costs the report that one figure, never the whole file."""
+    path = tmp_path / "vol_db.csv"
+    path.write_text(
+        '﻿"Total shifts","Email","First Name","Last Name"\r\n'
+        "inf,ada@example.org,Ada,Lovelace\r\n",
+        encoding="utf-8",
+    )
+    (volunteer,) = read_local_volunteers(path)
+    assert volunteer.total_shifts is None
+    assert volunteer.email == "ada@example.org"

@@ -25,7 +25,9 @@ nothing is ever written: the database is opened read-only.
 from __future__ import annotations
 
 import csv
+import math
 import sqlite3
+import urllib.parse
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -108,19 +110,24 @@ def _int(value: Any) -> int | None:
         return None
     try:
         return int(float(text))
-    except ValueError:
+    except (ValueError, OverflowError):
         return None
 
 
 def _float(value: Any) -> float | None:
-    """*value* as a float, or None when it is blank or not a number."""
+    """*value* as a float, or None when it is blank or not a number.
+
+    ``inf``, ``-inf`` and ``nan`` all parse fine as floats but are not
+    meaningful totals, so they are treated the same as junk text.
+    """
     text = _text(value)
     if text is None:
         return None
     try:
-        return float(text)
+        value = float(text)
     except ValueError:
         return None
+    return value if math.isfinite(value) else None
 
 
 def read_local_volunteers(path: Path) -> list[LocalVolunteer]:
@@ -155,7 +162,9 @@ def _read_sqlite(path: Path) -> list[LocalVolunteer]:
     database, and a report has no business being able to write to it.
     """
     try:
-        connection = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+        connection = sqlite3.connect(
+            f"file:{urllib.parse.quote(str(path))}?mode=ro", uri=True
+        )
     except sqlite3.Error as error:
         raise LocalDataError(f"cannot open {path}: {error}") from error
     try:

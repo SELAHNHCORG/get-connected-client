@@ -77,9 +77,11 @@ _LOCAL = typer.Option(
     help=(
         "Merge in VolunteerLocal records from this file -- either a sqlite "
         "database (.sqlite3/.sqlite/.db) or a VolunteerLocal CSV export "
-        "(.csv), told apart by suffix. Matched on email, then on full name. "
-        "Its vl_* figures are LIFETIME totals: that export has no per-date "
-        "rows, so they ignore --start/--end/--year."
+        "(.csv), told apart by suffix. Matched on email, falling back to "
+        "full name when the emails don't line up (best-effort -- verify by "
+        "email if two volunteers share a name). Its vl_* figures are "
+        "LIFETIME totals: that export has no per-date rows, so they ignore "
+        "--start/--end/--year."
     ),
 )
 
@@ -306,8 +308,12 @@ def _local_keys(volunteer: LocalVolunteer) -> list[str]:
     """The keys *volunteer* can be matched on, best first.
 
     Email is the identity the two systems genuinely share; the full name is
-    a fallback for the records that have no email, and it is the reason a
-    name key is indexed for every volunteer, not only those.
+    a fallback tried whenever a row's email does not match one here --
+    including rows that have no email at all -- which is why a name key is
+    indexed for every volunteer, not only those without an email. People
+    often use different addresses in the two systems, so this is deliberate;
+    it is best-effort, and two volunteers sharing a full name can match the
+    wrong record.
     """
     keys = []
     if volunteer.email:
