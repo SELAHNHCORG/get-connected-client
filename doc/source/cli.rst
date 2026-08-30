@@ -3,7 +3,10 @@ Command Line Interface
 
 The ``galaxy`` command has one sub-app per resource. Run ``galaxy --help``
 or ``galaxy <resource> --help`` for the full, current option list for any
-command -- this page is an index, not a replacement for ``--help``.
+command -- this page is an index, not a replacement for ``--help``. The
+command reference below is rendered directly from the live application with
+`sphinxcontrib-typer <https://sphinxcontrib-typer.readthedocs.io/>`_, so it
+can never drift out of sync with the actual CLI.
 
 Global options
 --------------
@@ -44,16 +47,12 @@ Command tree
 ``config`` -- inspect the resolved configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. list-table::
-   :header-rows: 1
-   :widths: 25 75
-
-   * - Command
-     - Description
-   * - ``show``
-     - Show the resolved ``api_key`` and ``token`` (both redacted), ``url``
-       and ``read_only``, plus whether each came from a flag, the
-       environment, or the default.
+.. typer:: galaxy_digital_cli.cli:app:config
+   :prog: galaxy config
+   :show-nested:
+   :make-sections:
+   :preferred: text
+   :width: 100
 
 There is nothing to set or unset: settings come from the global flags, then
 ``GALAXY_API_KEY`` / ``GALAXY_API_TOKEN`` / ``GALAXY_API_URL`` /
@@ -62,401 +61,183 @@ There is nothing to set or unset: settings come from the global flags, then
 ``auth`` -- credential exchange
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. list-table::
-   :header-rows: 1
-   :widths: 25 75
-
-   * - Command
-     - Description
-   * - ``login``
-     - Exchange the site key, an email and a password for a session token.
-   * - ``authenticate``
-     - Verify credentials and mint a one-click login link.
+.. typer:: galaxy_digital_cli.cli:app:auth
+   :prog: galaxy auth
+   :show-nested:
+   :make-sections:
+   :preferred: text
+   :width: 100
 
 ``login`` is where every session starts, since the site key cannot
-authenticate requests by itself. Its options:
+authenticate requests by itself.
 
-``--email TEXT``
-    The account email address (required).
+``--export`` puts one shell-eval'able line on stdout and nothing else, so
+the token can be adopted by the current shell without ever being written to
+a file:
 
-``--password TEXT``
-    The account password. Omit it and the command prompts, hidden, on
-    stderr.
+.. code-block:: bash
 
-``--key TEXT``
-    The site key for the login body. Defaults to the resolved
-    ``--api-key`` / ``GALAXY_API_KEY``; ``--key`` alone is enough to log in
-    even with no ``GALAXY_API_KEY`` set. The command errors out only if
-    neither is available.
+   eval "$(galaxy auth login --email you@example.org --export)"
 
-``--export``
-    Print exactly one line on stdout --
-    ``export GALAXY_API_TOKEN='<token>'`` -- and nothing else, so the token
-    can be adopted by the current shell:
-
-    .. code-block:: bash
-
-       eval "$(galaxy auth login --email you@example.org --export)"
-
-    Every other message, the password prompt included, goes to stderr.
+Every other message, the password prompt included, goes to stderr -- which
+is also why the password is always collected via a hidden prompt unless
+``--password`` is given explicitly.
 
 Without ``--export`` the token is printed in a table, wrapped in full
 rather than truncated, and ``--json`` emits the whole login record for
 scripting.
 
 Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
-Passwords are always collected via a hidden prompt unless ``--password`` is
-given explicitly.
 
 ``users`` -- manage users
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. list-table::
-   :header-rows: 1
-   :widths: 35 65
-
-   * - Command
-     - Description
-   * - ``list``
-     - List users, paging through every match.
-   * - ``get ID``
-     - Show one user.
-   * - ``create``
-     - Create a user.
-   * - ``update ID``
-     - Update a user, sending only the fields you name.
-   * - ``delete ID``
-     - Delete a user (soft delete).
-   * - ``agencies ID``
-     - List the agencies a user has fanned.
-   * - ``add-agency ID AGENCY_ID``
-     - Fan an agency on a user's behalf.
-   * - ``remove-agency ID AGENCY_ID``
-     - Drop a user's fan relationship with an agency.
-   * - ``benchmarks ID``
-     - List the benchmarks a user has earned.
-   * - ``remove-benchmark ID BENCHMARK_ID``
-     - Take a benchmark away from a user.
-   * - ``causes ID``
-     - List a user's causes.
-   * - ``add-cause ID CAUSE_ID``
-     - Assign a cause to a user.
-   * - ``remove-cause ID CAUSE_ID``
-     - Unassign a cause from a user.
-   * - ``extras ID``
-     - List a user's custom key/value data.
-   * - ``set-extras ID``
-     - Replace a user's extras.
-   * - ``hours ID``
-     - List the hours a user has submitted.
-   * - ``interests ID``
-     - List a user's interests.
-   * - ``add-interest ID INTEREST_ID``
-     - Assign an interest to a user.
-   * - ``remove-interest ID INTEREST_ID``
-     - Unassign an interest from a user.
-   * - ``welcome-email ID``
-     - Send a user the site's welcome email. A GET with a side effect, so
-       ``--read-only`` blocks it.
-   * - ``oneclick ID``
-     - Mint a one-click login link for a user. Also a GET with a side
-       effect -- it hands out a credential -- so ``--read-only`` blocks it
-       too.
-   * - ``optouts ID``
-     - Show which message areas a user has opted out of.
-   * - ``add-optout ID AREAS...``
-     - Opt a user out of messaging.
-   * - ``remove-optout ID AREAS...``
-     - Lift named areas from a user's opt-out list.
-   * - ``qualifications ID``
-     - List a user's qualifications.
-   * - ``registration-answers ID``
-     - List a user's custom registration answers.
-   * - ``set-registration-answers ID``
-     - Store a user's custom registration answers.
-   * - ``responses ID``
-     - List the needs a user has signed up for.
-   * - ``tracks ID``
-     - List a user's tracks.
-   * - ``tags ID``
-     - List a user's tags.
-   * - ``add-tags ID TAGS...``
-     - Add one or more tags, by name, to a user.
-   * - ``remove-tag ID TAG_ID``
-     - Remove a tag from a user.
+.. typer:: galaxy_digital_cli.cli:app:users
+   :prog: galaxy users
+   :show-nested:
+   :make-sections:
+   :preferred: text
+   :width: 100
 
 ``agencies`` -- manage agencies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. list-table::
-   :header-rows: 1
-   :widths: 35 65
-
-   * - Command
-     - Description
-   * - ``list``
-     - List agencies, paging through every match.
-   * - ``get ID``
-     - Show one agency.
-   * - ``create``
-     - Create an agency.
-   * - ``update ID``
-     - Update an agency, sending only the fields you name.
-   * - ``delete ID``
-     - Delete an agency (soft delete).
-   * - ``causes ID``
-     - List the causes attached to an agency.
-   * - ``add-cause ID CAUSE_ID``
-     - Attach a cause to an agency.
-   * - ``remove-cause ID CAUSE_ID``
-     - Detach a cause from an agency.
-   * - ``clusters ID``
-     - List the clusters attached to an agency.
-   * - ``add-cluster ID CLUSTER_ID``
-     - Attach a cluster to an agency.
-   * - ``remove-cluster ID CLUSTER_ID``
-     - Detach a cluster from an agency.
-   * - ``managers ID``
-     - List the users who manage an agency.
-   * - ``add-manager ID USER_ID``
-     - Make a user a manager of an agency.
-   * - ``remove-manager ID USER_ID``
-     - Remove a user as a manager of an agency.
-   * - ``tags ID``
-     - List an agency's tags.
-   * - ``add-tags ID TAGS...``
-     - Add one or more tags, by name, to an agency.
-   * - ``remove-tag ID TAG_ID``
-     - Remove a tag from an agency.
+.. typer:: galaxy_digital_cli.cli:app:agencies
+   :prog: galaxy agencies
+   :show-nested:
+   :make-sections:
+   :preferred: text
+   :width: 100
 
 ``needs`` -- manage needs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. list-table::
-   :header-rows: 1
-   :widths: 35 65
-
-   * - Command
-     - Description
-   * - ``list``
-     - List needs, paging through every match.
-   * - ``get ID``
-     - Show one need.
-   * - ``create``
-     - Create a need.
-   * - ``update ID``
-     - Update a need, sending only the fields you name.
-   * - ``delete ID``
-     - Delete a need (soft delete).
-   * - ``responses ID``
-     - List the responses (sign-ups) to a need.
-   * - ``questions ID``
-     - List the custom questions asked of volunteers responding to a need.
-   * - ``add-shift ID``
-     - Add a shift to a need.
-   * - ``remove-shift ID SHIFT_ID``
-     - Remove a shift from a need.
-   * - ``add-interest ID INTEREST_ID``
-     - Attach an interest to a need.
-   * - ``remove-interest ID INTEREST_ID``
-     - Detach an interest from a need.
-   * - ``add-qualification ID QUALIFICATION_ID``
-     - Attach a qualification to a need.
-   * - ``remove-qualification ID QUALIFICATION_ID``
-     - Detach a qualification from a need.
+.. typer:: galaxy_digital_cli.cli:app:needs
+   :prog: galaxy needs
+   :show-nested:
+   :make-sections:
+   :preferred: text
+   :width: 100
 
 ``events`` -- manage events
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. list-table::
-   :header-rows: 1
-   :widths: 25 75
-
-   * - Command
-     - Description
-   * - ``list``
-     - List events, paging through every match.
-   * - ``get ID``
-     - Show one event.
-   * - ``create``
-     - Create an event.
-   * - ``update ID``
-     - Update an event, sending only the fields you name.
-   * - ``delete ID``
-     - Delete an event (soft delete).
+.. typer:: galaxy_digital_cli.cli:app:events
+   :prog: galaxy events
+   :show-nested:
+   :make-sections:
+   :preferred: text
+   :width: 100
 
 ``hours`` -- manage hour records
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. list-table::
-   :header-rows: 1
-   :widths: 25 75
-
-   * - Command
-     - Description
-   * - ``list``
-     - List hour records, paging through every match.
-   * - ``get ID``
-     - Show one hour record.
-   * - ``create``
-     - Create an hour record.
-   * - ``update ID``
-     - Update an hour record, sending only the fields you name.
-   * - ``delete ID``
-     - Delete an hour record (soft delete).
+.. typer:: galaxy_digital_cli.cli:app:hours
+   :prog: galaxy hours
+   :show-nested:
+   :make-sections:
+   :preferred: text
+   :width: 100
 
 ``responses`` -- manage responses (need sign-ups)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. list-table::
-   :header-rows: 1
-   :widths: 25 75
-
-   * - Command
-     - Description
-   * - ``list``
-     - List responses, paging through every match.
-   * - ``get ID``
-     - Show one response.
-   * - ``create``
-     - Create a response.
-   * - ``update ID``
-     - Update a response, sending only the fields you name.
-   * - ``delete ID``
-     - Delete a response (soft delete).
+.. typer:: galaxy_digital_cli.cli:app:responses
+   :prog: galaxy responses
+   :show-nested:
+   :make-sections:
+   :preferred: text
+   :width: 100
 
 ``teams`` -- manage teams
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. list-table::
-   :header-rows: 1
-   :widths: 35 65
-
-   * - Command
-     - Description
-   * - ``list``
-     - List teams, paging through every match.
-   * - ``get ID``
-     - Show one team.
-   * - ``create``
-     - Create a team.
-   * - ``delete ID``
-     - Delete a team (soft delete).
-   * - ``add-member ID MEMBER``
-     - Attach a member to a team.
-   * - ``remove-member ID MEMBER``
-     - Detach a member from a team.
+.. typer:: galaxy_digital_cli.cli:app:teams
+   :prog: galaxy teams
+   :show-nested:
+   :make-sections:
+   :preferred: text
+   :width: 100
 
 ``groups`` -- manage groups
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. list-table::
-   :header-rows: 1
-   :widths: 35 65
-
-   * - Command
-     - Description
-   * - ``list``
-     - List groups, paging through every match.
-   * - ``get ID``
-     - Show one group.
-   * - ``create``
-     - Create a group.
-   * - ``update ID``
-     - Update a group, sending only the fields you name.
-   * - ``delete ID``
-     - Delete a group (soft delete).
-   * - ``add-need ID NEED_ID``
-     - Attach a need to a group.
-   * - ``remove-need ID NEED_ID``
-     - Detach a need from a group.
-   * - ``add-user ID USER_ID``
-     - Attach a user to a group.
-   * - ``remove-user ID USER_ID``
-     - Detach a user from a group.
+.. typer:: galaxy_digital_cli.cli:app:groups
+   :prog: galaxy groups
+   :show-nested:
+   :make-sections:
+   :preferred: text
+   :width: 100
 
 ``qualifications`` -- manage qualifications
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. list-table::
-   :header-rows: 1
-   :widths: 25 75
-
-   * - Command
-     - Description
-   * - ``list``
-     - List qualifications, paging through every match.
-   * - ``get ID``
-     - Show one qualification.
-   * - ``create``
-     - Create a qualification.
-   * - ``update ID``
-     - Update a qualification, sending only the fields you name.
-   * - ``delete ID``
-     - Delete a qualification (soft delete).
-   * - ``users ID``
-     - List the users who hold a qualification.
+.. typer:: galaxy_digital_cli.cli:app:qualifications
+   :prog: galaxy qualifications
+   :show-nested:
+   :make-sections:
+   :preferred: text
+   :width: 100
 
 ``benchmarks`` -- manage benchmarks
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. list-table::
-   :header-rows: 1
-   :widths: 25 75
-
-   * - Command
-     - Description
-   * - ``list``
-     - List benchmarks, paging through every match.
-   * - ``get ID``
-     - Show one benchmark.
-   * - ``create``
-     - Create a benchmark.
-   * - ``update ID``
-     - Update a benchmark, sending only the fields you name.
-   * - ``delete ID``
-     - Delete a benchmark (soft delete).
-   * - ``users ID``
-     - List the users who have earned a benchmark.
+.. typer:: galaxy_digital_cli.cli:app:benchmarks
+   :prog: galaxy benchmarks
+   :show-nested:
+   :make-sections:
+   :preferred: text
+   :width: 100
 
 ``clusters``, ``causes``, ``interests``, ``impacts``, ``registration-questions``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Small, mostly read-only lookup endpoints:
 
-.. list-table::
-   :header-rows: 1
-   :widths: 40 60
+.. typer:: galaxy_digital_cli.cli:app:clusters
+   :prog: galaxy clusters
+   :show-nested:
+   :make-sections:
+   :preferred: text
+   :width: 100
 
-   * - Command
-     - Description
-   * - ``clusters list``
-     - List clusters.
-   * - ``clusters create``
-     - Create a cluster.
-   * - ``clusters delete ID``
-     - Delete a cluster.
-   * - ``causes list``
-     - List the site's available causes.
-   * - ``interests list``
-     - List the site's available interests.
-   * - ``impacts list``
-     - List the site's available impact areas.
-   * - ``registration-questions list``
-     - List the site's custom registration questions.
+.. typer:: galaxy_digital_cli.cli:app:causes
+   :prog: galaxy causes
+   :show-nested:
+   :make-sections:
+   :preferred: text
+   :width: 100
+
+.. typer:: galaxy_digital_cli.cli:app:interests
+   :prog: galaxy interests
+   :show-nested:
+   :make-sections:
+   :preferred: text
+   :width: 100
+
+.. typer:: galaxy_digital_cli.cli:app:impacts
+   :prog: galaxy impacts
+   :show-nested:
+   :make-sections:
+   :preferred: text
+   :width: 100
+
+.. typer:: galaxy_digital_cli.cli:app:registration-questions
+   :prog: galaxy registration-questions
+   :show-nested:
+   :make-sections:
+   :preferred: text
+   :width: 100
 
 ``reports`` -- aggregate answers the API will not compute
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. list-table::
-   :header-rows: 1
-   :widths: 25 75
-
-   * - Command
-     - Description
-   * - ``attendance``
-     - Rank a program's volunteers by how many of its sessions they
-       attended, highest first.
+.. typer:: galaxy_digital_cli.cli:app:reports
+   :prog: galaxy reports
+   :show-nested:
+   :make-sections:
+   :preferred: text
+   :width: 100
 
 Every command here only reads, so none of them prompts and all of them work
 under ``--read-only``.
@@ -465,39 +246,21 @@ under ``--read-only``.
 having attended on every distinct date they logged time against the matched
 needs, so two entries on one day are one program attended. The table adds a
 1-based ``rank``, sorted by programs attended, then total hours, then name.
-Its options:
 
-``--program TEXT``
-    Match needs whose title contains this text, case-insensitively. The
-    ``/needs`` endpoint's own ``need_title`` filter is tried first, and the
-    full need list (inactive included) is scanned as a fallback when that
-    returns nothing.
+``--program`` matches needs whose title contains the given text,
+case-insensitively: the ``/needs`` endpoint's own ``need_title`` filter is
+tried first, and the full need list (inactive included) is scanned as a
+fallback when that returns nothing. ``--need-id`` counts a need id exactly,
+skipping title resolution, and may be combined with ``--program``; at least
+one of the two is required.
 
-``--need-id INT``
-    Count this need id exactly, skipping title resolution. Repeatable, and
-    may be combined with ``--program``. At least one of ``--program`` and
-    ``--need-id`` is required.
-
-``--start YYYY-MM-DD`` / ``--end YYYY-MM-DD``
-    Inclusive bounds on the attendance date. Both are optional; omitting
-    them counts everything.
-
-``--year INT``
-    Shorthand for ``--start YEAR-01-01 --end YEAR-12-31``. It may not be
-    combined with ``--start`` or ``--end``.
-
-``--status TEXT``
-    Only count hour records with this status, e.g. ``approved``
-    (case-insensitive, repeatable). By default every status counts.
-
-``--full-scan``
-    Page through every hour record. ``/hours`` has no need, user or
-    attendance-date filter, so the report scans and narrows client-side; by
-    default a ``--start`` bound also sends ``since_created``, which skips the
-    pages of hours logged before the period and makes that scan far shorter.
-    That trades completeness for speed -- hours logged *before* the date they
-    were served would be missed -- so pass ``--full-scan`` when the report
-    must be exhaustive.
+``--full-scan`` trades completeness for speed: ``/hours`` has no need, user
+or attendance-date filter, so the report pages through every hour record and
+narrows client-side. By default a ``--start`` bound also sends
+``since_created``, which skips the pages of hours logged before the period
+and makes that scan far shorter -- but hours logged *before* the date they
+were served would then be missed, so pass ``--full-scan`` when the report
+must be exhaustive.
 
 With ``--json`` the output is a single object with a ``needs`` key (what the
 program name matched) and a ``rows`` key (the ranking), because which needs
@@ -510,8 +273,8 @@ were counted is half the answer.
 Soft deletes
 ------------
 
-Where the table above says "soft delete", the API marks the record inactive
-rather than removing it, so it may reappear when listing with
+Where the reference above says "a soft delete", the API marks the record
+inactive rather than removing it, so it may reappear when listing with
 ``--show-inactive`` (where the endpoint supports that filter). That is what
 the spec documents for the ``delete`` on ``users``, ``agencies``, ``needs``,
 ``events``, ``hours``, ``responses``, ``teams``, ``groups``,

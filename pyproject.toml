@@ -76,6 +76,7 @@ docs = [
     "furo>=2024.1.29",
     "sphinx-autobuild>=2024.2.4",
     "doc8>=1.1.2",
+    "sphinxcontrib-typer>=0.9.1",
 ]
 dev = [
     { include-group = "typing" },
