@@ -7,8 +7,8 @@
 [![Zizmor](https://github.com/SELAHNHCORG/galaxy-digital-cli/actions/workflows/zizmor.yml/badge.svg?branch=main)](https://docs.zizmor.sh/)
 [![Bandit](https://github.com/SELAHNHCORG/galaxy-digital-cli/actions/workflows/bandit.yml/badge.svg?branch=main)](https://bandit.readthedocs.io)
 
-A Python library and command line interface to Galaxy Digital's Get
-Connected API. It provides a typed, synchronous `GalaxyClient` covering
+A Python library and command line interface to [Galaxy Digital's](https://www.galaxydigital.com/volunteer-management-software-for-social-service-organizations) [Get
+Connected API](https://api.galaxydigital.com/docs/). It provides a typed, synchronous `GalaxyClient` covering
 all 66 documented API paths through one namespace per resource
 (`users`, `agencies`, `needs`, `events`, `hours`, `responses`, `teams`,
 `groups`, `qualifications`, `benchmarks`, `clusters`, `lookups`, `auth`),
