@@ -15,16 +15,6 @@ class ReadOnlyError(GalaxyError):
     """A write was attempted while the client is in read-only mode."""
 
 
-class LocalDataError(GalaxyError):
-    """A local data file could not be read — missing, unknown kind, or corrupt.
-
-    Raised by :mod:`galaxy_digital_cli.vollocal` for the VolunteerLocal
-    exports that ``galaxy reports attendance --local`` merges in. It is a
-    :class:`GalaxyError` so the CLI's error handler turns it into a one-line
-    message instead of a traceback, exactly like an API failure.
-    """
-
-
 class GalaxyConnectionError(GalaxyError):
     """The request never completed — DNS, TCP, TLS, or timeout failure."""
 

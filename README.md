@@ -89,20 +89,6 @@ program attended). Pin exact needs with `--need-id` instead of a title,
 narrow by `--status`, and use `--start`/`--end` for a period that is not a
 whole calendar year. Reports only read, so `--read-only` never blocks them.
 
-If your volunteers are split across a second system, `--local` merges
-[VolunteerLocal](https://volunteerlocal.com) in beside the ranking -- from
-either a sqlite database or a CSV export:
-
-```bash
-galaxy reports attendance --program "hollywood" --year 2026 \
-    --local ~/Development/selah_vol_stats/db.sqlite3
-```
-
-Volunteers are matched on email (then on full name), the `vl_*` columns
-carry VolunteerLocal's **lifetime** totals -- that export has no per-date
-rows, so `--year` does not bound them -- and anyone only VolunteerLocal
-knows about is listed after the ranking.
-
 ### Library
 
 ```python
