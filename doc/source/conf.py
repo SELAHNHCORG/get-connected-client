@@ -19,6 +19,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
+    "sphinxcontrib.typer",
 ]
 
 # Kept to just Python: httpx/pydantic inventories are optional and flaky to
