@@ -51,7 +51,7 @@ Command tree
    :prog: galaxy config
    :show-nested:
    :make-sections:
-   :preferred: text
+   :preferred: svg
    :width: 100
 
 There is nothing to set or unset: settings come from the global flags, then
@@ -65,7 +65,7 @@ There is nothing to set or unset: settings come from the global flags, then
    :prog: galaxy auth
    :show-nested:
    :make-sections:
-   :preferred: text
+   :preferred: svg
    :width: 100
 
 ``login`` is where every session starts, since the site key cannot
@@ -96,7 +96,7 @@ Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
    :prog: galaxy users
    :show-nested:
    :make-sections:
-   :preferred: text
+   :preferred: svg
    :width: 100
 
 ``agencies`` -- manage agencies
@@ -106,7 +106,7 @@ Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
    :prog: galaxy agencies
    :show-nested:
    :make-sections:
-   :preferred: text
+   :preferred: svg
    :width: 100
 
 ``needs`` -- manage needs
@@ -116,7 +116,7 @@ Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
    :prog: galaxy needs
    :show-nested:
    :make-sections:
-   :preferred: text
+   :preferred: svg
    :width: 100
 
 ``events`` -- manage events
@@ -126,7 +126,7 @@ Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
    :prog: galaxy events
    :show-nested:
    :make-sections:
-   :preferred: text
+   :preferred: svg
    :width: 100
 
 ``hours`` -- manage hour records
@@ -136,7 +136,7 @@ Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
    :prog: galaxy hours
    :show-nested:
    :make-sections:
-   :preferred: text
+   :preferred: svg
    :width: 100
 
 ``responses`` -- manage responses (need sign-ups)
@@ -146,7 +146,7 @@ Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
    :prog: galaxy responses
    :show-nested:
    :make-sections:
-   :preferred: text
+   :preferred: svg
    :width: 100
 
 ``teams`` -- manage teams
@@ -156,7 +156,7 @@ Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
    :prog: galaxy teams
    :show-nested:
    :make-sections:
-   :preferred: text
+   :preferred: svg
    :width: 100
 
 ``groups`` -- manage groups
@@ -166,7 +166,7 @@ Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
    :prog: galaxy groups
    :show-nested:
    :make-sections:
-   :preferred: text
+   :preferred: svg
    :width: 100
 
 ``qualifications`` -- manage qualifications
@@ -176,7 +176,7 @@ Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
    :prog: galaxy qualifications
    :show-nested:
    :make-sections:
-   :preferred: text
+   :preferred: svg
    :width: 100
 
 ``benchmarks`` -- manage benchmarks
@@ -186,7 +186,7 @@ Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
    :prog: galaxy benchmarks
    :show-nested:
    :make-sections:
-   :preferred: text
+   :preferred: svg
    :width: 100
 
 ``clusters``, ``causes``, ``interests``, ``impacts``, ``registration-questions``
@@ -198,35 +198,35 @@ Small, mostly read-only lookup endpoints:
    :prog: galaxy clusters
    :show-nested:
    :make-sections:
-   :preferred: text
+   :preferred: svg
    :width: 100
 
 .. typer:: galaxy_digital_cli.cli:app:causes
    :prog: galaxy causes
    :show-nested:
    :make-sections:
-   :preferred: text
+   :preferred: svg
    :width: 100
 
 .. typer:: galaxy_digital_cli.cli:app:interests
    :prog: galaxy interests
    :show-nested:
    :make-sections:
-   :preferred: text
+   :preferred: svg
    :width: 100
 
 .. typer:: galaxy_digital_cli.cli:app:impacts
    :prog: galaxy impacts
    :show-nested:
    :make-sections:
-   :preferred: text
+   :preferred: svg
    :width: 100
 
 .. typer:: galaxy_digital_cli.cli:app:registration-questions
    :prog: galaxy registration-questions
    :show-nested:
    :make-sections:
-   :preferred: text
+   :preferred: svg
    :width: 100
 
 ``reports`` -- aggregate answers the API will not compute
@@ -236,7 +236,7 @@ Small, mostly read-only lookup endpoints:
    :prog: galaxy reports
    :show-nested:
    :make-sections:
-   :preferred: text
+   :preferred: svg
    :width: 100
 
 Every command here only reads, so none of them prompts and all of them work
