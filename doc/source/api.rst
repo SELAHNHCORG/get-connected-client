@@ -22,13 +22,6 @@ Configuration
    :members:
    :show-inheritance:
 
-VolunteerLocal
---------------
-
-.. automodule:: galaxy_digital_cli.vollocal
-   :members:
-   :show-inheritance:
-
 Resources
 ---------
 

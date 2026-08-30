@@ -499,9 +499,6 @@ Its options:
     were served would be missed -- so pass ``--full-scan`` when the report
     must be exhaustive.
 
-``--local PATH``
-    Merge in volunteers from VolunteerLocal_. See below.
-
 With ``--json`` the output is a single object with a ``needs`` key (what the
 program name matched) and a ``rows`` key (the ranking), because which needs
 were counted is half the answer.
@@ -509,63 +506,6 @@ were counted is half the answer.
 .. code-block:: bash
 
    galaxy reports attendance --program "hollywood" --year 2026
-
-Merging VolunteerLocal in with ``--local``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Sites that also run VolunteerLocal_ can put the two systems side by side.
-``--local`` takes the path to a file VolunteerLocal's data already sits in,
-and the kind is told from the suffix:
-
-``.sqlite3``, ``.sqlite``, ``.db``
-    A sqlite database holding the ``selah_vol_db_volunteerrecord`` table.
-    It is opened **read-only**, so the report can never write to it.
-
-``.csv``
-    A VolunteerLocal export, in either variant it produces -- the full
-    volunteer database or the per-signup export (which carries the same
-    totals but no shift dates). Unknown columns, including the long tail of
-    per-event question columns, are ignored.
-
-There is no API to call: VolunteerLocal exports files, so a file is what
-this reads. A missing path, an unreadable file or a suffix that is neither
-of the above is a plain error, and it is reported before the hours scan
-starts rather than after it.
-
-Volunteers are matched on **email** first, case-insensitively. When the
-emails do not line up -- either side is missing one, or they simply differ,
-which happens when someone uses different addresses in the two systems -- a
-fallback is tried against the volunteer's full ``first last`` name, checked
-against every VolunteerLocal record. Name-only matches are best-effort: two
-volunteers who share a full name can occasionally attach the wrong record,
-so verify by email when it matters. Matched Galaxy rows
-gain ``vl_shifts``, ``vl_events`` and ``vl_hours`` columns (blank where
-VolunteerLocal knows nothing about that volunteer, and ``vl_events`` is
-always blank for the sqlite source, which has no event count). Volunteers
-only VolunteerLocal knows are appended *after* the ranking with a ``-``
-rank, ordered by shifts, so the report also answers "who is missing from
-Galaxy Digital entirely?".
-
-.. warning::
-
-    The ``vl_`` figures are **lifetime totals**. The exports have no
-    per-date rows, so nothing can narrow them: ``--start``, ``--end`` and
-    ``--year`` bound the Galaxy Digital columns only. The table prints a
-    note saying so whenever a period is in play.
-
-With ``--json`` the object gains a ``local_only`` key -- the unmatched
-VolunteerLocal records, each with ``email``, ``first_name``, ``last_name``,
-``total_shifts``, ``total_events``, ``total_hours``, ``outreach``,
-``non_outreach``, ``first_shift`` and ``last_shift`` -- and every row in
-``rows`` gains a ``volunteerlocal`` key holding that same object, or
-``null`` when the volunteer was not matched.
-
-.. code-block:: bash
-
-   galaxy reports attendance --program "hollywood" --year 2026 \
-       --local ~/Development/selah_vol_stats/db.sqlite3
-
-.. _VolunteerLocal: https://volunteerlocal.com
 
 Soft deletes
 ------------
