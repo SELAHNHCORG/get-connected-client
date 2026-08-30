@@ -1,6 +1,6 @@
 import pytest
 
-from get_connected_cli import exceptions as exc
+from get_connected_client import exceptions as exc
 
 
 @pytest.mark.parametrize(

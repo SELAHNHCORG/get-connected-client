@@ -1,4 +1,4 @@
-"""Sphinx configuration for get-connected-cli.
+"""Sphinx configuration for get-connected-client.
 
 Runs against the *installed* package (see ``just build-docs-html``), so
 autodoc imports it directly rather than manipulating ``sys.path``.
@@ -6,12 +6,12 @@ autodoc imports it directly rather than manipulating ``sys.path``.
 
 from __future__ import annotations
 
-import get_connected_cli
+import get_connected_client
 
-project = get_connected_cli.__title__
-author = get_connected_cli.__author__
-copyright = get_connected_cli.__copyright__
-release = get_connected_cli.__version__
+project = get_connected_client.__title__
+author = get_connected_client.__author__
+copyright = get_connected_client.__copyright__
+release = get_connected_client.__version__
 version = release
 
 extensions = [

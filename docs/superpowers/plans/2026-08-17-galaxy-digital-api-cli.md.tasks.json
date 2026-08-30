@@ -5,91 +5,91 @@
       "id": 1,
       "subject": "Task 1: Project setup & dependencies",
       "status": "pending",
-      "description": "**Goal:** Deps installed, spec vendored, markers registered, CLI entry stub.\n\n**Files:** pyproject.toml, doc/api.yml, src/get_connected_cli/cli/__init__.py, tests/test_package.py\n\n```json:metadata\n{\"files\": [\"pyproject.toml\", \"doc/api.yml\", \"src/get_connected_cli/cli/__init__.py\", \"tests/test_package.py\"], \"verifyCommand\": \"uv run galaxy --help && just test\", \"acceptanceCriteria\": [\"galaxy --help prints usage\", \"just test passes\", \"doc/api.yml committed\"]}\n```"
+      "description": "**Goal:** Deps installed, spec vendored, markers registered, CLI entry stub.\n\n**Files:** pyproject.toml, doc/api.yml, src/get_connected_client/cli/__init__.py, tests/test_package.py\n\n```json:metadata\n{\"files\": [\"pyproject.toml\", \"doc/api.yml\", \"src/get_connected_client/cli/__init__.py\", \"tests/test_package.py\"], \"verifyCommand\": \"uv run galaxy --help && just test\", \"acceptanceCriteria\": [\"galaxy --help prints usage\", \"just test passes\", \"doc/api.yml committed\"]}\n```"
     },
     {
       "id": 2,
       "subject": "Task 2: Exceptions",
       "status": "pending",
       "blockedBy": [1],
-      "description": "**Goal:** Typed exception hierarchy with for_status mapping.\n\n```json:metadata\n{\"files\": [\"src/get_connected_cli/exceptions.py\", \"tests/test_exceptions.py\"], \"verifyCommand\": \"just test tests/test_exceptions.py\", \"acceptanceCriteria\": [\"for_status maps 401/403/404/422/429\", \"GalaxyHTTPError carries status_code and detail\"]}\n```"
+      "description": "**Goal:** Typed exception hierarchy with for_status mapping.\n\n```json:metadata\n{\"files\": [\"src/get_connected_client/exceptions.py\", \"tests/test_exceptions.py\"], \"verifyCommand\": \"just test tests/test_exceptions.py\", \"acceptanceCriteria\": [\"for_status maps 401/403/404/422/429\", \"GalaxyHTTPError carries status_code and detail\"]}\n```"
     },
     {
       "id": 3,
       "subject": "Task 3: Model base & common models",
       "status": "pending",
       "blockedBy": [1],
-      "description": "**Goal:** GalaxyModel (extra=allow) + shared mini/lookup models.\n\n```json:metadata\n{\"files\": [\"src/get_connected_cli/models/base.py\", \"src/get_connected_cli/models/common.py\", \"src/get_connected_cli/models/__init__.py\", \"tests/test_models_common.py\"], \"verifyCommand\": \"just test tests/test_models_common.py\", \"acceptanceCriteria\": [\"unknown fields survive round-trip\", \"string ids coerce to int\", \"16 common models importable\"]}\n```"
+      "description": "**Goal:** GalaxyModel (extra=allow) + shared mini/lookup models.\n\n```json:metadata\n{\"files\": [\"src/get_connected_client/models/base.py\", \"src/get_connected_client/models/common.py\", \"src/get_connected_client/models/__init__.py\", \"tests/test_models_common.py\"], \"verifyCommand\": \"just test tests/test_models_common.py\", \"acceptanceCriteria\": [\"unknown fields survive round-trip\", \"string ids coerce to int\", \"16 common models importable\"]}\n```"
     },
     {
       "id": 4,
       "subject": "Task 4: Configuration",
       "status": "pending",
       "blockedBy": [1],
-      "description": "**Goal:** Settings precedence kwargs > env > TOML file > defaults; GALAXY_CONFIG_FILE override; save_config 0600.\n\n```json:metadata\n{\"files\": [\"src/get_connected_cli/config.py\", \"tests/test_config.py\"], \"verifyCommand\": \"just test tests/test_config.py\", \"acceptanceCriteria\": [\"precedence order correct\", \"server aliases resolve\", \"save_config 0600 perms\"]}\n```"
+      "description": "**Goal:** Settings precedence kwargs > env > TOML file > defaults; GALAXY_CONFIG_FILE override; save_config 0600.\n\n```json:metadata\n{\"files\": [\"src/get_connected_client/config.py\", \"tests/test_config.py\"], \"verifyCommand\": \"just test tests/test_config.py\", \"acceptanceCriteria\": [\"precedence order correct\", \"server aliases resolve\", \"save_config 0600 perms\"]}\n```"
     },
     {
       "id": 5,
       "subject": "Task 5: Client transport",
       "status": "pending",
       "blockedBy": [2, 4],
-      "description": "**Goal:** GalaxyClient: auth header, read-only choke point, unwrap, retries, since_id pagination, error mapping; shared respx fixtures.\n\n```json:metadata\n{\"files\": [\"src/get_connected_cli/client.py\", \"tests/conftest.py\", \"tests/test_client.py\"], \"verifyCommand\": \"just test tests/test_client.py\", \"acceptanceCriteria\": [\"writes blocked before wire in read-only\", \"GALAXY_READ_ONLY overrides\", \"retry 429/5xx with backoff\", \"paginate follows since_id, 404 ends quietly\"]}\n```"
+      "description": "**Goal:** GalaxyClient: auth header, read-only choke point, unwrap, retries, since_id pagination, error mapping; shared respx fixtures.\n\n```json:metadata\n{\"files\": [\"src/get_connected_client/client.py\", \"tests/conftest.py\", \"tests/test_client.py\"], \"verifyCommand\": \"just test tests/test_client.py\", \"acceptanceCriteria\": [\"writes blocked before wire in read-only\", \"GALAXY_READ_ONLY overrides\", \"retry 429/5xx with backoff\", \"paginate follows since_id, 404 ends quietly\"]}\n```"
     },
     {
       "id": 6,
       "subject": "Task 6: Resource base plumbing",
       "status": "pending",
       "blockedBy": [3, 5],
-      "description": "**Goal:** Resource + List/Get/Create/Update/Delete mixins; _get_list 404->[].\n\n```json:metadata\n{\"files\": [\"src/get_connected_cli/resources/base.py\", \"tests/test_resources_base.py\"], \"verifyCommand\": \"just test tests/test_resources_base.py\", \"acceptanceCriteria\": [\"declarative subclass gets CRUD\", \"show_inactive bool -> Yes/No\", \"create/update parse returned data\"]}\n```"
+      "description": "**Goal:** Resource + List/Get/Create/Update/Delete mixins; _get_list 404->[].\n\n```json:metadata\n{\"files\": [\"src/get_connected_client/resources/base.py\", \"tests/test_resources_base.py\"], \"verifyCommand\": \"just test tests/test_resources_base.py\", \"acceptanceCriteria\": [\"declarative subclass gets CRUD\", \"show_inactive bool -> Yes/No\", \"create/update parse returned data\"]}\n```"
     },
     {
       "id": 7,
       "subject": "Task 7: CLI skeleton, output, confirmation, config commands",
       "status": "pending",
       "blockedBy": [5],
-      "description": "**Goal:** Typer app with global options, rich/JSON output, confirm_write, galaxy config, clean GalaxyError handling.\n\n```json:metadata\n{\"files\": [\"src/get_connected_cli/cli/__init__.py\", \"src/get_connected_cli/cli/_state.py\", \"src/get_connected_cli/cli/_output.py\", \"src/get_connected_cli/cli/_confirm.py\", \"src/get_connected_cli/cli/config_cmds.py\", \"tests/test_cli_root.py\"], \"verifyCommand\": \"just test tests/test_cli_root.py\", \"acceptanceCriteria\": [\"--version works\", \"config set/show/path/unset with redaction\", \"GalaxyError exits 1 without traceback\", \"declined confirm aborts\"]}\n```"
+      "description": "**Goal:** Typer app with global options, rich/JSON output, confirm_write, galaxy config, clean GalaxyError handling.\n\n```json:metadata\n{\"files\": [\"src/get_connected_client/cli/__init__.py\", \"src/get_connected_client/cli/_state.py\", \"src/get_connected_client/cli/_output.py\", \"src/get_connected_client/cli/_confirm.py\", \"src/get_connected_client/cli/config_cmds.py\", \"tests/test_cli_root.py\"], \"verifyCommand\": \"just test tests/test_cli_root.py\", \"acceptanceCriteria\": [\"--version works\", \"config set/show/path/unset with redaction\", \"GalaxyError exits 1 without traceback\", \"declined confirm aborts\"]}\n```"
     },
     {
       "id": 8,
       "subject": "Task 8: Users resource + CLI",
       "status": "pending",
       "blockedBy": [6, 7],
-      "description": "**Goal:** Full /users coverage (23 endpoints), User models, Hour+BenchmarkMini declared early, CLI sub-app.\n\n```json:metadata\n{\"files\": [\"src/get_connected_cli/models/users.py\", \"src/get_connected_cli/models/hours.py\", \"src/get_connected_cli/resources/users.py\", \"src/get_connected_cli/cli/users.py\", \"tests/test_users.py\"], \"verifyCommand\": \"just test tests/test_users.py\", \"acceptanceCriteria\": [\"all 23 user endpoints mapped\", \"CLI create prompts, --yes sends\", \"welcome-email treated as write\"]}\n```"
+      "description": "**Goal:** Full /users coverage (23 endpoints), User models, Hour+BenchmarkMini declared early, CLI sub-app.\n\n```json:metadata\n{\"files\": [\"src/get_connected_client/models/users.py\", \"src/get_connected_client/models/hours.py\", \"src/get_connected_client/resources/users.py\", \"src/get_connected_client/cli/users.py\", \"tests/test_users.py\"], \"verifyCommand\": \"just test tests/test_users.py\", \"acceptanceCriteria\": [\"all 23 user endpoints mapped\", \"CLI create prompts, --yes sends\", \"welcome-email treated as write\"]}\n```"
     },
     {
       "id": 9,
       "subject": "Task 9: Agencies resource + CLI",
       "status": "pending",
       "blockedBy": [6, 7],
-      "description": "**Goal:** Full /agencies coverage incl. causes/clusters/managers/tags sub-resources.\n\n```json:metadata\n{\"files\": [\"src/get_connected_cli/models/agencies.py\", \"src/get_connected_cli/resources/agencies.py\", \"src/get_connected_cli/cli/agencies.py\", \"tests/test_agencies.py\"], \"verifyCommand\": \"just test tests/test_agencies.py\", \"acceptanceCriteria\": [\"all agency endpoints mapped\", \"CLI confirm tests pass\"]}\n```"
+      "description": "**Goal:** Full /agencies coverage incl. causes/clusters/managers/tags sub-resources.\n\n```json:metadata\n{\"files\": [\"src/get_connected_client/models/agencies.py\", \"src/get_connected_client/resources/agencies.py\", \"src/get_connected_client/cli/agencies.py\", \"tests/test_agencies.py\"], \"verifyCommand\": \"just test tests/test_agencies.py\", \"acceptanceCriteria\": [\"all agency endpoints mapped\", \"CLI confirm tests pass\"]}\n```"
     },
     {
       "id": 10,
       "subject": "Task 10: Needs resource + CLI",
       "status": "pending",
       "blockedBy": [6, 7],
-      "description": "**Goal:** Full /needs coverage incl. shifts/interests/qualifications/questions/responses; Response model declared here.\n\n```json:metadata\n{\"files\": [\"src/get_connected_cli/models/needs.py\", \"src/get_connected_cli/models/responses.py\", \"src/get_connected_cli/resources/needs.py\", \"src/get_connected_cli/cli/needs.py\", \"tests/test_needs.py\"], \"verifyCommand\": \"just test tests/test_needs.py\", \"acceptanceCriteria\": [\"add_shift body asserted\", \"list filters agency_id/need_title/need_status\"]}\n```"
+      "description": "**Goal:** Full /needs coverage incl. shifts/interests/qualifications/questions/responses; Response model declared here.\n\n```json:metadata\n{\"files\": [\"src/get_connected_client/models/needs.py\", \"src/get_connected_client/models/responses.py\", \"src/get_connected_client/resources/needs.py\", \"src/get_connected_client/cli/needs.py\", \"tests/test_needs.py\"], \"verifyCommand\": \"just test tests/test_needs.py\", \"acceptanceCriteria\": [\"add_shift body asserted\", \"list filters agency_id/need_title/need_status\"]}\n```"
     },
     {
       "id": 11,
       "subject": "Task 11: Events & Hours resources + CLI",
       "status": "pending",
       "blockedBy": [8],
-      "description": "**Goal:** CRUD for /events and /hours (Hour model exists from Task 8).\n\n```json:metadata\n{\"files\": [\"src/get_connected_cli/models/events.py\", \"src/get_connected_cli/resources/events.py\", \"src/get_connected_cli/resources/hours.py\", \"src/get_connected_cli/cli/events.py\", \"src/get_connected_cli/cli/hours.py\", \"tests/test_events_hours.py\"], \"verifyCommand\": \"just test tests/test_events_hours.py\", \"acceptanceCriteria\": [\"CRUD both resources\", \"hours create confirm test\"]}\n```"
+      "description": "**Goal:** CRUD for /events and /hours (Hour model exists from Task 8).\n\n```json:metadata\n{\"files\": [\"src/get_connected_client/models/events.py\", \"src/get_connected_client/resources/events.py\", \"src/get_connected_client/resources/hours.py\", \"src/get_connected_client/cli/events.py\", \"src/get_connected_client/cli/hours.py\", \"tests/test_events_hours.py\"], \"verifyCommand\": \"just test tests/test_events_hours.py\", \"acceptanceCriteria\": [\"CRUD both resources\", \"hours create confirm test\"]}\n```"
     },
     {
       "id": 12,
       "subject": "Task 12: Responses, Teams & Groups resources + CLI",
       "status": "pending",
       "blockedBy": [10],
-      "description": "**Goal:** /responses CRUD; /teams (no PUT) + members; /groups CRUD + needs/users links.\n\n```json:metadata\n{\"files\": [\"src/get_connected_cli/models/teams.py\", \"src/get_connected_cli/models/groups.py\", \"src/get_connected_cli/resources/responses.py\", \"src/get_connected_cli/resources/teams.py\", \"src/get_connected_cli/resources/groups.py\", \"src/get_connected_cli/cli/responses.py\", \"src/get_connected_cli/cli/teams.py\", \"src/get_connected_cli/cli/groups.py\", \"tests/test_responses_teams_groups.py\"], \"verifyCommand\": \"just test tests/test_responses_teams_groups.py\", \"acceptanceCriteria\": [\"teams has no update\", \"group need/user links mapped\"]}\n```"
+      "description": "**Goal:** /responses CRUD; /teams (no PUT) + members; /groups CRUD + needs/users links.\n\n```json:metadata\n{\"files\": [\"src/get_connected_client/models/teams.py\", \"src/get_connected_client/models/groups.py\", \"src/get_connected_client/resources/responses.py\", \"src/get_connected_client/resources/teams.py\", \"src/get_connected_client/resources/groups.py\", \"src/get_connected_client/cli/responses.py\", \"src/get_connected_client/cli/teams.py\", \"src/get_connected_client/cli/groups.py\", \"tests/test_responses_teams_groups.py\"], \"verifyCommand\": \"just test tests/test_responses_teams_groups.py\", \"acceptanceCriteria\": [\"teams has no update\", \"group need/user links mapped\"]}\n```"
     },
     {
       "id": 13,
       "subject": "Task 13: Qualifications, Benchmarks, Clusters, lookups & auth",
       "status": "pending",
       "blockedBy": [6, 7],
-      "description": "**Goal:** Remaining resources: qualifications, benchmarks, clusters, causes/interests/impacts/registration-questions lookups, login/authenticate. Also the deferred no-key CLI error test.\n\n```json:metadata\n{\"files\": [\"src/get_connected_cli/models/qualifications.py\", \"src/get_connected_cli/models/benchmarks.py\", \"src/get_connected_cli/models/auth.py\", \"src/get_connected_cli/resources/qualifications.py\", \"src/get_connected_cli/resources/benchmarks.py\", \"src/get_connected_cli/resources/misc.py\", \"src/get_connected_cli/resources/auth.py\", \"src/get_connected_cli/cli/qualifications.py\", \"src/get_connected_cli/cli/benchmarks.py\", \"src/get_connected_cli/cli/misc.py\", \"src/get_connected_cli/cli/auth.py\", \"tests/test_quals_benchmarks_misc.py\"], \"verifyCommand\": \"just test tests/test_quals_benchmarks_misc.py tests/test_cli_root.py\", \"acceptanceCriteria\": [\"all remaining endpoints mapped\", \"login parses LoginResult\", \"lookups [] on 404\"]}\n```"
+      "description": "**Goal:** Remaining resources: qualifications, benchmarks, clusters, causes/interests/impacts/registration-questions lookups, login/authenticate. Also the deferred no-key CLI error test.\n\n```json:metadata\n{\"files\": [\"src/get_connected_client/models/qualifications.py\", \"src/get_connected_client/models/benchmarks.py\", \"src/get_connected_client/models/auth.py\", \"src/get_connected_client/resources/qualifications.py\", \"src/get_connected_client/resources/benchmarks.py\", \"src/get_connected_client/resources/misc.py\", \"src/get_connected_client/resources/auth.py\", \"src/get_connected_client/cli/qualifications.py\", \"src/get_connected_client/cli/benchmarks.py\", \"src/get_connected_client/cli/misc.py\", \"src/get_connected_client/cli/auth.py\", \"tests/test_quals_benchmarks_misc.py\"], \"verifyCommand\": \"just test tests/test_quals_benchmarks_misc.py tests/test_cli_root.py\", \"acceptanceCriteria\": [\"all remaining endpoints mapped\", \"login parses LoginResult\", \"lookups [] on 404\"]}\n```"
     },
     {
       "id": 14,
@@ -110,7 +110,7 @@
       "subject": "Task 16: Public exports & final verification",
       "status": "pending",
       "blockedBy": [8, 9, 10, 11, 12, 13, 14, 15],
-      "description": "**Goal:** Top-level exports; just check / check-types / test-all all green; coverage >=90%.\n\n```json:metadata\n{\"files\": [\"src/get_connected_cli/__init__.py\", \"tests/test_package.py\"], \"verifyCommand\": \"just check && just check-types && just test-all\", \"acceptanceCriteria\": [\"GalaxyClient importable from top level\", \"all quality gates pass\", \"coverage >= 90%\"]}\n```"
+      "description": "**Goal:** Top-level exports; just check / check-types / test-all all green; coverage >=90%.\n\n```json:metadata\n{\"files\": [\"src/get_connected_client/__init__.py\", \"tests/test_package.py\"], \"verifyCommand\": \"just check && just check-types && just test-all\", \"acceptanceCriteria\": [\"GalaxyClient importable from top level\", \"all quality gates pass\", \"coverage >= 90%\"]}\n```"
     }
   ],
   "lastUpdated": "2026-08-17T00:00:00Z"

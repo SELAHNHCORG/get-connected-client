@@ -123,7 +123,7 @@ def pytest_configure(config: pytest.Config) -> None:
 
 @pytest.fixture
 def client():
-    from get_connected_cli.client import GalaxyClient
+    from get_connected_client.client import GalaxyClient
 
     with GalaxyClient(api_key="test-key", base_url=BASE) as c:
         yield c

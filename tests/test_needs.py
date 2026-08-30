@@ -12,11 +12,11 @@ import pytest
 import yaml
 from typer.testing import CliRunner
 
-from get_connected_cli.cli import app
-from get_connected_cli.models.common import Question
-from get_connected_cli.models.needs import Need
-from get_connected_cli.models.responses import Response
-from get_connected_cli.resources.needs import Needs
+from get_connected_client.cli import app
+from get_connected_client.models.common import Question
+from get_connected_client.models.needs import Need
+from get_connected_client.models.responses import Response
+from get_connected_client.resources.needs import Needs
 
 
 runner = CliRunner()

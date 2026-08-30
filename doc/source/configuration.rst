@@ -2,7 +2,7 @@ Configuration
 =============
 
 The ``galaxy`` command resolves its settings through
-:func:`~get_connected_cli.config.load_settings`, with a fixed precedence,
+:func:`~get_connected_client.config.load_settings`, with a fixed precedence,
 highest first:
 
 .. list-table:: CLI precedence
@@ -30,7 +30,7 @@ see `Read-only modes`_ below.
 One setting is deliberately outside that table: ``GALAXY_FORMAT`` /
 ``--format`` chooses a *renderer*, never anything the API sees, so it is
 resolved by the CLI itself rather than by
-:func:`~get_connected_cli.config.load_settings` -- see `Output format`_.
+:func:`~get_connected_client.config.load_settings` -- see `Output format`_.
 
 Two credentials, two jobs
 --------------------------
@@ -77,7 +77,7 @@ and the resulting 401 is the API telling you to run
 Library behavior
 ----------------
 
-The table above describes the CLI. :class:`~get_connected_cli.client.GalaxyClient`
+The table above describes the CLI. :class:`~get_connected_client.client.GalaxyClient`
 deliberately implements *none* of that chain except the two credentials'
 env var fallbacks: it takes what you pass it, and reads ``GALAXY_API_KEY``
 and ``GALAXY_API_TOKEN`` when ``api_key`` and ``token`` are omitted.
@@ -88,7 +88,7 @@ only in one direction -- see `Read-only modes`_.)
 
 .. code-block:: python
 
-   from get_connected_cli import GalaxyClient
+   from get_connected_client import GalaxyClient
 
    # explicit arguments; base_url accepts the same aliases as --url
    GalaxyClient(token="eyJ...", base_url="us2")
@@ -97,8 +97,8 @@ only in one direction -- see `Read-only modes`_.)
    GalaxyClient()
 
 At least one of the two must be resolvable, or the constructor raises
-:class:`~get_connected_cli.exceptions.MissingAPIKeyError`.
-:meth:`GalaxyClient.login <get_connected_cli.client.GalaxyClient.login>` is
+:class:`~get_connected_client.exceptions.MissingAPIKeyError`.
+:meth:`GalaxyClient.login <get_connected_client.client.GalaxyClient.login>` is
 the library counterpart of ``galaxy auth login``: it defaults the ``key``
 field from ``api_key``, and on success adopts the returned token, so every
 later request carries it.
@@ -114,15 +114,15 @@ running it themselves and handing the result to the constructor:
 
 .. code-block:: python
 
-   from get_connected_cli import GalaxyClient
-   from get_connected_cli.config import load_settings
+   from get_connected_client import GalaxyClient
+   from get_connected_client.config import load_settings
 
    s = load_settings()
    client = GalaxyClient(
        api_key=s.api_key, token=s.token, base_url=s.url, read_only=s.read_only
    )
 
-:func:`~get_connected_cli.config.load_settings` also accepts the same
+:func:`~get_connected_client.config.load_settings` also accepts the same
 four overrides the CLI passes it (``api_key``, ``token``, ``url``,
 ``read_only``), which slot in at level 1 of the table.
 
@@ -150,7 +150,7 @@ Environment variables
     How results are rendered: ``table`` (the default) or ``json``,
     case-insensitive. **CLI-only** -- unlike the four above, it is not a
     client or library setting at all;
-    :class:`~get_connected_cli.client.GalaxyClient` returns models and
+    :class:`~get_connected_client.client.GalaxyClient` returns models and
     never consults it. See `Output format`_.
 
 Set them for the session, or add them to your shell profile
@@ -181,7 +181,7 @@ Neither the key nor the token is ever printed in full, by either renderer,
 so the output is safe to paste into a bug report.
 
 The listing includes a ``format`` row, which is the only one that is not a
-:class:`~get_connected_cli.config.Settings` field -- it is there precisely
+:class:`~get_connected_client.config.Settings` field -- it is there precisely
 because an exported ``GALAXY_FORMAT`` is otherwise invisible.
 
 Output format
@@ -222,7 +222,7 @@ Server aliases
 --------------
 
 ``url`` accepts either a full URL or one of three built-in aliases,
-resolved by :func:`~get_connected_cli.config.resolve_url`:
+resolved by :func:`~get_connected_client.config.resolve_url`:
 
 .. list-table::
    :header-rows: 1
@@ -248,19 +248,19 @@ There are three independent ways to turn it on:
 3. **Environment**: ``GALAXY_READ_ONLY=1`` (export it to make it stick for
    the whole session).
 
-:attr:`GalaxyClient.read_only <get_connected_cli.client.GalaxyClient.read_only>`
+:attr:`GalaxyClient.read_only <get_connected_client.client.GalaxyClient.read_only>`
 is the boolean OR of the constructor flag and the environment variable --
 either one can turn read-only mode *on*, but neither can turn it back
 *off* once the other has set it. Concretely, ``GALAXY_READ_ONLY=0`` cannot
 unblock a client built with ``read_only=True``.
 
 The guard is enforced twice: once in
-:meth:`GalaxyClient.request <get_connected_cli.client.GalaxyClient.request>`
+:meth:`GalaxyClient.request <get_connected_client.client.GalaxyClient.request>`
 before any request is issued (including GET endpoints that have side
 effects, via ``treat_as_write``), and again as an ``httpx`` request hook on
 the underlying client, in case something reaches it through the ``http``
 escape hatch instead of ``request()``. A blocked write raises
-:class:`~get_connected_cli.exceptions.ReadOnlyError`.
+:class:`~get_connected_client.exceptions.ReadOnlyError`.
 
 Read-only mode therefore blocks more than the obvious
 ``create``/``update``/``delete``. Four further commands are gated -- the
@@ -309,5 +309,5 @@ Pass ``--yes``/``-y`` on the root command to skip the prompt -- required
 for non-interactive use such as scripts or CI. This is a UX safeguard, not
 a security boundary: it runs in the CLI layer only
 (``confirm_write()``), so library callers
-using :class:`~get_connected_cli.client.GalaxyClient` directly do not get
+using :class:`~get_connected_client.client.GalaxyClient` directly do not get
 a prompt -- read-only mode is the mechanism for guarding library code.

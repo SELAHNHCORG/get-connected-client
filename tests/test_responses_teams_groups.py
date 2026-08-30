@@ -12,13 +12,13 @@ import pytest
 import yaml
 from typer.testing import CliRunner
 
-from get_connected_cli.cli import app
-from get_connected_cli.models.groups import Group, GroupUser
-from get_connected_cli.models.responses import Response
-from get_connected_cli.models.teams import Team, TeamMember
-from get_connected_cli.resources.groups import Groups
-from get_connected_cli.resources.responses import Responses
-from get_connected_cli.resources.teams import Teams
+from get_connected_client.cli import app
+from get_connected_client.models.groups import Group, GroupUser
+from get_connected_client.models.responses import Response
+from get_connected_client.models.teams import Team, TeamMember
+from get_connected_client.resources.groups import Groups
+from get_connected_client.resources.responses import Responses
+from get_connected_client.resources.teams import Teams
 
 
 runner = CliRunner()

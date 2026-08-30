@@ -2,7 +2,7 @@
 
 import pytest
 
-from get_connected_cli import config
+from get_connected_client import config
 
 
 @pytest.fixture
