@@ -15,13 +15,16 @@ server -- so the scan pages through hour records and narrows them here.
 from __future__ import annotations
 
 import json
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable, Iterator, Sequence
+from dataclasses import asdict
+from pathlib import Path
 from typing import Any
 
 import typer
 
 from ..models.hours import Hour
 from ..models.needs import Need
+from ..vollocal import LocalVolunteer, read_local_volunteers
 from ._output import console, output
 from ._state import get_state, handle_errors
 
@@ -39,6 +42,20 @@ ATTENDANCE_COLUMNS = [
     "total_hours",
 ]
 
+#: Columns for the ``attendance`` table when ``--local`` merges VolunteerLocal
+#: in. ``user_id`` goes: the appended VolunteerLocal-only rows have no Galaxy
+#: user to show one for, and the three ``vl_`` columns need the width.
+ATTENDANCE_LOCAL_COLUMNS = [
+    "rank",
+    "volunteer",
+    "programs_attended",
+    "hour_entries",
+    "total_hours",
+    "vl_shifts",
+    "vl_events",
+    "vl_hours",
+]
+
 #: Module-level singletons so ruff's B008 (immutable-default check) does not
 #: trip over a ``list[...]`` annotation paired with a call default.
 _NEED_ID = typer.Option(
@@ -52,6 +69,19 @@ _STATUS = typer.Option(
     help=(
         "Only count hour records with this status, e.g. 'approved' "
         "(case-insensitive, repeatable). Default: every status."
+    ),
+)
+_LOCAL = typer.Option(
+    None,
+    "--local",
+    help=(
+        "Merge in VolunteerLocal records from this file -- either a sqlite "
+        "database (.sqlite3/.sqlite/.db) or a VolunteerLocal CSV export "
+        "(.csv), told apart by suffix. Matched on email, falling back to "
+        "full name when the emails don't line up (best-effort -- verify by "
+        "email if two volunteers share a name). Its vl_* figures are "
+        "LIFETIME totals: that export has no per-date rows, so they ignore "
+        "--start/--end/--year."
     ),
 )
 
@@ -197,11 +227,16 @@ def _tally(
     start: str | None,
     end: str | None,
     statuses: set[str],
+    with_email: bool = False,
 ) -> list[dict[str, Any]]:
     """Rank volunteers by how many distinct days they turned up.
 
     A program attended is a *date*, not an hour record: somebody who logged
     a morning block and an afternoon block on the same day attended once.
+
+    *with_email* adds each volunteer's lowercased email to their row. It is
+    the key ``--local`` matches VolunteerLocal records on, and it is left out
+    otherwise so the plain report keeps publishing only what it ranks.
     """
     tallies: dict[int, dict[str, Any]] = {}
     for hour in hours:
@@ -221,6 +256,7 @@ def _tally(
             {
                 "volunteer": _volunteer(hour.user, user_id),
                 "user_id": user_id,
+                "email": (hour.user.user_email or "").strip().lower() or None,
                 "dates": set(),
                 "hour_entries": 0,
                 "total_hours": 0.0,
@@ -241,6 +277,7 @@ def _tally(
             "programs_attended": len(row["dates"]),
             "hour_entries": row["hour_entries"],
             "total_hours": round(row["total_hours"], 2),
+            **({"email": row["email"]} if with_email else {}),
         }
         for row in tallies.values()
     ]
@@ -254,6 +291,141 @@ def _tally(
     for rank, row in enumerate(rows, start=1):
         row["rank"] = rank
     return rows
+
+
+# ---------------------------------------------------------------------------
+# VolunteerLocal
+# ---------------------------------------------------------------------------
+
+
+def _local_name(volunteer: LocalVolunteer) -> str:
+    """A display name for a VolunteerLocal record, degrading to its email."""
+    name = f"{volunteer.first_name or ''} {volunteer.last_name or ''}".strip()
+    return name or volunteer.email or "unknown volunteer"
+
+
+def _local_keys(volunteer: LocalVolunteer) -> list[str]:
+    """The keys *volunteer* can be matched on, best first.
+
+    Email is the identity the two systems genuinely share; the full name is
+    a fallback tried whenever a row's email does not match one here --
+    including rows that have no email at all -- which is why a name key is
+    indexed for every volunteer, not only those without an email. People
+    often use different addresses in the two systems, so this is deliberate;
+    it is best-effort, and two volunteers sharing a full name can match the
+    wrong record.
+    """
+    keys = []
+    if volunteer.email:
+        keys.append(volunteer.email.strip().lower())
+    name = f"{volunteer.first_name or ''} {volunteer.last_name or ''}".strip()
+    if name:
+        keys.append(name.lower())
+    return keys
+
+
+def _match_local(
+    rows: Sequence[dict[str, Any]], volunteers: Sequence[LocalVolunteer]
+) -> tuple[list[tuple[dict[str, Any], LocalVolunteer | None]], list[LocalVolunteer]]:
+    """Pair each ranked row with its VolunteerLocal record, if any.
+
+    Returns the pairs in ranking order plus the VolunteerLocal records left
+    over -- people the second system knows about and Galaxy does not, which
+    is half of why anyone merges the two.
+
+    The first record to claim a key keeps it: a duplicated email in the
+    export is a data problem there, and quietly matching against whichever
+    row happened to come last would only hide it.
+    """
+    index: dict[str, int] = {}
+    for position, volunteer in enumerate(volunteers):
+        for key in _local_keys(volunteer):
+            index.setdefault(key, position)
+    matched: set[int] = set()
+    pairs: list[tuple[dict[str, Any], LocalVolunteer | None]] = []
+    for row in rows:
+        keys = [row["email"], str(row["volunteer"]).strip().lower()]
+        found: int | None = next(
+            (index[key] for key in keys if key and key in index),
+            None,
+        )
+        if found is not None:
+            matched.add(found)
+        pairs.append((row, None if found is None else volunteers[found]))
+    leftovers = [
+        volunteer
+        for position, volunteer in enumerate(volunteers)
+        if position not in matched
+    ]
+    leftovers.sort(key=lambda v: (-(v.total_shifts or 0), _local_name(v).lower()))
+    return pairs, leftovers
+
+
+def _cell(value: Any) -> str:
+    """A table cell for an optional number: absent reads as blank, not None."""
+    return "" if value is None else str(value)
+
+
+def _local_cells(volunteer: LocalVolunteer | None) -> dict[str, str]:
+    """The three ``vl_`` cells for a (possibly unmatched) record."""
+    if volunteer is None:
+        return {"vl_shifts": "", "vl_events": "", "vl_hours": ""}
+    return {
+        "vl_shifts": _cell(volunteer.total_shifts),
+        "vl_events": _cell(volunteer.total_events),
+        "vl_hours": _cell(volunteer.total_hours),
+    }
+
+
+def _merged_report(
+    state: Any,
+    needs: list[dict[str, Any]],
+    rows: list[dict[str, Any]],
+    volunteers: Sequence[LocalVolunteer],
+    start: str | None,
+    end: str | None,
+) -> None:
+    """Print the ranking with VolunteerLocal's lifetime totals beside it."""
+    pairs, leftovers = _match_local(rows, volunteers)
+    if state.json_output:
+        console.print_json(
+            json.dumps(
+                {
+                    "needs": needs,
+                    "rows": [
+                        {
+                            **{k: v for k, v in row.items() if k != "email"},
+                            "volunteerlocal": None if match is None else asdict(match),
+                        }
+                        for row, match in pairs
+                    ],
+                    "local_only": [asdict(v) for v in leftovers],
+                },
+                default=str,
+            )
+        )
+        return
+    if start or end:
+        # Said before the table, not after: the numbers are misleading only
+        # for as long as nobody has been told what they are.
+        console.print(
+            "[yellow]note:[/] vl_* are VolunteerLocal lifetime totals -- that "
+            "export has no per-date rows, so they are not limited to "
+            f"{_period_label(start, end)}."
+        )
+    table = [{**row, **_local_cells(match)} for row, match in pairs]
+    table += [
+        {"rank": "-", "volunteer": _local_name(v), **_local_cells(v)} for v in leftovers
+    ]
+    output(
+        state,
+        table,
+        ATTENDANCE_LOCAL_COLUMNS,
+        title=(
+            f"attendance: {_needs_label(needs)} ({_period_label(start, end)}) "
+            "-- Galaxy Digital + VolunteerLocal"
+        ),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -281,6 +453,7 @@ def attendance(
         None, "--year", help="Shorthand for --start YEAR-01-01 --end YEAR-12-31."
     ),
     status: list[str] | None = _STATUS,
+    local: Path | None = _LOCAL,
     full_scan: bool = typer.Option(
         False,
         "--full-scan",
@@ -299,12 +472,18 @@ def attendance(
     every distinct date they logged time against the matched needs. Name the
     program with --program (a title substring) or pin exact needs with
     --need-id; at least one is required.
+
+    --local sets VolunteerLocal's lifetime totals beside the ranking and
+    appends the volunteers only that system knows about.
     """
     state = get_state(ctx)
     need_ids = need_id or []
     if not program and not need_ids:
         raise typer.BadParameter("give --program and/or --need-id")
     start, end = _period(start, end, year)
+    # Read the local file up front: a mistyped path should be answered now,
+    # not after minutes of paging through /hours.
+    volunteers = None if local is None else read_local_volunteers(local)
     needs = _resolve_needs(state, program, need_ids)
     if not state.json_output:
         # Show what was matched before the (potentially long) hours scan, so
@@ -317,7 +496,11 @@ def attendance(
         start,
         end,
         {s.lower() for s in (status or [])},
+        with_email=volunteers is not None,
     )
+    if volunteers is not None:
+        _merged_report(state, needs, rows, volunteers, start, end)
+        return
     if state.json_output:
         # output() emits rows alone; the matched needs are half the answer
         # (they say *what* was counted), so --json gets both in one object.
