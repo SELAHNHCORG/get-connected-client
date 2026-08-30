@@ -6,6 +6,12 @@ environment variables ``GALAXY_API_KEY``, ``GALAXY_API_TOKEN``,
 ``GALAXY_API_URL`` and ``GALAXY_READ_ONLY``, then the built-in defaults.
 This sub-app only reports what that chain produced, so it is a diagnostic,
 not an editor.
+
+The ``format`` row is the odd one out: ``--format`` / ``GALAXY_FORMAT``
+picks a renderer and is never handed to the client, so it lives on the
+state rather than in :class:`~galaxy_digital_cli.config.Settings`. It is
+reported here anyway because an exported ``GALAXY_FORMAT`` is exactly the
+kind of invisible environment setting this command exists to surface.
 """
 
 from __future__ import annotations
@@ -22,7 +28,8 @@ from ._state import get_state
 config_app = typer.Typer(
     help=(
         "Inspect the resolved configuration (GALAXY_API_KEY, "
-        "GALAXY_API_TOKEN, GALAXY_API_URL, GALAXY_READ_ONLY)."
+        "GALAXY_API_TOKEN, GALAXY_API_URL, GALAXY_READ_ONLY, "
+        "GALAXY_FORMAT)."
     ),
     no_args_is_help=True,
 )
@@ -49,7 +56,8 @@ def _source(flag_given: bool, env_set: bool) -> str:
 @config_app.command("show")
 def show(ctx: typer.Context) -> None:
     """Show the resolved settings and where each one came from."""
-    settings = get_state(ctx).settings
+    state = get_state(ctx)
+    settings = state.settings
     root_params = ctx.find_root().params
 
     rows: list[dict[str, Any]] = [
@@ -83,6 +91,25 @@ def show(ctx: typer.Context) -> None:
             "source": _source(
                 bool(root_params.get("read_only")),
                 env_read_only() is not None,
+            ),
+        },
+        {
+            "setting": "format",
+            "value": state.format.value,
+            # The only row that is not a Settings field: the output format
+            # never reaches the client, it only picks a renderer. Its env
+            # var is resolved by click rather than load_settings, so the
+            # flag half of the source has to come from the parameter
+            # source -- root_params alone cannot tell --format json from
+            # GALAXY_FORMAT=json. Both --format and its --json shorthand
+            # count as flags.
+            "source": _source(
+                bool(root_params.get("json_output"))
+                or getattr(
+                    ctx.find_root().get_parameter_source("output_format"), "name", ""
+                )
+                == "COMMANDLINE",
+                bool(os.environ.get("GALAXY_FORMAT")),
             ),
         },
     ]

@@ -33,7 +33,7 @@ import typer
 
 from ..client import _token_of
 from ..exceptions import GalaxyError
-from ._output import err_console, output, output_one
+from ._output import OutputFormat, err_console, output, output_one
 from ._state import get_state, handle_errors
 
 auth_app = typer.Typer(help="Login and authenticate.", no_args_is_help=True)
@@ -100,7 +100,7 @@ def login(
         typer.echo(f"export GALAXY_API_TOKEN={shlex.quote(token)}")
         return
     output_one(state, result)
-    if not state.json_output:
+    if state.format is not OutputFormat.JSON:
         err_console.print(
             "Adopt this token in your shell with:\n"
             f'  eval "$(galaxy auth login --email {email} --export)"',

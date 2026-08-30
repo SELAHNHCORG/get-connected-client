@@ -147,6 +147,9 @@ def _isolate_env(monkeypatch):
     # site key, and a real GALAXY_API_TOKEN in the developer's environment
     # must never leak into a test's Authorization header.
     monkeypatch.delenv("GALAXY_API_TOKEN", raising=False)
+    # A developer who exports GALAXY_FORMAT=json for daily use must not
+    # flip every table-rendering assertion in the suite.
+    monkeypatch.delenv("GALAXY_FORMAT", raising=False)
     monkeypatch.setenv("GALAXY_API_KEY", "test-key")
     # typer/rich force ANSI escapes into --help output when GITHUB_ACTIONS or
     # FORCE_COLOR are set, breaking plain-text assertions in CI.

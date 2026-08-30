@@ -15,7 +15,7 @@ from pydantic import ValidationError
 from ..client import GalaxyClient
 from ..config import Settings
 from ..exceptions import GalaxyError
-from ._output import err_console
+from ._output import OutputFormat, err_console
 
 F = TypeVar("F", bound=Callable[..., Any])
 
@@ -25,7 +25,7 @@ class State:
     """Everything a command needs: resolved settings plus the global flags."""
 
     settings: Settings
-    json_output: bool = False
+    format: OutputFormat = OutputFormat.TABLE
     assume_yes: bool = False
     debug: bool = False
     _client: GalaxyClient | None = field(default=None, repr=False)
