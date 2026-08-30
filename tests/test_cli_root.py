@@ -9,7 +9,7 @@ import galaxy_digital_cli
 from galaxy_digital_cli.cli import app
 from galaxy_digital_cli.cli import main as root_callback
 from galaxy_digital_cli.cli._confirm import confirm_write
-from galaxy_digital_cli.cli._output import console
+from galaxy_digital_cli.cli._output import OutputFormat, console
 from galaxy_digital_cli.cli._state import _merge_fields, handle_errors
 from galaxy_digital_cli.exceptions import GalaxyError, NotFoundError
 
@@ -62,6 +62,7 @@ def test_help_lists_global_options_and_config():
         "--token",
         "--url",
         "--read-only",
+        "--format",
         "--json",
         "--yes",
         "--debug",
@@ -236,7 +237,7 @@ def test_output_result_reports_empty_writes(capsys):
     output_result(state, None)
     assert "done" in capsys.readouterr().out
 
-    state.json_output = True
+    state.format = OutputFormat.JSON
     output_result(state, None)
     assert json.loads(capsys.readouterr().out) == {"ok": True}
 
@@ -280,6 +281,100 @@ def test_json_output_flag(monkeypatch):
     assert '"url"' in out and "volunteerapi.com" in out
 
 
+def test_format_json_is_identical_to_the_json_shorthand():
+    """``--format json`` and ``--json`` are the same renderer, not lookalikes."""
+    long_form = runner.invoke(app, ["--format", "json", "config", "show"])
+    shorthand = runner.invoke(app, ["--json", "config", "show"])
+    assert long_form.exit_code == 0
+    assert json.loads(long_form.output) == json.loads(shorthand.output)
+    rows = {row["setting"]: row for row in json.loads(long_form.output)}
+    assert rows["url"]["value"] == "https://api.galaxydigital.com/api"
+
+
+def test_format_flag_is_case_insensitive():
+    out = runner.invoke(app, ["--format", "JSON", "config", "show"]).output
+    assert json.loads(out)
+
+
+@pytest.mark.parametrize("value", ["json", "JSON", "Json"])
+def test_format_env_selects_json_without_any_flag(monkeypatch, value):
+    """GALAXY_FORMAT is the default for the session, in any casing."""
+    monkeypatch.setenv("GALAXY_FORMAT", value)
+    result = runner.invoke(app, ["config", "show"])
+    assert result.exit_code == 0
+    rows = {row["setting"]: row for row in json.loads(result.output)}
+    assert rows["api_key"]["source"] == "env"
+
+
+def test_format_flag_beats_the_env(monkeypatch):
+    """An explicit --format table pulls a JSON-by-default session back to a table."""
+    monkeypatch.setenv("GALAXY_FORMAT", "json")
+    result = runner.invoke(app, ["--format", "table", "config", "show"])
+    assert result.exit_code == 0
+    assert "configuration" in result.output
+    with pytest.raises(ValueError):
+        json.loads(result.output)
+
+
+def test_json_shorthand_beats_a_table_env(monkeypatch):
+    """--json is a flag, so it wins over GALAXY_FORMAT rather than conflicting."""
+    monkeypatch.setenv("GALAXY_FORMAT", "table")
+    result = runner.invoke(app, ["--json", "config", "show"])
+    assert result.exit_code == 0
+    assert json.loads(result.output)
+
+
+def test_json_shorthand_agreeing_with_format_is_fine():
+    result = runner.invoke(app, ["--json", "--format", "json", "config", "show"])
+    assert result.exit_code == 0
+    assert json.loads(result.output)
+
+
+def test_json_shorthand_conflicting_with_format_is_refused():
+    """Two contradicting flags are an operator mistake, not a precedence puzzle."""
+    result = runner.invoke(app, ["--json", "--format", "table", "config", "show"])
+    assert result.exit_code != 0
+    assert "--json" in result.stderr
+    assert "shorthand" in result.stderr
+    assert "Traceback" not in result.stderr
+
+
+def test_unknown_format_is_a_usage_error():
+    result = runner.invoke(app, ["--format", "xml", "config", "show"])
+    assert result.exit_code == 2
+    assert "xml" in result.stderr
+
+
+def test_config_show_format_row_defaults_to_table():
+    out = runner.invoke(app, ["--json", "config", "show"]).output
+    row = {r["setting"]: r for r in json.loads(out)}["format"]
+    # --json is itself a flag, so only its value -- not its source -- is
+    # the default here.
+    assert row["value"] == "json"
+    assert row["source"] == "flag"
+
+    lines = runner.invoke(app, ["config", "show"]).output.splitlines()
+    format_row = next(line for line in lines if "format" in line)
+    assert "table" in format_row
+    assert "default" in format_row
+
+
+def test_config_show_format_row_reports_env(monkeypatch):
+    monkeypatch.setenv("GALAXY_FORMAT", "json")
+    out = runner.invoke(app, ["config", "show"]).output
+    row = {r["setting"]: r for r in json.loads(out)}["format"]
+    assert row["value"] == "json"
+    assert row["source"] == "env"
+
+
+def test_config_show_format_row_reports_flag_over_env(monkeypatch):
+    monkeypatch.setenv("GALAXY_FORMAT", "json")
+    out = runner.invoke(app, ["--format", "table", "config", "show"]).output
+    format_row = next(line for line in out.splitlines() if "format" in line)
+    assert "table" in format_row
+    assert "flag" in format_row
+
+
 def test_state_client_is_lazy_and_configured():
     from galaxy_digital_cli.cli._state import State
     from galaxy_digital_cli.config import load_settings
@@ -315,7 +410,7 @@ def test_output_helpers(capsys):
     output_one(state, {"id": 1, "name": "a"})
     assert "name" in capsys.readouterr().out
 
-    state.json_output = True
+    state.format = OutputFormat.JSON
     output(state, [{"id": 1}], ["id"])
     assert '"id"' in capsys.readouterr().out
     output_one(state, {"id": 1})

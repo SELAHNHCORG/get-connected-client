@@ -22,7 +22,7 @@ import typer
 
 from ..models.hours import Hour
 from ..models.needs import Need
-from ._output import console, output
+from ._output import OutputFormat, console, output
 from ._state import get_state, handle_errors
 
 reports_app = typer.Typer(
@@ -306,7 +306,7 @@ def attendance(
         raise typer.BadParameter("give --program and/or --need-id")
     start, end = _period(start, end, year)
     needs = _resolve_needs(state, program, need_ids)
-    if not state.json_output:
+    if state.format is not OutputFormat.JSON:
         # Show what was matched before the (potentially long) hours scan, so
         # a wrong match can be spotted without waiting for the report.
         for need in needs:
@@ -318,9 +318,9 @@ def attendance(
         end,
         {s.lower() for s in (status or [])},
     )
-    if state.json_output:
+    if state.format is OutputFormat.JSON:
         # output() emits rows alone; the matched needs are half the answer
-        # (they say *what* was counted), so --json gets both in one object.
+        # (they say *what* was counted), so JSON gets both in one object.
         console.print_json(json.dumps({"needs": needs, "rows": rows}, default=str))
         return
     output(

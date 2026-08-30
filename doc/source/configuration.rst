@@ -27,6 +27,11 @@ provides a value wins outright; it is not merged with lower sources for
 that same setting. ``read_only`` is the one exception at the client level:
 see `Read-only modes`_ below.
 
+One setting is deliberately outside that table: ``GALAXY_FORMAT`` /
+``--format`` chooses a *renderer*, never anything the API sees, so it is
+resolved by the CLI itself rather than by
+:func:`~galaxy_digital_cli.config.load_settings` -- see `Output format`_.
+
 Two credentials, two jobs
 --------------------------
 
@@ -141,6 +146,13 @@ Environment variables
     to the default (off). Any of ``1``, ``true``, ``yes``, ``on``
     (case-insensitive) means true; anything else means false.
 
+``GALAXY_FORMAT``
+    How results are rendered: ``table`` (the default) or ``json``,
+    case-insensitive. **CLI-only** -- unlike the four above, it is not a
+    client or library setting at all;
+    :class:`~galaxy_digital_cli.client.GalaxyClient` returns models and
+    never consults it. See `Output format`_.
+
 Set them for the session, or add them to your shell profile
 (``~/.bashrc``, ``~/.zshrc``, ...) to persist them:
 
@@ -149,6 +161,7 @@ Set them for the session, or add them to your shell profile
    export GALAXY_API_KEY=YOUR_SITE_KEY
    export GALAXY_API_URL=us1        # us1 (default), us2, or ca
    export GALAXY_READ_ONLY=1        # optional: block every write
+   export GALAXY_FORMAT=json        # optional: JSON instead of tables
 
    # the token is minted, not typed -- re-run when it expires (~1 year)
    eval "$(galaxy auth login --email you@example.org --export)"
@@ -166,6 +179,44 @@ where each value came from -- ``flag``, ``env`` or ``default``:
 
 Neither the key nor the token is ever printed in full, by either renderer,
 so the output is safe to paste into a bug report.
+
+The listing includes a ``format`` row, which is the only one that is not a
+:class:`~galaxy_digital_cli.config.Settings` field -- it is there precisely
+because an exported ``GALAXY_FORMAT`` is otherwise invisible.
+
+Output format
+-------------
+
+Every command renders through one global switch:
+
+``--format table``
+    A rich table, the default. Human-readable, and explicitly not a data
+    interchange format -- column widths, wrapping and styling are free to
+    change between releases.
+
+``--format json``
+    Raw JSON on stdout, for scripting. ``galaxy --format json needs list |
+    jq ...`` is the intended shape. Writes that return no body still emit
+    ``{"ok": true}``, so a successful command never produces empty stdout.
+
+``--json`` is a shorthand for ``--format json``, kept because it predates
+the general option; the two are interchangeable. Passing both is fine when
+they agree (``--json --format json``) and is refused when they contradict
+each other (``--json --format table``), rather than one silently winning.
+
+The default comes from ``GALAXY_FORMAT``, so a scripting-oriented shell can
+opt in once:
+
+.. code-block:: bash
+
+   export GALAXY_FORMAT=json
+   galaxy needs list                    # JSON, no flag needed
+   galaxy --format table needs list     # ... and back to a table, just here
+
+Precedence is the familiar one -- an explicit ``--format`` (or ``--json``)
+beats ``GALAXY_FORMAT``, which beats the ``table`` default. Values are
+case-insensitive in both places; anything that is not a known format is a
+usage error.
 
 Server aliases
 --------------

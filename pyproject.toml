@@ -142,6 +142,13 @@ target-version = "py310"
 [tool.ruff.lint]
 exclude = ["tests/**/*"]
 
+[tool.ruff.lint.flake8-bugbear]
+# typer declares CLI options as argument defaults -- that is the framework's
+# idiom, not a mutable-default bug. B008 happens to let most of ours through
+# because their annotations (str | None, bool) are recognized as immutable,
+# which makes the rule fire only on the ones annotated with our own enums.
+extend-immutable-calls = ["typer.Option", "typer.Argument"]
+
 [tool.bandit]
 targets = ["src"]
 exclude_dirs = [

@@ -29,8 +29,17 @@ These apply to every sub-command and must be given before the sub-app name
 ``--read-only``
     Block all writes for this invocation. See :doc:`configuration`.
 
+``--format [table|json]``
+    How results are rendered: ``table`` (the default) for a formatted rich
+    table, ``json`` for raw JSON -- for scripting. Falls back to
+    ``GALAXY_FORMAT``, so a session that always wants JSON can export it
+    once instead of repeating the flag. The value is case-insensitive on
+    both the flag and the environment variable.
+
 ``--json``
-    Emit raw JSON instead of a formatted table -- for scripting.
+    Shorthand for ``--format json``. The two are interchangeable; giving
+    both is only an error when they disagree
+    (``--json --format table`` is refused rather than silently resolved).
 
 ``--yes`` / ``-y``
     Skip the "are you sure?" prompt shown before every write.
@@ -56,7 +65,8 @@ Command tree
 
 There is nothing to set or unset: settings come from the global flags, then
 ``GALAXY_API_KEY`` / ``GALAXY_API_TOKEN`` / ``GALAXY_API_URL`` /
-``GALAXY_READ_ONLY``, then the defaults. See :doc:`configuration`.
+``GALAXY_READ_ONLY`` / ``GALAXY_FORMAT``, then the defaults. See
+:doc:`configuration`.
 
 ``auth`` -- credential exchange
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

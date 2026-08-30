@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import enum
 import json
 from collections.abc import Iterable, Sequence
 from typing import Any
@@ -14,6 +15,23 @@ console = Console()
 err_console = Console(stderr=True)
 
 
+class OutputFormat(str, enum.Enum):
+    """How a command renders its result.
+
+    Selected globally with ``--format`` (or ``GALAXY_FORMAT``); ``--json``
+    is a shorthand for ``--format json``. Deriving from :class:`str` keeps
+    the members usable wherever their wire value is wanted -- typer renders
+    the choices in ``--help`` from them -- and leaves room for more
+    renderers (csv, yaml, ...) without touching any call site.
+    """
+
+    TABLE = "table"
+    JSON = "json"
+
+    def __str__(self) -> str:
+        return self.value
+
+
 def _to_dict(row: Any) -> dict[str, Any]:
     """Coerce a row -- model, mapping or scalar -- into a flat dict."""
     if isinstance(row, BaseModel):
@@ -24,9 +42,9 @@ def _to_dict(row: Any) -> dict[str, Any]:
 def output(
     state: Any, rows: Iterable[Any], columns: Sequence[str], title: str = ""
 ) -> None:
-    """Print rows as a rich table (default) or raw JSON (``--json``)."""
+    """Print rows as a rich table (default) or raw JSON (``--format json``)."""
     data = [_to_dict(r) for r in rows]
-    if state.json_output:
+    if state.format is OutputFormat.JSON:
         console.print_json(json.dumps(data, default=str))
         return
     table = Table(title=title or None)
@@ -38,9 +56,9 @@ def output(
 
 
 def output_one(state: Any, row: Any) -> None:
-    """Print a single record as a field/value table or raw JSON (``--json``)."""
+    """Print one record as a field/value table or raw JSON (``--format json``)."""
     item = _to_dict(row)
-    if state.json_output:
+    if state.format is OutputFormat.JSON:
         console.print_json(json.dumps(item, default=str))
         return
     table = Table(show_header=False)
@@ -59,13 +77,13 @@ def output_result(state: Any, result: Any = None) -> None:
 
     Many write endpoints answer 204, or a bare message with nothing to
     render -- some as ``None``/``""``, others as an empty list. Under
-    ``--json`` those must still emit *something* parseable -- a script
-    piping us into ``jq`` should never get an empty stdout on success -- so
-    they print ``{"ok": true}``. When the API did return a model or dict, it
-    is printed by :func:`output_one` as usual.
+    ``--format json`` those must still emit *something* parseable -- a
+    script piping us into ``jq`` should never get an empty stdout on
+    success -- so they print ``{"ok": true}``. When the API did return a
+    model or dict, it is printed by :func:`output_one` as usual.
     """
     if result is None or result == "" or result == []:
-        if state.json_output:
+        if state.format is OutputFormat.JSON:
             console.print_json(json.dumps({"ok": True}))
         else:
             console.print("[green]done[/]")
