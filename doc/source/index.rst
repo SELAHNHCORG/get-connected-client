@@ -13,8 +13,9 @@ sub-app per resource: ``config``, ``users``, ``agencies``, ``needs``, ``events``
 ``registration-questions`` and ``auth``.
 
 The library's namespaces line up with those, minus ``config`` (which
-manages the CLI's settings file and has no client counterpart) and with
-the four lookup sub-apps rolled into a single ``client.lookups``.
+inspects the CLI's resolved environment settings and has no client
+counterpart) and with the four lookup sub-apps rolled into a single
+``client.lookups``.
 
 Because the only Galaxy Digital account available for development and
 testing is a production account, the library and CLI are built around a
