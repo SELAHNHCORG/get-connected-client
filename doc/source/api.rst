@@ -4,21 +4,21 @@ API Reference
 Client
 ------
 
-.. automodule:: galaxy_digital_cli.client
+.. automodule:: get_connected_cli.client
    :members:
    :show-inheritance:
 
 Exceptions
 ----------
 
-.. automodule:: galaxy_digital_cli.exceptions
+.. automodule:: get_connected_cli.exceptions
    :members:
    :show-inheritance:
 
 Configuration
 -------------
 
-.. automodule:: galaxy_digital_cli.config
+.. automodule:: get_connected_cli.config
    :members:
    :show-inheritance:
 
@@ -28,91 +28,91 @@ Resources
 Base classes
 ~~~~~~~~~~~~
 
-.. automodule:: galaxy_digital_cli.resources.base
+.. automodule:: get_connected_cli.resources.base
    :members:
    :show-inheritance:
 
 Agencies
 ~~~~~~~~
 
-.. automodule:: galaxy_digital_cli.resources.agencies
+.. automodule:: get_connected_cli.resources.agencies
    :members:
    :show-inheritance:
 
 Auth
 ~~~~
 
-.. automodule:: galaxy_digital_cli.resources.auth
+.. automodule:: get_connected_cli.resources.auth
    :members:
    :show-inheritance:
 
 Benchmarks
 ~~~~~~~~~~
 
-.. automodule:: galaxy_digital_cli.resources.benchmarks
+.. automodule:: get_connected_cli.resources.benchmarks
    :members:
    :show-inheritance:
 
 Events
 ~~~~~~
 
-.. automodule:: galaxy_digital_cli.resources.events
+.. automodule:: get_connected_cli.resources.events
    :members:
    :show-inheritance:
 
 Groups
 ~~~~~~
 
-.. automodule:: galaxy_digital_cli.resources.groups
+.. automodule:: get_connected_cli.resources.groups
    :members:
    :show-inheritance:
 
 Hours
 ~~~~~
 
-.. automodule:: galaxy_digital_cli.resources.hours
+.. automodule:: get_connected_cli.resources.hours
    :members:
    :show-inheritance:
 
 Misc (clusters, lookups)
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. automodule:: galaxy_digital_cli.resources.misc
+.. automodule:: get_connected_cli.resources.misc
    :members:
    :show-inheritance:
 
 Needs
 ~~~~~
 
-.. automodule:: galaxy_digital_cli.resources.needs
+.. automodule:: get_connected_cli.resources.needs
    :members:
    :show-inheritance:
 
 Qualifications
 ~~~~~~~~~~~~~~~
 
-.. automodule:: galaxy_digital_cli.resources.qualifications
+.. automodule:: get_connected_cli.resources.qualifications
    :members:
    :show-inheritance:
 
 Responses
 ~~~~~~~~~
 
-.. automodule:: galaxy_digital_cli.resources.responses
+.. automodule:: get_connected_cli.resources.responses
    :members:
    :show-inheritance:
 
 Teams
 ~~~~~
 
-.. automodule:: galaxy_digital_cli.resources.teams
+.. automodule:: get_connected_cli.resources.teams
    :members:
    :show-inheritance:
 
 Users
 ~~~~~
 
-.. automodule:: galaxy_digital_cli.resources.users
+.. automodule:: get_connected_cli.resources.users
    :members:
    :show-inheritance:
 
@@ -122,90 +122,90 @@ Models
 Base
 ~~~~
 
-.. automodule:: galaxy_digital_cli.models.base
+.. automodule:: get_connected_cli.models.base
    :members:
    :show-inheritance:
 
 Common
 ~~~~~~
 
-.. automodule:: galaxy_digital_cli.models.common
+.. automodule:: get_connected_cli.models.common
    :members:
    :show-inheritance:
 
 Agencies
 ~~~~~~~~
 
-.. automodule:: galaxy_digital_cli.models.agencies
+.. automodule:: get_connected_cli.models.agencies
    :members:
    :show-inheritance:
 
 Auth
 ~~~~
 
-.. automodule:: galaxy_digital_cli.models.auth
+.. automodule:: get_connected_cli.models.auth
    :members:
    :show-inheritance:
 
 Benchmarks
 ~~~~~~~~~~
 
-.. automodule:: galaxy_digital_cli.models.benchmarks
+.. automodule:: get_connected_cli.models.benchmarks
    :members:
    :show-inheritance:
 
 Events
 ~~~~~~
 
-.. automodule:: galaxy_digital_cli.models.events
+.. automodule:: get_connected_cli.models.events
    :members:
    :show-inheritance:
 
 Groups
 ~~~~~~
 
-.. automodule:: galaxy_digital_cli.models.groups
+.. automodule:: get_connected_cli.models.groups
    :members:
    :show-inheritance:
 
 Hours
 ~~~~~
 
-.. automodule:: galaxy_digital_cli.models.hours
+.. automodule:: get_connected_cli.models.hours
    :members:
    :show-inheritance:
 
 Needs
 ~~~~~
 
-.. automodule:: galaxy_digital_cli.models.needs
+.. automodule:: get_connected_cli.models.needs
    :members:
    :show-inheritance:
 
 Qualifications
 ~~~~~~~~~~~~~~~
 
-.. automodule:: galaxy_digital_cli.models.qualifications
+.. automodule:: get_connected_cli.models.qualifications
    :members:
    :show-inheritance:
 
 Responses
 ~~~~~~~~~
 
-.. automodule:: galaxy_digital_cli.models.responses
+.. automodule:: get_connected_cli.models.responses
    :members:
    :show-inheritance:
 
 Teams
 ~~~~~
 
-.. automodule:: galaxy_digital_cli.models.teams
+.. automodule:: get_connected_cli.models.teams
    :members:
    :show-inheritance:
 
 Users
 ~~~~~
 
-.. automodule:: galaxy_digital_cli.models.users
+.. automodule:: get_connected_cli.models.users
    :members:
    :show-inheritance:

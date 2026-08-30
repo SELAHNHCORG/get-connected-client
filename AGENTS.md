@@ -4,9 +4,9 @@ This file is for Claude Code and other Claude-based AI assistants working in thi
 
 ## What This Repo Is
 
-**galaxy-digital-cli** — A CLI interface to Galaxy Digital's API
+**get-connected-cli** — A CLI interface to Galaxy Digital's API
 
-A Python library. Source lives in `src/galaxy_digital_cli/`. Tests are in `tests/`. Documentation is in `doc/`.
+A Python library. Source lives in `src/get_connected_cli/`. Tests are in `tests/`. Documentation is in `doc/`.
 
 ## Tooling
 
@@ -63,7 +63,7 @@ newest Python on Windows and macOS. Lower dependency bounds are tested with
 ## Project Structure
 
 ```
-src/galaxy_digital_cli/   # library source
-tests/                               # pytest test suite
-doc/source/                          # Sphinx documentation source
+src/get_connected_cli/   # library source
+tests/                   # pytest test suite
+doc/source/              # Sphinx documentation source
 ```

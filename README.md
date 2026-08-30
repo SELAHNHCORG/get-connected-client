@@ -1,4 +1,4 @@
-# galaxy-digital-cli
+# get-connected-cli
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Code Cov](https://codecov.io/gh/SELAHNHCORG/galaxy-digital-cli/branch/main/graph/badge.svg?token=0IZOKN2DYL)](https://codecov.io/gh/SELAHNHCORG/galaxy-digital-cli)
 [![Test Status](https://github.com/SELAHNHCORG/galaxy-digital-cli/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/SELAHNHCORG/galaxy-digital-cli/actions/workflows/test.yml?query=branch:main)
@@ -30,7 +30,7 @@ will not compute for you.
 ## Installation
 
 ```bash
-pip install galaxy-digital-cli
+pip install get-connected-cli
 ```
 
 ## Quick Start
@@ -92,7 +92,7 @@ whole calendar year. Reports only read, so `--read-only` never blocks them.
 ### Library
 
 ```python
-from galaxy_digital_cli import GalaxyClient
+from get_connected_cli import GalaxyClient
 
 # the site key alone gets you exactly one thing: a token
 with GalaxyClient(api_key="SITE-KEY") as client:
@@ -137,7 +137,7 @@ does honor, and only in one direction: it can turn read-only on, never
 off.)
 
 ```python
-from galaxy_digital_cli import GalaxyClient
+from get_connected_cli import GalaxyClient
 
 # explicit arguments; base_url accepts the same aliases as --url
 GalaxyClient(token="eyJ...", base_url="us2")
@@ -150,8 +150,8 @@ Library callers who want the CLI's full resolution can ask for it
 explicitly:
 
 ```python
-from galaxy_digital_cli import GalaxyClient
-from galaxy_digital_cli.config import load_settings
+from get_connected_cli import GalaxyClient
+from get_connected_cli.config import load_settings
 
 s = load_settings()
 client = GalaxyClient(
@@ -196,7 +196,7 @@ core design constraint, not an afterthought:
 
 ## Documentation
 
-Full documentation is available at [galaxy-digital-cli.readthedocs.io](https://galaxy-digital-cli.readthedocs.io).
+Full documentation is available at [get-connected-cli.readthedocs.io](https://get-connected-cli.readthedocs.io).
 
 ## Development
 

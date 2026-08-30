@@ -1,13 +1,13 @@
-import galaxy_digital_cli
+import get_connected_cli
 
 
 def test_version():
-    assert galaxy_digital_cli.__title__ == "galaxy-digital-cli"
+    assert get_connected_cli.__title__ == "get-connected-cli"
 
 
 def test_public_exports():
-    from galaxy_digital_cli import GalaxyClient  # noqa: F401
+    from get_connected_cli import GalaxyClient  # noqa: F401
 
-    assert galaxy_digital_cli.__all__
-    for name in galaxy_digital_cli.__all__:
-        assert hasattr(galaxy_digital_cli, name), f"missing export: {name}"
+    assert get_connected_cli.__all__
+    for name in get_connected_cli.__all__:
+        assert hasattr(get_connected_cli, name), f"missing export: {name}"

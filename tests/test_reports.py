@@ -11,9 +11,9 @@ import httpx
 import pytest
 from typer.testing import CliRunner
 
-from galaxy_digital_cli.cli import app
-from galaxy_digital_cli.cli.reports import _period, _period_label
-from galaxy_digital_cli.client import MAX_PER_PAGE
+from get_connected_cli.cli import app
+from get_connected_cli.cli.reports import _period, _period_label
+from get_connected_cli.client import MAX_PER_PAGE
 
 runner = CliRunner()
 

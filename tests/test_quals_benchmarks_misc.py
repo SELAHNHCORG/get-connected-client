@@ -14,17 +14,17 @@ import pytest
 import yaml
 from typer.testing import CliRunner
 
-from galaxy_digital_cli.cli import app
-from galaxy_digital_cli.exceptions import ReadOnlyError
-from galaxy_digital_cli.models.auth import LoginResult
-from galaxy_digital_cli.models.benchmarks import Benchmark
-from galaxy_digital_cli.models.common import Cause, Cluster, Impact, Interest, Question
-from galaxy_digital_cli.models.qualifications import Qualification, QualificationUser
-from galaxy_digital_cli.models.users import User, UserOneclick
-from galaxy_digital_cli.resources.auth import Auth
-from galaxy_digital_cli.resources.benchmarks import Benchmarks
-from galaxy_digital_cli.resources.misc import Clusters, Lookups
-from galaxy_digital_cli.resources.qualifications import Qualifications
+from get_connected_cli.cli import app
+from get_connected_cli.exceptions import ReadOnlyError
+from get_connected_cli.models.auth import LoginResult
+from get_connected_cli.models.benchmarks import Benchmark
+from get_connected_cli.models.common import Cause, Cluster, Impact, Interest, Question
+from get_connected_cli.models.qualifications import Qualification, QualificationUser
+from get_connected_cli.models.users import User, UserOneclick
+from get_connected_cli.resources.auth import Auth
+from get_connected_cli.resources.benchmarks import Benchmarks
+from get_connected_cli.resources.misc import Clusters, Lookups
+from get_connected_cli.resources.qualifications import Qualifications
 
 from .test_agencies import _COVERED_AGENCIES_PATHS
 from .test_events_hours import _COVERED_EVENTS_PATHS, _COVERED_HOURS_PATHS
@@ -478,8 +478,8 @@ def test_auth_login_key_defaults_to_client_api_key(client, api):
 
 
 def test_auth_login_without_any_key_raises(monkeypatch, api):
-    from galaxy_digital_cli.client import GalaxyClient
-    from galaxy_digital_cli.exceptions import MissingAPIKeyError
+    from get_connected_cli.client import GalaxyClient
+    from get_connected_cli.exceptions import MissingAPIKeyError
 
     monkeypatch.delenv("GALAXY_API_KEY", raising=False)
     with GalaxyClient(base_url="https://api.test/api", token="tok") as c:
@@ -501,7 +501,7 @@ def test_auth_authenticate_body_and_parse(client, api):
 
 
 def test_auth_login_blocked_in_read_only(api):
-    from galaxy_digital_cli.client import GalaxyClient
+    from get_connected_cli.client import GalaxyClient
 
     with GalaxyClient(
         api_key="test-key", base_url="https://api.test/api", read_only=True
@@ -512,7 +512,7 @@ def test_auth_login_blocked_in_read_only(api):
 
 
 def test_auth_authenticate_blocked_in_read_only(api):
-    from galaxy_digital_cli.client import GalaxyClient
+    from get_connected_cli.client import GalaxyClient
 
     with GalaxyClient(
         api_key="test-key", base_url="https://api.test/api", read_only=True

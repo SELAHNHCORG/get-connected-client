@@ -31,7 +31,7 @@ Hand-written sync client (httpx) with pydantic v2 models. No code generation:
 66 endpoints is small enough to maintain by hand, and we control ergonomics.
 
 ```
-src/galaxy_digital_cli/
+src/get_connected_cli/
 ├── __init__.py          # exports GalaxyClient, exceptions, __version__
 ├── client.py            # GalaxyClient: transport, auth, retries, pagination
 ├── config.py            # settings resolution: env vars > config file > defaults
@@ -43,7 +43,7 @@ src/galaxy_digital_cli/
     ├── users.py needs.py hours.py events.py agencies.py responses.py
     ├── teams.py groups.py qualifications.py benchmarks.py clusters.py
     └── misc.py          # causes, interests, impacts (read-only lookups)
-src/galaxy_digital_cli/cli/   # typer app; one sub-app per resource
+src/get_connected_cli/cli/   # typer app; one sub-app per resource
 ```
 
 ### Client core
@@ -124,7 +124,7 @@ perms; value redacted when displayed).
 - Sphinx docs in `doc/source/` per the existing scaffold: quickstart,
   configuration, CLI reference, API reference (autodoc).
 - New runtime deps: `httpx`, `pydantic>=2`, `typer`, `rich`, `platformdirs`;
-  test dep: `respx`. `[project.scripts] galaxy = "galaxy_digital_cli.cli:app"`.
+  test dep: `respx`. `[project.scripts] galaxy = "get_connected_cli.cli:app"`.
 
 ## Out of Scope (YAGNI)
 

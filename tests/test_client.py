@@ -3,8 +3,8 @@ import json
 import httpx
 import pytest
 
-from galaxy_digital_cli import exceptions as exc
-from galaxy_digital_cli.client import GalaxyClient
+from get_connected_cli import exceptions as exc
+from get_connected_cli.client import GalaxyClient
 
 from .conftest import BASE
 

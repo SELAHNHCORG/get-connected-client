@@ -12,11 +12,11 @@ import pytest
 import yaml
 from typer.testing import CliRunner
 
-from galaxy_digital_cli.cli import app
-from galaxy_digital_cli.models.events import Event
-from galaxy_digital_cli.models.hours import Hour
-from galaxy_digital_cli.resources.events import Events
-from galaxy_digital_cli.resources.hours import Hours
+from get_connected_cli.cli import app
+from get_connected_cli.models.events import Event
+from get_connected_cli.models.hours import Hour
+from get_connected_cli.resources.events import Events
+from get_connected_cli.resources.hours import Hours
 
 
 runner = CliRunner()

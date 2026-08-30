@@ -56,7 +56,7 @@ Command tree
 ``config`` -- inspect the resolved configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. typer:: galaxy_digital_cli.cli:app:config
+.. typer:: get_connected_cli.cli:app:config
    :prog: galaxy config
    :show-nested:
    :make-sections:
@@ -71,7 +71,7 @@ There is nothing to set or unset: settings come from the global flags, then
 ``auth`` -- credential exchange
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. typer:: galaxy_digital_cli.cli:app:auth
+.. typer:: get_connected_cli.cli:app:auth
    :prog: galaxy auth
    :show-nested:
    :make-sections:
@@ -102,7 +102,7 @@ Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
 ``users`` -- manage users
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. typer:: galaxy_digital_cli.cli:app:users
+.. typer:: get_connected_cli.cli:app:users
    :prog: galaxy users
    :show-nested:
    :make-sections:
@@ -112,7 +112,7 @@ Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
 ``agencies`` -- manage agencies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. typer:: galaxy_digital_cli.cli:app:agencies
+.. typer:: get_connected_cli.cli:app:agencies
    :prog: galaxy agencies
    :show-nested:
    :make-sections:
@@ -122,7 +122,7 @@ Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
 ``needs`` -- manage needs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. typer:: galaxy_digital_cli.cli:app:needs
+.. typer:: get_connected_cli.cli:app:needs
    :prog: galaxy needs
    :show-nested:
    :make-sections:
@@ -132,7 +132,7 @@ Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
 ``events`` -- manage events
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. typer:: galaxy_digital_cli.cli:app:events
+.. typer:: get_connected_cli.cli:app:events
    :prog: galaxy events
    :show-nested:
    :make-sections:
@@ -142,7 +142,7 @@ Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
 ``hours`` -- manage hour records
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. typer:: galaxy_digital_cli.cli:app:hours
+.. typer:: get_connected_cli.cli:app:hours
    :prog: galaxy hours
    :show-nested:
    :make-sections:
@@ -152,7 +152,7 @@ Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
 ``responses`` -- manage responses (need sign-ups)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. typer:: galaxy_digital_cli.cli:app:responses
+.. typer:: get_connected_cli.cli:app:responses
    :prog: galaxy responses
    :show-nested:
    :make-sections:
@@ -162,7 +162,7 @@ Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
 ``teams`` -- manage teams
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. typer:: galaxy_digital_cli.cli:app:teams
+.. typer:: get_connected_cli.cli:app:teams
    :prog: galaxy teams
    :show-nested:
    :make-sections:
@@ -172,7 +172,7 @@ Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
 ``groups`` -- manage groups
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. typer:: galaxy_digital_cli.cli:app:groups
+.. typer:: get_connected_cli.cli:app:groups
    :prog: galaxy groups
    :show-nested:
    :make-sections:
@@ -182,7 +182,7 @@ Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
 ``qualifications`` -- manage qualifications
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. typer:: galaxy_digital_cli.cli:app:qualifications
+.. typer:: get_connected_cli.cli:app:qualifications
    :prog: galaxy qualifications
    :show-nested:
    :make-sections:
@@ -192,7 +192,7 @@ Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
 ``benchmarks`` -- manage benchmarks
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. typer:: galaxy_digital_cli.cli:app:benchmarks
+.. typer:: get_connected_cli.cli:app:benchmarks
    :prog: galaxy benchmarks
    :show-nested:
    :make-sections:
@@ -204,35 +204,35 @@ Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
 
 Small, mostly read-only lookup endpoints:
 
-.. typer:: galaxy_digital_cli.cli:app:clusters
+.. typer:: get_connected_cli.cli:app:clusters
    :prog: galaxy clusters
    :show-nested:
    :make-sections:
    :preferred: svg
    :width: 100
 
-.. typer:: galaxy_digital_cli.cli:app:causes
+.. typer:: get_connected_cli.cli:app:causes
    :prog: galaxy causes
    :show-nested:
    :make-sections:
    :preferred: svg
    :width: 100
 
-.. typer:: galaxy_digital_cli.cli:app:interests
+.. typer:: get_connected_cli.cli:app:interests
    :prog: galaxy interests
    :show-nested:
    :make-sections:
    :preferred: svg
    :width: 100
 
-.. typer:: galaxy_digital_cli.cli:app:impacts
+.. typer:: get_connected_cli.cli:app:impacts
    :prog: galaxy impacts
    :show-nested:
    :make-sections:
    :preferred: svg
    :width: 100
 
-.. typer:: galaxy_digital_cli.cli:app:registration-questions
+.. typer:: get_connected_cli.cli:app:registration-questions
    :prog: galaxy registration-questions
    :show-nested:
    :make-sections:
@@ -242,7 +242,7 @@ Small, mostly read-only lookup endpoints:
 ``reports`` -- aggregate answers the API will not compute
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. typer:: galaxy_digital_cli.cli:app:reports
+.. typer:: get_connected_cli.cli:app:reports
    :prog: galaxy reports
    :show-nested:
    :make-sections:

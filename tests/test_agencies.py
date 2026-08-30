@@ -12,10 +12,10 @@ import pytest
 import yaml
 from typer.testing import CliRunner
 
-from galaxy_digital_cli.cli import app
-from galaxy_digital_cli.models.agencies import Agency
-from galaxy_digital_cli.models.common import Cause, Cluster, Tag, UserMini
-from galaxy_digital_cli.resources.agencies import Agencies
+from get_connected_cli.cli import app
+from get_connected_cli.models.agencies import Agency
+from get_connected_cli.models.common import Cause, Cluster, Tag, UserMini
+from get_connected_cli.resources.agencies import Agencies
 
 
 runner = CliRunner()

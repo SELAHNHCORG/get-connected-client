@@ -5,13 +5,13 @@ import typer
 from pydantic import BaseModel, ValidationError
 from typer.testing import CliRunner
 
-import galaxy_digital_cli
-from galaxy_digital_cli.cli import app
-from galaxy_digital_cli.cli import main as root_callback
-from galaxy_digital_cli.cli._confirm import confirm_write
-from galaxy_digital_cli.cli._output import OutputFormat, console
-from galaxy_digital_cli.cli._state import _merge_fields, handle_errors
-from galaxy_digital_cli.exceptions import GalaxyError, NotFoundError
+import get_connected_cli
+from get_connected_cli.cli import app
+from get_connected_cli.cli import main as root_callback
+from get_connected_cli.cli._confirm import confirm_write
+from get_connected_cli.cli._output import OutputFormat, console
+from get_connected_cli.cli._state import _merge_fields, handle_errors
+from get_connected_cli.exceptions import GalaxyError, NotFoundError
 
 runner = CliRunner()
 
@@ -52,7 +52,7 @@ def demo_bad_payload() -> None:
 def test_version():
     result = runner.invoke(app, ["--version"])
     assert result.exit_code == 0
-    assert galaxy_digital_cli.__version__ in result.output
+    assert get_connected_cli.__version__ in result.output
 
 
 def test_help_lists_global_options_and_config():
@@ -165,8 +165,8 @@ def test_config_show_reports_flag_source_for_token():
 
 def test_token_flag_reaches_the_client():
     """The global --token is what the lazily-built client authenticates with."""
-    from galaxy_digital_cli.cli._state import State
-    from galaxy_digital_cli.config import load_settings
+    from get_connected_cli.cli._state import State
+    from get_connected_cli.config import load_settings
 
     state = State(settings=load_settings(api_key="k", token="tok"))
     with state.client as client:
@@ -229,9 +229,9 @@ def test_validation_error_with_debug_reraises():
 
 def test_output_result_reports_empty_writes(capsys):
     """A write that returns nothing still emits parseable JSON under --json."""
-    from galaxy_digital_cli.cli._output import output_result
-    from galaxy_digital_cli.cli._state import State
-    from galaxy_digital_cli.config import Settings
+    from get_connected_cli.cli._output import output_result
+    from get_connected_cli.cli._state import State
+    from get_connected_cli.config import Settings
 
     state = State(settings=Settings(api_key=None, url="x", read_only=False))
     output_result(state, None)
@@ -266,8 +266,8 @@ def test_yes_skips_confirmation():
 
 
 def test_confirm_write_without_payload(monkeypatch, capsys):
-    from galaxy_digital_cli.cli._state import State
-    from galaxy_digital_cli.config import Settings
+    from get_connected_cli.cli._state import State
+    from get_connected_cli.config import Settings
 
     state = State(settings=Settings(api_key=None, url="x", read_only=False))
     monkeypatch.setattr(typer, "confirm", lambda *args, **kwargs: True)
@@ -376,8 +376,8 @@ def test_config_show_format_row_reports_flag_over_env(monkeypatch):
 
 
 def test_state_client_is_lazy_and_configured():
-    from galaxy_digital_cli.cli._state import State
-    from galaxy_digital_cli.config import load_settings
+    from get_connected_cli.cli._state import State
+    from get_connected_cli.config import load_settings
 
     state = State(settings=load_settings(api_key="k", url="ca", read_only=True))
     assert state._client is None
@@ -398,9 +398,9 @@ def test_merge_fields():
 
 
 def test_output_helpers(capsys):
-    from galaxy_digital_cli.cli._output import output, output_one
-    from galaxy_digital_cli.cli._state import State
-    from galaxy_digital_cli.config import Settings
+    from get_connected_cli.cli._output import output, output_one
+    from get_connected_cli.cli._state import State
+    from get_connected_cli.config import Settings
 
     state = State(settings=Settings(api_key=None, url="x", read_only=False))
     output(state, [{"id": 1, "name": "a"}], ["id", "name"], title="Rows")
@@ -440,7 +440,7 @@ def test_cli_reference_docs_render_from_the_live_app():
     ``sphinxcontrib-typer`` ``.. typer::`` directives, it cannot drift from
     the app -- there is nothing to enumerate and compare. What remains
     worth guarding is that the directives still point at the real app
-    import path, so a rename of ``galaxy_digital_cli.cli.app`` breaks this
+    import path, so a rename of ``get_connected_cli.cli.app`` breaks this
     test loudly instead of silently producing an empty/broken doc build.
     """
     import importlib
@@ -454,9 +454,9 @@ def test_cli_reference_docs_render_from_the_live_app():
     # the exact import path every `.. typer::` directive below resolves
     # against; if `app` is ever renamed or moved this fails before a doc
     # build would silently render nothing (or fail on its own, less clearly).
-    assert getattr(importlib.import_module("galaxy_digital_cli.cli"), "app") is app
-    assert ".. typer:: galaxy_digital_cli.cli:app" in cli_rst
-    directive_count = cli_rst.count(".. typer:: galaxy_digital_cli.cli:app")
+    assert getattr(importlib.import_module("get_connected_cli.cli"), "app") is app
+    assert ".. typer:: get_connected_cli.cli:app" in cli_rst
+    directive_count = cli_rst.count(".. typer:: get_connected_cli.cli:app")
     # one directive per registered sub-app
     root = get_command(app)
     sub_apps = [
@@ -466,9 +466,9 @@ def test_cli_reference_docs_render_from_the_live_app():
 
 
 def test_output_accepts_models_and_scalars(capsys):
-    from galaxy_digital_cli.cli._output import output
-    from galaxy_digital_cli.cli._state import State
-    from galaxy_digital_cli.config import Settings
+    from get_connected_cli.cli._output import output
+    from get_connected_cli.cli._state import State
+    from get_connected_cli.config import Settings
 
     class Row(BaseModel):
         id: int

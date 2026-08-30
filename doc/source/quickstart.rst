@@ -6,9 +6,9 @@ Install
 
 .. code-block:: bash
 
-   pip install galaxy-digital-cli
+   pip install get-connected-cli
 
-This installs both the ``galaxy_digital_cli`` library and the ``galaxy``
+This installs both the ``get_connected_cli`` library and the ``galaxy``
 command line tool.
 
 Two credentials
@@ -84,7 +84,7 @@ the root command, so it goes *before* the sub-app name.
 Library
 -------
 
-:class:`~galaxy_digital_cli.client.GalaxyClient` is the entry point. It
+:class:`~get_connected_cli.client.GalaxyClient` is the entry point. It
 holds one namespace per resource (``users``, ``agencies``, ``needs``,
 ``events``, ``hours``, ``responses``, ``teams``, ``groups``,
 ``qualifications``, ``benchmarks``, ``clusters``, ``lookups``, ``auth``) and
@@ -95,7 +95,7 @@ Use it as a context manager so the underlying connection is always closed:
 
 .. code-block:: python
 
-   from galaxy_digital_cli import GalaxyClient
+   from get_connected_cli import GalaxyClient
 
    # the site key alone gets you exactly one thing: a token
    with GalaxyClient(api_key="SITE-KEY") as client:
@@ -106,7 +106,7 @@ Use it as a context manager so the underlying connection is always closed:
        for user in client.users.list(per_page=50):
            print(user.id, user.user_email)
 
-:meth:`~galaxy_digital_cli.client.GalaxyClient.login` stores the token on
+:meth:`~get_connected_cli.client.GalaxyClient.login` stores the token on
 the client and rebuilds its HTTP transport around it, so every later call
 is authenticated. A token you already have can be handed to the constructor
 instead:

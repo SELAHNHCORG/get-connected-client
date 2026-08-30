@@ -1,10 +1,10 @@
-galaxy-digital-cli
-===================
+get-connected-cli
+=================
 
-**galaxy-digital-cli** is a Python library and command line interface for
+**get-connected-cli** is a Python library and command line interface for
 `Galaxy Digital's Get Connected API <https://www.galaxydigital.com/>`_. It
 wraps all 66 documented API paths behind a typed, synchronous
-:class:`~galaxy_digital_cli.client.GalaxyClient` -- the sole choke point for
+:class:`~get_connected_cli.client.GalaxyClient` -- the sole choke point for
 every request -- and a ``galaxy`` command with one sub-app per resource:
 ``config``, ``users``, ``agencies``, ``needs``, ``events``, ``hours``,
 ``responses``, ``teams``, ``groups``, ``qualifications``, ``benchmarks``,

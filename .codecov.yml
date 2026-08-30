@@ -1,3 +1,3 @@
 coverage:
   fixes:
-    - "__init__.py::galaxy_digital_cli/__init__.py"
+    - "__init__.py::get_connected_cli/__init__.py"

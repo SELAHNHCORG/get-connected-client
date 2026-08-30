@@ -25,7 +25,7 @@ Net effect: live tests see the real process environment untouched, so
 ``GALAXY_API_TOKEN`` (the credential that actually authenticates),
 ``GALAXY_API_KEY`` and ``GALAXY_API_URL`` (if the user wants something other
 than the production default) pass straight through to
-:class:`~galaxy_digital_cli.client.GalaxyClient`. This works
+:class:`~get_connected_cli.client.GalaxyClient`. This works
 because the ``live_client`` fixtures in ``test_live_read.py`` and
 ``test_live_write.py`` read ``GALAXY_API_URL`` themselves and pass it as
 ``base_url=`` explicitly -- ``GalaxyClient`` itself never reads that env var.

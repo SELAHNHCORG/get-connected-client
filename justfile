@@ -241,13 +241,13 @@ run +ARGS:
 validate_version VERSION:
     import re
     import tomllib
-    import galaxy_digital_cli
+    import get_connected_cli
     from packaging.version import Version
     raw_version = "{{ VERSION }}".lstrip("v")
     version_obj = Version(raw_version)
     assert str(version_obj) == raw_version
     assert raw_version == tomllib.load(open('pyproject.toml', 'rb'))['project']['version']
-    assert raw_version == galaxy_digital_cli.__version__
+    assert raw_version == get_connected_cli.__version__
     print(raw_version)
 
 # issue a release for the given semver string (e.g. 1.0.0)
