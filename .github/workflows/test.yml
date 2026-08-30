@@ -46,9 +46,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.14"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
         dependencies:
+          - "lowest-direct"
           - "highest"
+        exclude:
+          - python-version: "3.10"
+            dependencies: "highest"
+          - python-version: "3.11"
+            dependencies: "lowest-direct"
+          - python-version: "3.12"
+            dependencies: "lowest-direct"
+          - python-version: "3.13"
+            dependencies: "lowest-direct"
+          - python-version: "3.14"
+            dependencies: "lowest-direct"
+          - python-version: "3.15"
+            dependencies: "lowest-direct"
     env:
       COVERAGE_FILE: linux-py${{ matrix.python-version }}.coverage
       TEST_PYTHON_VERSION: ${{ matrix.python-version }}
@@ -99,9 +113,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.14"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
         dependencies:
+          - "lowest-direct"
           - "highest"
+        exclude:
+          - python-version: "3.10"
+            dependencies: "highest"
+          - python-version: "3.11"
+            dependencies: "lowest-direct"
+          - python-version: "3.12"
+            dependencies: "lowest-direct"
+          - python-version: "3.13"
+            dependencies: "lowest-direct"
+          - python-version: "3.14"
+            dependencies: "lowest-direct"
+          - python-version: "3.15"
+            dependencies: "lowest-direct"
     env:
       COVERAGE_FILE: windows-py${{ matrix.python-version }}.coverage
       TEST_PYTHON_VERSION: ${{ matrix.python-version }}
@@ -149,9 +177,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.14"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
         dependencies:
+          - "lowest-direct"
           - "highest"
+        exclude:
+          - python-version: "3.10"
+            dependencies: "highest"
+          - python-version: "3.11"
+            dependencies: "lowest-direct"
+          - python-version: "3.12"
+            dependencies: "lowest-direct"
+          - python-version: "3.13"
+            dependencies: "lowest-direct"
+          - python-version: "3.14"
+            dependencies: "lowest-direct"
+          - python-version: "3.15"
+            dependencies: "lowest-direct"
     env:
       COVERAGE_FILE: macos-py${{ matrix.python-version }}.coverage
       TEST_PYTHON_VERSION: ${{ matrix.python-version }}
