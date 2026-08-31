@@ -1,6 +1,8 @@
 API Reference
 =============
 
+.. automodule:: get_connected_client
+
 Client
 ------
 

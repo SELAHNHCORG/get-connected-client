@@ -218,7 +218,9 @@ class GalaxyHTTPError(GalaxyError):
     def __init__(self, status_code: int, detail: str = ""):
         self.status_code = status_code
         self.detail = detail
-        super().__init__(f"HTTP {status_code}: {detail}" if detail else f"HTTP {status_code}")
+        super().__init__(
+            f"HTTP {status_code}: {detail}" if detail else f"HTTP {status_code}"
+        )
 
     @classmethod
     def for_status(cls, status_code: int, detail: str = "") -> "GalaxyHTTPError":
@@ -284,17 +286,35 @@ def test_extra_fields_survive():
 
 def test_common_models_exist():
     for name in [
-        "Tag", "Cause", "Cluster", "Interest", "Impact", "Category",
-        "Extra", "Question", "Shift", "TrackMini", "UserMini", "AgencyMini",
-        "NeedMini", "GroupMini", "InitiativeMini", "TeamMini",
+        "Tag",
+        "Cause",
+        "Cluster",
+        "Interest",
+        "Impact",
+        "Category",
+        "Extra",
+        "Question",
+        "Shift",
+        "TrackMini",
+        "UserMini",
+        "AgencyMini",
+        "NeedMini",
+        "GroupMini",
+        "InitiativeMini",
+        "TeamMini",
     ]:
         assert hasattr(models, name)
 
 
 def test_user_mini_fields():
     u = models.UserMini.model_validate(
-        {"id": 1, "domain_id": 2, "user_fname": "A", "user_lname": "B",
-         "user_email": "a@b.co"}
+        {
+            "id": 1,
+            "domain_id": 2,
+            "user_fname": "A",
+            "user_lname": "B",
+            "user_email": "a@b.co",
+        }
     )
     assert u.user_email == "a@b.co"
 ```
@@ -321,42 +341,42 @@ from __future__ import annotations
 from .base import GalaxyModel
 
 
-class Tag(GalaxyModel):          # tagObject
+class Tag(GalaxyModel):  # tagObject
     id: int | None = None
     name: str | None = None
 
 
-class Cause(GalaxyModel):        # causeObject
+class Cause(GalaxyModel):  # causeObject
     id: int | None = None
     name: str | None = None
 
 
-class Cluster(GalaxyModel):      # clusterObject
+class Cluster(GalaxyModel):  # clusterObject
     id: int | None = None
     name: str | None = None
 
 
-class Interest(GalaxyModel):     # interestObject
+class Interest(GalaxyModel):  # interestObject
     id: int | None = None
     name: str | None = None
 
 
-class Impact(GalaxyModel):       # impactObject
+class Impact(GalaxyModel):  # impactObject
     id: int | None = None
     impact_name: str | None = None
 
 
-class Category(GalaxyModel):     # categoryObject
+class Category(GalaxyModel):  # categoryObject
     id: int | None = None
     name: str | None = None
 
 
-class Extra(GalaxyModel):        # extraObject
+class Extra(GalaxyModel):  # extraObject
     key: str | None = None
     value: str | None = None
 
 
-class Question(GalaxyModel):     # questionObject
+class Question(GalaxyModel):  # questionObject
     id: int | None = None
     q_type: str | None = None
     q_label: str | None = None
@@ -368,7 +388,7 @@ class Question(GalaxyModel):     # questionObject
     updated_at: str | None = None
 
 
-class Shift(GalaxyModel):        # shiftObject
+class Shift(GalaxyModel):  # shiftObject
     id: int | None = None
     start: str | None = None
     end: str | None = None
@@ -376,13 +396,13 @@ class Shift(GalaxyModel):        # shiftObject
     slots: int | None = None
 
 
-class TrackMini(GalaxyModel):    # trackMiniObject
+class TrackMini(GalaxyModel):  # trackMiniObject
     id: int | None = None
     name: str | None = None
     created_at: str | None = None
 
 
-class UserMini(GalaxyModel):     # userMiniObject
+class UserMini(GalaxyModel):  # userMiniObject
     id: int | None = None
     domain_id: int | None = None
     user_fname: str | None = None
@@ -390,19 +410,19 @@ class UserMini(GalaxyModel):     # userMiniObject
     user_email: str | None = None
 
 
-class AgencyMini(GalaxyModel):   # agencyMiniObject
+class AgencyMini(GalaxyModel):  # agencyMiniObject
     id: int | None = None
     domain_id: int | None = None
     agency_name: str | None = None
 
 
-class NeedMini(GalaxyModel):     # needMiniObject
+class NeedMini(GalaxyModel):  # needMiniObject
     id: int | None = None
     domain_id: int | None = None
     need_title: str | None = None
 
 
-class GroupMini(GalaxyModel):    # groupMiniObject
+class GroupMini(GalaxyModel):  # groupMiniObject
     id: int | None = None
     domain_id: int | None = None
     group_title: str | None = None
@@ -414,7 +434,7 @@ class InitiativeMini(GalaxyModel):  # initiativeMiniObject
     init_title: str | None = None
 
 
-class TeamMini(GalaxyModel):     # teamMiniObject
+class TeamMini(GalaxyModel):  # teamMiniObject
     id: int | None = None
     domain_id: int | None = None
     team_name: str | None = None
@@ -425,15 +445,42 @@ class TeamMini(GalaxyModel):     # teamMiniObject
 ```python
 from .base import GalaxyModel
 from .common import (
-    AgencyMini, Category, Cause, Cluster, Extra, GroupMini, Impact,
-    InitiativeMini, Interest, NeedMini, Question, Shift, Tag, TeamMini,
-    TrackMini, UserMini,
+    AgencyMini,
+    Category,
+    Cause,
+    Cluster,
+    Extra,
+    GroupMini,
+    Impact,
+    InitiativeMini,
+    Interest,
+    NeedMini,
+    Question,
+    Shift,
+    Tag,
+    TeamMini,
+    TrackMini,
+    UserMini,
 )
 
 __all__ = [
-    "GalaxyModel", "AgencyMini", "Category", "Cause", "Cluster", "Extra",
-    "GroupMini", "Impact", "InitiativeMini", "Interest", "NeedMini",
-    "Question", "Shift", "Tag", "TeamMini", "TrackMini", "UserMini",
+    "GalaxyModel",
+    "AgencyMini",
+    "Category",
+    "Cause",
+    "Cluster",
+    "Extra",
+    "GroupMini",
+    "Impact",
+    "InitiativeMini",
+    "Interest",
+    "NeedMini",
+    "Question",
+    "Shift",
+    "Tag",
+    "TeamMini",
+    "TrackMini",
+    "UserMini",
 ]
 ```
 
@@ -593,7 +640,9 @@ def load_settings(
     read_only: bool | None = None,
 ) -> Settings:
     file_cfg = read_config()
-    resolved_key = api_key or os.environ.get("GALAXY_API_KEY") or file_cfg.get("api_key")
+    resolved_key = (
+        api_key or os.environ.get("GALAXY_API_KEY") or file_cfg.get("api_key")
+    )
     resolved_url = url or os.environ.get("GALAXY_API_URL") or file_cfg.get("url") or US1
     if read_only is None:
         read_only = env_read_only()
@@ -694,7 +743,10 @@ def test_server_alias():
     assert c.base_url == "https://ca.volunteerapi.com/api"
 
 
-@pytest.mark.parametrize("status,klass", [(401, exc.AuthError), (404, exc.NotFoundError), (422, exc.ValidationFailedError)])
+@pytest.mark.parametrize(
+    "status,klass",
+    [(401, exc.AuthError), (404, exc.NotFoundError), (422, exc.ValidationFailedError)],
+)
 def test_error_mapping(client, api, status, klass):
     api.get("/users/9").respond(status_code=status, json={"error": "nope"})
     with pytest.raises(klass):
@@ -739,7 +791,10 @@ def test_paginate(client, api):
     page1 = {"data": [{"id": i} for i in range(1, 4)]}
     page2 = {"data": [{"id": 4}]}
     route = api.get("/hours")
-    route.side_effect = [httpx.Response(200, json=page1), httpx.Response(200, json=page2)]
+    route.side_effect = [
+        httpx.Response(200, json=page1),
+        httpx.Response(200, json=page2),
+    ]
     rows = list(client.paginate("/hours", per_page=3))
     assert [r["id"] for r in rows] == [1, 2, 3, 4]
     assert route.calls[1].request.url.params["since_id"] == "3"
@@ -796,9 +851,7 @@ class GalaxyClient:
     ):
         self.api_key = api_key or os.environ.get("GALAXY_API_KEY") or ""
         if not self.api_key:
-            raise MissingAPIKeyError(
-                "No API key: pass api_key= or set GALAXY_API_KEY"
-            )
+            raise MissingAPIKeyError("No API key: pass api_key= or set GALAXY_API_KEY")
         self.base_url = resolve_url(base_url)
         self.read_only = read_only
         self.timeout = timeout
@@ -891,7 +944,11 @@ class GalaxyClient:
             yield from rows
             if len(rows) < int(query["per_page"]):
                 return
-            ids = [int(r["id"]) for r in rows if isinstance(r, dict) and r.get("id") is not None]
+            ids = [
+                int(r["id"])
+                for r in rows
+                if isinstance(r, dict) and r.get("id") is not None
+            ]
             if not ids:
                 return
             since_id = max(ids)
@@ -924,7 +981,12 @@ class GalaxyClient:
 ```python
 from get_connected_client.models.common import Tag
 from get_connected_client.resources.base import (
-    CreateMixin, DeleteMixin, GetMixin, ListMixin, Resource, UpdateMixin,
+    CreateMixin,
+    DeleteMixin,
+    GetMixin,
+    ListMixin,
+    Resource,
+    UpdateMixin,
 )
 
 
@@ -934,9 +996,7 @@ class Widgets(ListMixin, GetMixin, CreateMixin, UpdateMixin, DeleteMixin, Resour
 
 
 def test_list_parses_and_filters(client, api):
-    route = api.get("/widgets").respond(
-        json={"data": [{"id": 1, "name": "a"}]}
-    )
+    route = api.get("/widgets").respond(json={"data": [{"id": 1, "name": "a"}]})
     rows = list(Widgets(client).list(show_inactive=True, since_created="2024-01-01"))
     assert isinstance(rows[0], Tag) and rows[0].name == "a"
     params = route.calls.last.request.url.params
@@ -1271,7 +1331,9 @@ def set_(key: str, value: str) -> None:
     if key not in _VALID_KEYS:
         raise typer.BadParameter(f"key must be one of {sorted(_VALID_KEYS)}")
     current = config.read_config()
-    current[key] = value.lower() in {"1", "true", "yes", "on"} if key in _BOOL_KEYS else value
+    current[key] = (
+        value.lower() in {"1", "true", "yes", "on"} if key in _BOOL_KEYS else value
+    )
     config.save_config(current)
     console.print(f"wrote {config.config_file()}")
 
@@ -1322,8 +1384,12 @@ def _version(value: bool) -> None:
 @app.callback()
 def main(
     ctx: typer.Context,
-    api_key: Optional[str] = typer.Option(None, "--api-key", help="API key (or GALAXY_API_KEY)."),
-    url: Optional[str] = typer.Option(None, "--url", help="Server URL or alias us1/us2/ca."),
+    api_key: Optional[str] = typer.Option(
+        None, "--api-key", help="API key (or GALAXY_API_KEY)."
+    ),
+    url: Optional[str] = typer.Option(
+        None, "--url", help="Server URL or alias us1/us2/ca."
+    ),
     read_only: bool = typer.Option(False, "--read-only", help="Block all writes."),
     json_output: bool = typer.Option(False, "--json", help="Emit raw JSON."),
     yes: bool = typer.Option(False, "--yes", "-y", help="Skip write confirmations."),
@@ -1388,6 +1454,7 @@ CLI command naming: `list`, `get`, `create`, `update`, `delete`, plus sub-resour
 ```python
 import json as _json
 
+
 def _merge_fields(data: str | None, **options) -> dict:
     fields = {k: v for k, v in options.items() if v is not None}
     if data:
@@ -1450,15 +1517,30 @@ from __future__ import annotations
 from typing import Any
 
 from ..models.common import (
-    AgencyMini, BenchmarkMini, Cause, Extra, Interest, Tag, TrackMini,
+    AgencyMini,
+    BenchmarkMini,
+    Cause,
+    Extra,
+    Interest,
+    Tag,
+    TrackMini,
 )
 from ..models.hours import Hour
 from ..models.users import (
-    RegistrationAnswer, User, UserOneclick, UserOptouts, UserQualification,
+    RegistrationAnswer,
+    User,
+    UserOneclick,
+    UserOptouts,
+    UserQualification,
     UserResponse,
 )
 from .base import (
-    CreateMixin, DeleteMixin, GetMixin, ListMixin, Resource, UpdateMixin,
+    CreateMixin,
+    DeleteMixin,
+    GetMixin,
+    ListMixin,
+    Resource,
+    UpdateMixin,
 )
 
 
@@ -1498,9 +1580,13 @@ class Users(ListMixin, GetMixin, CreateMixin, UpdateMixin, DeleteMixin, Resource
             return []
         return [Extra.model_validate(r) for r in rows]
 
-    def set_extras(self, id: int, extras: dict[str, Any], subset: str | None = None) -> Any:
+    def set_extras(
+        self, id: int, extras: dict[str, Any], subset: str | None = None
+    ) -> Any:
         params = {"subset": subset} if subset else None
-        return self._client.request("POST", self._url(id, "extras"), params=params, json=extras)
+        return self._client.request(
+            "POST", self._url(id, "extras"), params=params, json=extras
+        )
 
     def hours(self, id: int) -> list[Hour]:
         return self._get_list(self._url(id, "hours"), Hour)
@@ -1533,7 +1619,9 @@ class Users(ListMixin, GetMixin, CreateMixin, UpdateMixin, DeleteMixin, Resource
         return self._get_list(self._url(id, "qualifications"), UserQualification)
 
     def registration_answers(self, id: int) -> list[RegistrationAnswer]:
-        return self._get_list(self._url(id, "registrationQuestions"), RegistrationAnswer)
+        return self._get_list(
+            self._url(id, "registrationQuestions"), RegistrationAnswer
+        )
 
     def set_registration_answers(self, id: int, answers: Any) -> Any:
         return self._client.request(
@@ -1561,8 +1649,9 @@ class Users(ListMixin, GetMixin, CreateMixin, UpdateMixin, DeleteMixin, Resource
 Attach in `GalaxyClient.__init__` (import inside method body or at module top — module top of `client.py` would be circular; import inside `__init__`):
 
 ```python
-        from .resources.users import Users
-        self.users = Users(self)
+from .resources.users import Users
+
+self.users = Users(self)
 ```
 
 (Each later resource task appends its own import/attach lines here.)
@@ -1730,7 +1819,12 @@ from typing import Any
 from ..models.agencies import Agency
 from ..models.common import Cause, Cluster, Tag, UserMini
 from .base import (
-    CreateMixin, DeleteMixin, GetMixin, ListMixin, Resource, UpdateMixin,
+    CreateMixin,
+    DeleteMixin,
+    GetMixin,
+    ListMixin,
+    Resource,
+    UpdateMixin,
 )
 
 
@@ -1811,7 +1905,12 @@ from ..models.common import Question
 from ..models.needs import Need
 from ..models.responses import Response
 from .base import (
-    CreateMixin, DeleteMixin, GetMixin, ListMixin, Resource, UpdateMixin,
+    CreateMixin,
+    DeleteMixin,
+    GetMixin,
+    ListMixin,
+    Resource,
+    UpdateMixin,
 )
 
 
@@ -1846,10 +1945,14 @@ class Needs(ListMixin, GetMixin, CreateMixin, UpdateMixin, DeleteMixin, Resource
         self._client.request("DELETE", self._url(id, "interests", interest_id))
 
     def add_qualification(self, id: int, qualification_id: int) -> Any:
-        return self._client.request("POST", self._url(id, "qualifications", qualification_id))
+        return self._client.request(
+            "POST", self._url(id, "qualifications", qualification_id)
+        )
 
     def remove_qualification(self, id: int, qualification_id: int) -> None:
-        self._client.request("DELETE", self._url(id, "qualifications", qualification_id))
+        self._client.request(
+            "DELETE", self._url(id, "qualifications", qualification_id)
+        )
 
     def questions(self, id: int) -> list[Question]:
         return self._get_list(self._url(id, "questions"), Question)
@@ -1878,7 +1981,12 @@ class Needs(ListMixin, GetMixin, CreateMixin, UpdateMixin, DeleteMixin, Resource
 
 from ..models.events import Event
 from .base import (
-    CreateMixin, DeleteMixin, GetMixin, ListMixin, Resource, UpdateMixin,
+    CreateMixin,
+    DeleteMixin,
+    GetMixin,
+    ListMixin,
+    Resource,
+    UpdateMixin,
 )
 
 
@@ -1892,7 +2000,12 @@ class Events(ListMixin, GetMixin, CreateMixin, UpdateMixin, DeleteMixin, Resourc
 
 from ..models.hours import Hour
 from .base import (
-    CreateMixin, DeleteMixin, GetMixin, ListMixin, Resource, UpdateMixin,
+    CreateMixin,
+    DeleteMixin,
+    GetMixin,
+    ListMixin,
+    Resource,
+    UpdateMixin,
 )
 
 
@@ -1925,7 +2038,12 @@ class Hours(ListMixin, GetMixin, CreateMixin, UpdateMixin, DeleteMixin, Resource
 
 from ..models.responses import Response
 from .base import (
-    CreateMixin, DeleteMixin, GetMixin, ListMixin, Resource, UpdateMixin,
+    CreateMixin,
+    DeleteMixin,
+    GetMixin,
+    ListMixin,
+    Resource,
+    UpdateMixin,
 )
 
 
@@ -1965,7 +2083,12 @@ from typing import Any
 
 from ..models.groups import Group
 from .base import (
-    CreateMixin, DeleteMixin, GetMixin, ListMixin, Resource, UpdateMixin,
+    CreateMixin,
+    DeleteMixin,
+    GetMixin,
+    ListMixin,
+    Resource,
+    UpdateMixin,
 )
 
 
@@ -2013,11 +2136,18 @@ class Groups(ListMixin, GetMixin, CreateMixin, UpdateMixin, DeleteMixin, Resourc
 
 from ..models.qualifications import Qualification, QualificationUser
 from .base import (
-    CreateMixin, DeleteMixin, GetMixin, ListMixin, Resource, UpdateMixin,
+    CreateMixin,
+    DeleteMixin,
+    GetMixin,
+    ListMixin,
+    Resource,
+    UpdateMixin,
 )
 
 
-class Qualifications(ListMixin, GetMixin, CreateMixin, UpdateMixin, DeleteMixin, Resource):
+class Qualifications(
+    ListMixin, GetMixin, CreateMixin, UpdateMixin, DeleteMixin, Resource
+):
     path = "/qualifications"
     model = Qualification
 
@@ -2030,7 +2160,12 @@ class Qualifications(ListMixin, GetMixin, CreateMixin, UpdateMixin, DeleteMixin,
 from ..models.benchmarks import Benchmark
 from ..models.common import UserMini
 from .base import (
-    CreateMixin, DeleteMixin, GetMixin, ListMixin, Resource, UpdateMixin,
+    CreateMixin,
+    DeleteMixin,
+    GetMixin,
+    ListMixin,
+    Resource,
+    UpdateMixin,
 )
 
 
@@ -2092,8 +2227,13 @@ class Auth(Resource):
     path = "/users"
     model = LoginResult
 
-    def login(self, user_email: str, user_password: str, key: str | None = None) -> LoginResult:
-        body: dict[str, Any] = {"user_email": user_email, "user_password": user_password}
+    def login(
+        self, user_email: str, user_password: str, key: str | None = None
+    ) -> LoginResult:
+        body: dict[str, Any] = {
+            "user_email": user_email,
+            "user_password": user_password,
+        }
         if key:
             body["key"] = key
         payload = self._client.request("POST", "/users/login", json=body)
