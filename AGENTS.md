@@ -2,6 +2,16 @@
 
 This file is for Claude Code and other Claude-based AI assistants working in this repository.
 
+## Agentic Docs
+
+Agentic working documents live in `.agents/docs/`:
+
+- `.agents/docs/superpowers/plans/` — implementation plans (and their `.tasks.json` task state)
+- `.agents/docs/superpowers/specs/` — design specs
+
+Check there for existing plans and specs before starting or resuming work, and write
+new plans and specs there rather than in `docs/` or `doc/`.
+
 ## What This Repo Is
 
 **get-connected-client** — A typed Python client (and optional CLI) for Galaxy Digital's Get Connected API
