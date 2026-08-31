@@ -95,6 +95,7 @@ jobs:
         run: |
           PACKAGE_NAME=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['name'])")
           echo "package_name=${PACKAGE_NAME}" >> $GITHUB_OUTPUT
+          echo "release_version=${RELEASE_VERSION}" >> $GITHUB_OUTPUT
 
   publish-to-testpypi:
     name: Publish to TestPyPI
@@ -147,6 +148,9 @@ jobs:
       - lint
       - test
       - build
+      # the release description links to PyPI; publish there first so the
+      # link resolves the moment the release goes live
+      - publish-to-pypi
     permissions:
       contents: write # IMPORTANT: mandatory for making GitHub Releases
       id-token: write # IMPORTANT: mandatory for sigstore
@@ -168,10 +172,14 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           GITHUB_REF_NAME: ${{ github.ref_name }}
           GITHUB_REPOSITORY: ${{ github.repository }}
+          PACKAGE_NAME: ${{ needs.build.outputs.PACKAGE_NAME }}
+          RELEASE_VERSION: ${{ needs.build.outputs.RELEASE_VERSION }}
+        # provided notes render first; --generate-notes appends the changelog
         run: >-
           gh release create
           "$GITHUB_REF_NAME"
           --repo "$GITHUB_REPOSITORY"
+          --notes "📦 [${PACKAGE_NAME} ${RELEASE_VERSION} on PyPI](https://pypi.org/project/${PACKAGE_NAME}/${RELEASE_VERSION}/)"
           --generate-notes
       - name: Upload artifact signatures to GitHub Release
         env:
