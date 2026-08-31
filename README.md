@@ -234,4 +234,4 @@ production account.
 
 ## Contributing
 
-Contributions are welcome -- open an issue or pull request on GitHub.
+Contributions are welcome — see the [contribution guide](CONTRIBUTING.md).
