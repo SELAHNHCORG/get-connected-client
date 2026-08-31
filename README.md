@@ -232,6 +232,11 @@ selection excludes `live` and `live_write`). See [Write Safety](#write-safety)
 above before ever running the live markers yourself -- they hit a real
 production account.
 
+`doc/api.yml` is the vendored copy of Galaxy Digital's published OpenAPI spec
+and the source of truth the test suite checks path coverage against. A weekly
+GitHub Action diffs it against the live spec and opens an issue labelled
+`api-drift` when upstream changes.
+
 ## Contributing
 
 Contributions are welcome -- open an issue or pull request on GitHub.

@@ -1,0 +1,96 @@
+# Upstream API drift monitor.
+#
+# doc/api.yml is the vendored source of truth for this client -- the test suite
+# asserts 100% path coverage against it. Galaxy Digital publishes the
+# authoritative spec on its public Swagger UI page (no credentials involved,
+# and the authenticated API is never touched). Every Monday this job fetches
+# that spec, diffs it against the vendored copy, and opens an `api-drift` issue
+# with a version/path summary and a truncated diff when the two diverge.
+#
+# The report embeds remote content, so it is only ever handed to `gh` via
+# --body-file -- never interpolated into a run: block.
+
+name: API Drift
+
+on:
+  schedule:
+    # Mondays at 14:00 UTC
+    - cron: "0 14 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: api-drift-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  api-drift:
+    name: Check upstream spec
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write # open/comment on the api-drift issue
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9
+        with:
+          enable-cache: false
+
+      - name: Check for drift
+        id: drift
+        run: |
+          set -uo pipefail
+          status=0
+          uv run --no-project --with pyyaml --with httpx \
+            python .github/scripts/check_api_drift.py --output drift.md || status=$?
+          # 0 = in sync, 1 = drift (open an issue), 2 = fetch/parse failure
+          # (fail loudly -- a silent monitor is worse than no monitor).
+          if [ "$status" -ge 2 ]; then
+            echo "::error::could not fetch or parse the live API spec"
+            exit "$status"
+          fi
+          echo "drift=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Report drift
+        if: ${{ steps.drift.outputs.drift == '1' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          gh label create api-drift \
+            --description "Upstream Get Connected API spec has changed" \
+            --color D93F0B --force
+
+          existing="$(
+            gh issue list --state open --label api-drift \
+              --limit 1 --json number --jq '.[0].number // empty'
+          )"
+
+          if [ -n "$existing" ]; then
+            # One open issue tracks drift at a time -- a second issue every
+            # Monday would be pure noise. We do comment the fresh report onto
+            # it, because upstream can move again while the issue sits open and
+            # a week-one report would then be quietly wrong. Comments stop as
+            # soon as the vendored spec is refreshed and the issue is closed.
+            {
+              printf 'Still drifting as of %s, latest report below.\n\n' \
+                "$(date -u +%Y-%m-%d)"
+              cat drift.md
+            } > drift-comment.md
+            gh issue comment "$existing" --body-file drift-comment.md
+            echo "::notice::still drifting; commented on issue #${existing}"
+          else
+            gh issue create \
+              --title "Upstream API spec drift detected" \
+              --label api-drift \
+              --body-file drift.md
+          fi

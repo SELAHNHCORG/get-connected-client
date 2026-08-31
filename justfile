@@ -189,8 +189,12 @@ fix *ENV:
     @just format {{ ENV }}
 
 # run bandit static security analysis
+# -x repeats [tool.bandit].exclude_dirs on the command line on purpose: bandit's
+# built-in exclusions are substring matches and one of them is ".git", which
+# silently swallows everything under .github/. Passing our own list back in is
+# what lets .github/scripts actually get scanned.
 bandit:
-    @just run --no-default-groups --group lint bandit -c pyproject.toml -r ./src -f sarif -o bandit.sarif
+    @just run --no-default-groups --group lint bandit -c pyproject.toml -x './tests,./.venv,./doc' -r ./src ./.github/scripts -f sarif -o bandit.sarif
 
 # run zizmor security analysis of CI
 zizmor:
