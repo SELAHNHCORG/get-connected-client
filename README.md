@@ -5,6 +5,7 @@
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/get-connected-client.svg)](https://pypi.python.org/pypi/get-connected-client/)
 [![PyPI status](https://img.shields.io/pypi/status/get-connected-client.svg)](https://pypi.python.org/pypi/get-connected-client)
 [![PyPI - Types](https://img.shields.io/pypi/types/get-connected-client.svg)](https://pypi.python.org/pypi/get-connected-client)
+[![Documentation Status](https://readthedocs.org/projects/get-connected-client/badge/?version=latest)](http://get-connected-client.readthedocs.io/?badge=latest/)
 [![Code Cov](https://codecov.io/gh/SELAHNHCORG/get-connected-client/branch/main/graph/badge.svg?token=0IZOKN2DYL)](https://codecov.io/gh/SELAHNHCORG/get-connected-client)
 [![Test Status](https://github.com/SELAHNHCORG/get-connected-client/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/SELAHNHCORG/get-connected-client/actions/workflows/test.yml?query=branch:main)
 [![Lint Status](https://github.com/SELAHNHCORG/get-connected-client/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/SELAHNHCORG/get-connected-client/actions/workflows/lint.yml?query=branch:main)
