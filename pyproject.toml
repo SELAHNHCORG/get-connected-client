@@ -58,8 +58,10 @@ expression = "get_version()"
 "Homepage"      = "https://github.com/SELAHNHCORG/get-connected-client"
 "Documentation" = "https://get-connected-client.readthedocs.io"
 "Repository"    = "https://github.com/SELAHNHCORG/get-connected-client"
-"Issues"        = "https://github.com/SELAHNHCORG/get-connected-client/releases"
-"Changelog"     = "https://get-connected-client.readthedocs.io"
+"Issues"        = "https://github.com/SELAHNHCORG/get-connected-client/issues"
+"Changelog"     = "https://github.com/SELAHNHCORG/get-connected-client/releases"
+"Code_of_Conduct" = "https://raw.githubusercontent.com/SELAHNHCORG/.github/refs/heads/main/CODE_OF_CONDUCT.md"
+
 
 [project.scripts]
 galaxy = "get_connected_client.cli:app"
