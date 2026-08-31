@@ -1,11 +1,16 @@
 # get-connected-client
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-[![Code Cov](https://codecov.io/gh/SELAHNHCORG/galaxy-digital-cli/branch/main/graph/badge.svg?token=0IZOKN2DYL)](https://codecov.io/gh/SELAHNHCORG/galaxy-digital-cli)
-[![Test Status](https://github.com/SELAHNHCORG/galaxy-digital-cli/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/SELAHNHCORG/galaxy-digital-cli/actions/workflows/test.yml?query=branch:main)
-[![Lint Status](https://github.com/SELAHNHCORG/galaxy-digital-cli/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/SELAHNHCORG/galaxy-digital-cli/actions/workflows/lint.yml?query=branch:main)
-[![CodeQL](https://github.com/SELAHNHCORG/galaxy-digital-cli/actions/workflows/github-code-scanning/codeql/badge.svg?branch=main)](https://github.com/SELAHNHCORG/galaxy-digital-cli/actions/workflows/github-code-scanning/codeql?query=branch:main)
-[![Zizmor](https://github.com/SELAHNHCORG/galaxy-digital-cli/actions/workflows/zizmor.yml/badge.svg?branch=main)](https://docs.zizmor.sh/)
-[![Bandit](https://github.com/SELAHNHCORG/galaxy-digital-cli/actions/workflows/bandit.yml/badge.svg?branch=main)](https://bandit.readthedocs.io)
+[![PyPI version](https://badge.fury.io/py/get-connected-client.svg)](https://pypi.python.org/pypi/get-connected-client/)
+[![PyPI pyversions](https://img.shields.io/pypi/pyversions/get-connected-client.svg)](https://pypi.python.org/pypi/get-connected-client/)
+[![PyPI status](https://img.shields.io/pypi/status/get-connected-client.svg)](https://pypi.python.org/pypi/get-connected-client)
+[![PyPI - Types](https://img.shields.io/pypi/types/get-connected-client.svg)](https://pypi.python.org/pypi/get-connected-client)
+[![Code Cov](https://codecov.io/gh/SELAHNHCORG/get-connected-client/branch/main/graph/badge.svg?token=0IZOKN2DYL)](https://codecov.io/gh/SELAHNHCORG/get-connected-client)
+[![Test Status](https://github.com/SELAHNHCORG/get-connected-client/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/SELAHNHCORG/get-connected-client/actions/workflows/test.yml?query=branch:main)
+[![Lint Status](https://github.com/SELAHNHCORG/get-connected-client/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/SELAHNHCORG/get-connected-client/actions/workflows/lint.yml?query=branch:main)
+[![CodeQL](https://github.com/SELAHNHCORG/get-connected-client/actions/workflows/github-code-scanning/codeql/badge.svg?branch=main)](https://github.com/SELAHNHCORG/get-connected-client/actions/workflows/github-code-scanning/codeql?query=branch:main)
+[![Zizmor](https://github.com/SELAHNHCORG/get-connected-client/actions/workflows/zizmor.yml/badge.svg?branch=main)](https://docs.zizmor.sh/)
+[![Bandit](https://github.com/SELAHNHCORG/get-connected-client/actions/workflows/bandit.yml/badge.svg?branch=main)](https://bandit.readthedocs.io)
 
 A typed Python client, with an optional command line interface, for [Galaxy Digital's](https://www.galaxydigital.com/volunteer-management-software-for-social-service-organizations) [Get
 Connected API](https://api.galaxydigital.com/docs/). It provides a typed, synchronous `GalaxyClient` covering
@@ -214,8 +219,8 @@ Full documentation is available at [get-connected-client.readthedocs.io](https:/
 ## Development
 
 ```bash
-git clone https://github.com/SELAHNHCORG/galaxy-digital-cli.git
-cd galaxy-digital-cli
+git clone https://github.com/SELAHNHCORG/get-connected-client.git
+cd get-connected-client
 just setup
 just install
 just test
