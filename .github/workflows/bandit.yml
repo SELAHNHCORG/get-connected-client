@@ -4,11 +4,6 @@ on:
   push:
     branches: [main]
   pull_request:
-    paths:
-      - "src/**"
-      - "pyproject.toml"
-      - "justfile"
-      - ".github/workflows/bandit.yml"
   workflow_dispatch:
 
 permissions:

@@ -16,12 +16,6 @@ on:
     branches: ["main"]
   pull_request:
     branches: ["main"]
-    paths:
-      - "src/**"
-      - "tests/**"
-      - ".github/workflows/test.yml"
-      - "pyproject.toml"
-      - "justfile"
   merge_group:
   workflow_call:
   workflow_dispatch:
