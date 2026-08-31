@@ -1,6 +1,71 @@
 get-connected-client
 ====================
 
+.. |license| image:: https://img.shields.io/badge/License-MIT-blue.svg
+   :target: https://opensource.org/licenses/MIT
+   :alt: License: MIT
+
+.. |ruff| image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/
+   astral-sh/ruff/main/assets/badge/v2.json
+   :target: https://github.com/astral-sh/ruff
+   :alt: Ruff
+
+.. |pypi-version| image:: https://badge.fury.io/py/get-connected-client.svg
+   :target: https://pypi.python.org/pypi/get-connected-client/
+   :alt: PyPI version
+
+.. |pypi-pyversions| image:: https://img.shields.io/pypi/pyversions/get-connected-client.svg
+   :target: https://pypi.python.org/pypi/get-connected-client/
+   :alt: PyPI pyversions
+
+.. |pypi-status| image:: https://img.shields.io/pypi/status/get-connected-client.svg
+   :target: https://pypi.python.org/pypi/get-connected-client
+   :alt: PyPI status
+
+.. |pypi-types| image:: https://img.shields.io/pypi/types/get-connected-client.svg
+   :target: https://pypi.python.org/pypi/get-connected-client
+   :alt: PyPI - Types
+
+.. |docs| image:: https://readthedocs.org/projects/get-connected-client/badge/?version=latest
+   :target: http://get-connected-client.readthedocs.io/en/latest/
+   :alt: Documentation Status
+
+.. |codecov| image:: https://codecov.io/gh/SELAHNHCORG/get-connected-client/branch/main/
+   graph/badge.svg?token=0IZOKN2DYL
+   :target: https://codecov.io/gh/SELAHNHCORG/get-connected-client
+   :alt: Code Cov
+
+.. |tests| image:: https://github.com/SELAHNHCORG/get-connected-client/actions/workflows/
+   test.yml/badge.svg?branch=main
+   :target: https://github.com/SELAHNHCORG/get-connected-client/actions/workflows/
+      test.yml?query=branch:main
+   :alt: Test Status
+
+.. |lint| image:: https://github.com/SELAHNHCORG/get-connected-client/actions/workflows/
+   lint.yml/badge.svg?branch=main
+   :target: https://github.com/SELAHNHCORG/get-connected-client/actions/workflows/
+      lint.yml?query=branch:main
+   :alt: Lint Status
+
+.. |codeql| image:: https://github.com/SELAHNHCORG/get-connected-client/actions/workflows/
+   github-code-scanning/codeql/badge.svg?branch=main
+   :target: https://github.com/SELAHNHCORG/get-connected-client/actions/workflows/
+      github-code-scanning/codeql?query=branch:main
+   :alt: CodeQL
+
+.. |zizmor| image:: https://github.com/SELAHNHCORG/get-connected-client/actions/workflows/
+   zizmor.yml/badge.svg?branch=main
+   :target: https://docs.zizmor.sh/
+   :alt: Zizmor
+
+.. |bandit| image:: https://github.com/SELAHNHCORG/get-connected-client/actions/workflows/
+   bandit.yml/badge.svg?branch=main
+   :target: https://bandit.readthedocs.io
+   :alt: Bandit
+
+|license| |ruff| |pypi-version| |pypi-pyversions| |pypi-status| |pypi-types|
+|docs| |codecov| |tests| |lint| |codeql| |zizmor| |bandit|
+
 :pypi:`get-connected-client` is a typed Python client for
 `Galaxy Digital's <https://www.galaxydigital.com/>`_
 `Get Connected API <https://api.galaxydigital.com/docs/>`_, with an
