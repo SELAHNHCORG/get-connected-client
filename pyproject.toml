@@ -162,7 +162,7 @@ exclude = ["tests/**/*"]
 extend-immutable-calls = ["typer.Option", "typer.Argument"]
 
 [tool.bandit]
-targets = ["src"]
+targets = ["src", ".github/scripts"]
 exclude_dirs = [
     "./tests",
     "./.venv",
