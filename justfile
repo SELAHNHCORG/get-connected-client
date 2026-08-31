@@ -81,8 +81,16 @@ build-docs-html:
 # build the docs
 build-docs: build-docs-html
 
-# build docs and package
-build: build-docs-html
+# build docs and package at the current (or given) version
+build VERSION="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd "{{ justfile_directory() }}"
+    version_arg="{{ VERSION }}"
+    export PACKAGE_VERSION="${version_arg:-${PACKAGE_VERSION:-$(just --quiet print-version)}}"
+    # load-bearing: export masks the command substitution's exit status
+    [ -n "$PACKAGE_VERSION" ] || { echo "error: could not determine version" >&2; exit 1; }
+    just build-docs-html
     uv build
 
 # open the html documentation
