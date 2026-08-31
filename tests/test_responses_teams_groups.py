@@ -12,13 +12,13 @@ import pytest
 import yaml
 from typer.testing import CliRunner
 
-from galaxy_digital_cli.cli import app
-from galaxy_digital_cli.models.groups import Group, GroupUser
-from galaxy_digital_cli.models.responses import Response
-from galaxy_digital_cli.models.teams import Team, TeamMember
-from galaxy_digital_cli.resources.groups import Groups
-from galaxy_digital_cli.resources.responses import Responses
-from galaxy_digital_cli.resources.teams import Teams
+from get_connected_client.cli import app
+from get_connected_client.models.groups import Group, GroupUser
+from get_connected_client.models.responses import Response
+from get_connected_client.models.teams import Team, TeamMember
+from get_connected_client.resources.groups import Groups
+from get_connected_client.resources.responses import Responses
+from get_connected_client.resources.teams import Teams
 
 
 runner = CliRunner()

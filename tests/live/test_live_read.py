@@ -27,7 +27,7 @@ pytestmark = [
 
 @pytest.fixture(scope="module")
 def live_client():
-    from galaxy_digital_cli.client import GalaxyClient
+    from get_connected_client.client import GalaxyClient
 
     # base_url is passed explicitly here because GalaxyClient itself never
     # reads GALAXY_API_URL -- see tests/live/conftest.py's module docstring.
@@ -58,7 +58,7 @@ def test_list_users_first_page(live_client):
 
 
 def test_read_only_client_blocks_writes(live_client):
-    from galaxy_digital_cli.exceptions import ReadOnlyError
+    from get_connected_client.exceptions import ReadOnlyError
 
     with pytest.raises(ReadOnlyError):
         live_client.users.create(user_fname="nope")

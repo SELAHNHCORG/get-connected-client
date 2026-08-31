@@ -1,4 +1,4 @@
-# galaxy-digital-cli
+# get-connected-client
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Code Cov](https://codecov.io/gh/SELAHNHCORG/galaxy-digital-cli/branch/main/graph/badge.svg?token=0IZOKN2DYL)](https://codecov.io/gh/SELAHNHCORG/galaxy-digital-cli)
 [![Test Status](https://github.com/SELAHNHCORG/galaxy-digital-cli/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/SELAHNHCORG/galaxy-digital-cli/actions/workflows/test.yml?query=branch:main)
@@ -7,12 +7,13 @@
 [![Zizmor](https://github.com/SELAHNHCORG/galaxy-digital-cli/actions/workflows/zizmor.yml/badge.svg?branch=main)](https://docs.zizmor.sh/)
 [![Bandit](https://github.com/SELAHNHCORG/galaxy-digital-cli/actions/workflows/bandit.yml/badge.svg?branch=main)](https://bandit.readthedocs.io)
 
-A Python library and command line interface to [Galaxy Digital's](https://www.galaxydigital.com/volunteer-management-software-for-social-service-organizations) [Get
+A typed Python client, with an optional command line interface, for [Galaxy Digital's](https://www.galaxydigital.com/volunteer-management-software-for-social-service-organizations) [Get
 Connected API](https://api.galaxydigital.com/docs/). It provides a typed, synchronous `GalaxyClient` covering
 all 66 documented API paths through one namespace per resource
 (`users`, `agencies`, `needs`, `events`, `hours`, `responses`, `teams`,
-`groups`, `qualifications`, `benchmarks`, `clusters`, `lookups`, `auth`),
-plus a `galaxy` command that mirrors it with one sub-app apiece:
+`groups`, `qualifications`, `benchmarks`, `clusters`, `lookups`, `auth`).
+The optional `cli` extra adds a `galaxy` command that mirrors it with one
+sub-app apiece:
 
 ```
 config  users  agencies  needs  events  hours  responses  teams  groups
@@ -29,9 +30,21 @@ will not compute for you.
 
 ## Installation
 
+The library alone -- `httpx` and `pydantic`, nothing else:
+
 ```bash
-pip install galaxy-digital-cli
+pip install get-connected-client
 ```
+
+The `galaxy` command line tool is optional; it lives behind the `cli` extra:
+
+```bash
+pip install "get-connected-client[cli]"
+```
+
+The `galaxy` entry point is always installed, but without the extra it exits
+with a message telling you to install it. The CLI examples below need the
+extra.
 
 ## Quick Start
 
@@ -92,7 +105,7 @@ whole calendar year. Reports only read, so `--read-only` never blocks them.
 ### Library
 
 ```python
-from galaxy_digital_cli import GalaxyClient
+from get_connected_client import GalaxyClient
 
 # the site key alone gets you exactly one thing: a token
 with GalaxyClient(api_key="SITE-KEY") as client:
@@ -137,7 +150,7 @@ does honor, and only in one direction: it can turn read-only on, never
 off.)
 
 ```python
-from galaxy_digital_cli import GalaxyClient
+from get_connected_client import GalaxyClient
 
 # explicit arguments; base_url accepts the same aliases as --url
 GalaxyClient(token="eyJ...", base_url="us2")
@@ -150,8 +163,8 @@ Library callers who want the CLI's full resolution can ask for it
 explicitly:
 
 ```python
-from galaxy_digital_cli import GalaxyClient
-from galaxy_digital_cli.config import load_settings
+from get_connected_client import GalaxyClient
+from get_connected_client.config import load_settings
 
 s = load_settings()
 client = GalaxyClient(
@@ -196,7 +209,7 @@ core design constraint, not an afterthought:
 
 ## Documentation
 
-Full documentation is available at [galaxy-digital-cli.readthedocs.io](https://galaxy-digital-cli.readthedocs.io).
+Full documentation is available at [get-connected-client.readthedocs.io](https://get-connected-client.readthedocs.io).
 
 ## Development
 

@@ -25,7 +25,7 @@
 
 ```
 doc/api.yml                                  # vendored OpenAPI spec (Task 1)
-src/galaxy_digital_cli/
+src/get_connected_client/
 ├── __init__.py            # existing banner + exports GalaxyClient, exceptions (Task 16)
 ├── exceptions.py          # Task 2
 ├── config.py              # Task 4
@@ -66,7 +66,7 @@ doc/source/                # Sphinx (Task 15)
 **Files:**
 - Modify: `pyproject.toml`
 - Create: `doc/api.yml` (copy of https://api.galaxydigital.com/docs/api.yml?v=1.9.2)
-- Create: `src/galaxy_digital_cli/cli/__init__.py` (minimal stub, replaced in Task 7)
+- Create: `src/get_connected_client/cli/__init__.py` (minimal stub, replaced in Task 7)
 - Delete: `tests/test.py` (scaffold placeholder) → replaced by `tests/test_package.py`
 
 **Acceptance Criteria:**
@@ -94,7 +94,7 @@ Add after `[project.urls]`:
 
 ```toml
 [project.scripts]
-galaxy = "galaxy_digital_cli.cli:app"
+galaxy = "get_connected_client.cli:app"
 ```
 
 Add `"respx>=0.21"` to the `test` dependency group. In `[tool.pytest.ini_options]` add:
@@ -114,7 +114,7 @@ and append `'-m "not live and not live_write"'` to `addopts`.
 curl -sL 'https://api.galaxydigital.com/docs/api.yml?v=1.9.2' -o doc/api.yml
 ```
 
-- [ ] **Step 3: CLI stub.** `src/galaxy_digital_cli/cli/__init__.py`:
+- [ ] **Step 3: CLI stub.** `src/get_connected_client/cli/__init__.py`:
 
 ```python
 import typer
@@ -130,11 +130,11 @@ def main() -> None:
 - [ ] **Step 4: replace placeholder test.** Delete `tests/test.py`; create `tests/test_package.py`:
 
 ```python
-import galaxy_digital_cli
+import get_connected_client
 
 
 def test_version():
-    assert galaxy_digital_cli.__title__ == "galaxy-digital-cli"
+    assert get_connected_client.__title__ == "get-connected-client"
 ```
 
 - [ ] **Step 5: install & verify.** Run: `uv sync --all-groups && uv run galaxy --help && just test` → help text prints, tests pass.
@@ -148,7 +148,7 @@ def test_version():
 **Goal:** Typed exception hierarchy the whole library raises.
 
 **Files:**
-- Create: `src/galaxy_digital_cli/exceptions.py`
+- Create: `src/get_connected_client/exceptions.py`
 - Test: `tests/test_exceptions.py`
 
 **Acceptance Criteria:**
@@ -163,7 +163,7 @@ def test_version():
 
 ```python
 import pytest
-from galaxy_digital_cli import exceptions as exc
+from get_connected_client import exceptions as exc
 
 
 @pytest.mark.parametrize(
@@ -192,7 +192,7 @@ def test_hierarchy():
 
 - [ ] **Step 2:** Run `just test tests/test_exceptions.py` → FAIL (module missing).
 
-- [ ] **Step 3: implement** `src/galaxy_digital_cli/exceptions.py`:
+- [ ] **Step 3: implement** `src/get_connected_client/exceptions.py`:
 
 ```python
 """Exception hierarchy for the Galaxy Digital API client."""
@@ -258,13 +258,13 @@ class RateLimitError(GalaxyHTTPError):
 **Goal:** `GalaxyModel` base (extra-preserving) plus the small shared models used by many resources.
 
 **Files:**
-- Create: `src/galaxy_digital_cli/models/__init__.py`, `models/base.py`, `models/common.py`
+- Create: `src/get_connected_client/models/__init__.py`, `models/base.py`, `models/common.py`
 - Test: `tests/test_models_common.py`
 
 **Acceptance Criteria:**
 - [ ] Unknown fields survive `model_dump()` round-trip
 - [ ] String ids coerce to int (`{"id": "5"}` → `id == 5`)
-- [ ] All models importable from `galaxy_digital_cli.models`
+- [ ] All models importable from `get_connected_client.models`
 
 **Verify:** `just test tests/test_models_common.py` → PASS
 
@@ -273,7 +273,7 @@ class RateLimitError(GalaxyHTTPError):
 - [ ] **Step 1: failing tests** (`tests/test_models_common.py`):
 
 ```python
-from galaxy_digital_cli import models
+from get_connected_client import models
 
 
 def test_extra_fields_survive():
@@ -449,7 +449,7 @@ __all__ = [
 **Goal:** Settings resolution: explicit args > env vars > config file > defaults; config file helpers used later by `galaxy config`.
 
 **Files:**
-- Create: `src/galaxy_digital_cli/config.py`
+- Create: `src/get_connected_client/config.py`
 - Test: `tests/test_config.py`
 
 **Acceptance Criteria:**
@@ -467,7 +467,7 @@ __all__ = [
 ```python
 import os
 import stat
-from galaxy_digital_cli import config
+from get_connected_client import config
 
 
 def test_defaults(monkeypatch, tmp_path):
@@ -511,7 +511,7 @@ def test_save_config_permissions(monkeypatch, tmp_path):
     assert config.read_config()["api_key"] == "k"
 ```
 
-- [ ] **Step 2:** run → FAIL. **Step 3: implement** `src/galaxy_digital_cli/config.py`:
+- [ ] **Step 2:** run → FAIL. **Step 3: implement** `src/get_connected_client/config.py`:
 
 ```python
 """Settings resolution: explicit args > env vars > config file > defaults."""
@@ -616,7 +616,7 @@ def load_settings(
 **Goal:** `GalaxyClient` — auth header, read-only choke point, envelope unwrap, retries, pagination, error mapping. Plus shared test fixtures.
 
 **Files:**
-- Create: `src/galaxy_digital_cli/client.py`
+- Create: `src/get_connected_client/client.py`
 - Modify: `tests/conftest.py` (append fixtures)
 - Test: `tests/test_client.py`
 
@@ -642,7 +642,7 @@ BASE = "https://api.test/api"
 
 @pytest.fixture
 def client():
-    from galaxy_digital_cli.client import GalaxyClient
+    from get_connected_client.client import GalaxyClient
 
     with GalaxyClient(api_key="test-key", base_url=BASE) as c:
         yield c
@@ -671,8 +671,8 @@ import httpx
 import pytest
 import respx
 
-from galaxy_digital_cli import exceptions as exc
-from galaxy_digital_cli.client import GalaxyClient
+from get_connected_client import exceptions as exc
+from get_connected_client.client import GalaxyClient
 
 from .conftest import BASE
 
@@ -750,7 +750,7 @@ def test_paginate_404_is_empty(client, api):
     assert list(client.paginate("/hours")) == []
 ```
 
-- [ ] **Step 3:** run → FAIL. **Step 4: implement** `src/galaxy_digital_cli/client.py`:
+- [ ] **Step 3:** run → FAIL. **Step 4: implement** `src/get_connected_client/client.py`:
 
 ```python
 """Sync HTTP client for the Galaxy Digital Get Connected API."""
@@ -907,7 +907,7 @@ class GalaxyClient:
 **Goal:** `Resource` base class + CRUD mixins so each resource module is declarative.
 
 **Files:**
-- Create: `src/galaxy_digital_cli/resources/__init__.py` (empty), `resources/base.py`
+- Create: `src/get_connected_client/resources/__init__.py` (empty), `resources/base.py`
 - Test: `tests/test_resources_base.py`
 
 **Acceptance Criteria:**
@@ -922,8 +922,8 @@ class GalaxyClient:
 - [ ] **Step 1: failing tests** (`tests/test_resources_base.py`):
 
 ```python
-from galaxy_digital_cli.models.common import Tag
-from galaxy_digital_cli.resources.base import (
+from get_connected_client.models.common import Tag
+from get_connected_client.resources.base import (
     CreateMixin, DeleteMixin, GetMixin, ListMixin, Resource, UpdateMixin,
 )
 
@@ -1067,7 +1067,7 @@ class DeleteMixin(Resource):
 **Goal:** Real typer app with global options, rich/JSON output helper, write-confirmation helper, `galaxy config` commands, top-level error handling.
 
 **Files:**
-- Modify: `src/galaxy_digital_cli/cli/__init__.py` (replace stub)
+- Modify: `src/get_connected_client/cli/__init__.py` (replace stub)
 - Create: `cli/_state.py`, `cli/_output.py`, `cli/_confirm.py`, `cli/config_cmds.py`
 - Test: `tests/test_cli_root.py`
 
@@ -1089,8 +1089,8 @@ import json
 
 from typer.testing import CliRunner
 
-import galaxy_digital_cli
-from galaxy_digital_cli.cli import app
+import get_connected_client
+from get_connected_client.cli import app
 
 runner = CliRunner()
 
@@ -1098,7 +1098,7 @@ runner = CliRunner()
 def test_version():
     result = runner.invoke(app, ["--version"])
     assert result.exit_code == 0
-    assert galaxy_digital_cli.__version__ in result.output
+    assert get_connected_client.__version__ in result.output
 
 
 def test_config_roundtrip(tmp_path, monkeypatch):
@@ -1295,7 +1295,7 @@ from typing import Optional
 
 import typer
 
-import galaxy_digital_cli
+import get_connected_client
 
 from ..config import load_settings
 from ..exceptions import GalaxyError
@@ -1315,7 +1315,7 @@ app.add_typer(config_app, name="config")
 
 def _version(value: bool) -> None:
     if value:
-        typer.echo(galaxy_digital_cli.__version__)
+        typer.echo(get_connected_client.__version__)
         raise typer.Exit()
 
 
@@ -1404,7 +1404,7 @@ Put `_merge_fields` in `cli/_state.py`.
 **Goal:** Full `/users` coverage — the largest resource (23 endpoints).
 
 **Files:**
-- Create: `src/galaxy_digital_cli/models/users.py`, `resources/users.py`, `cli/users.py`
+- Create: `src/get_connected_client/models/users.py`, `resources/users.py`, `cli/users.py`
 - Modify: `models/__init__.py`, `client.py` (attach), `cli/__init__.py` (register)
 - Test: `tests/test_users.py`
 
@@ -1664,7 +1664,7 @@ import json
 
 from typer.testing import CliRunner
 
-from galaxy_digital_cli.cli import app
+from get_connected_client.cli import app
 
 runner = CliRunner()
 
@@ -2154,7 +2154,7 @@ pytestmark = [
 
 @pytest.fixture(scope="module")
 def live_client():
-    from galaxy_digital_cli.client import GalaxyClient
+    from get_connected_client.client import GalaxyClient
 
     with GalaxyClient(read_only=True) as c:  # belt and suspenders
         yield c
@@ -2175,7 +2175,7 @@ def test_list_users_first_page(live_client):
 
 
 def test_read_only_client_blocks_writes(live_client):
-    from galaxy_digital_cli.exceptions import ReadOnlyError
+    from get_connected_client.exceptions import ReadOnlyError
 
     with pytest.raises(ReadOnlyError):
         live_client.users.create(user_fname="nope")
@@ -2213,7 +2213,7 @@ pytestmark = [
 
 @pytest.fixture(scope="module")
 def live_client():
-    from galaxy_digital_cli.client import GalaxyClient
+    from get_connected_client.client import GalaxyClient
 
     with GalaxyClient() as c:
         yield c
@@ -2221,13 +2221,13 @@ def live_client():
 
 def test_cluster_round_trip(live_client):
     """Create a throwaway cluster, verify it exists, delete it."""
-    made = live_client.clusters.create(name="galaxy-digital-cli-selftest")
+    made = live_client.clusters.create(name="get-connected-client-selftest")
     made_id = made.id if hasattr(made, "id") else None
     if made_id is None:
         pytest.skip("API did not return the created cluster id; clean up manually")
     try:
         names = [c.name for c in live_client.clusters.list()]
-        assert "galaxy-digital-cli-selftest" in names
+        assert "get-connected-client-selftest" in names
     finally:
         live_client.clusters.delete(made_id)
 ```
@@ -2250,7 +2250,7 @@ def test_cluster_round_trip(live_client):
 
 **Steps:**
 
-- [ ] **Step 1:** README sections: What/Install (`pip install galaxy-digital-cli`)/Quickstart (library: `with GalaxyClient() as c: for u in c.users.list(): ...`; CLI: `galaxy users list --per-page 10`)/Configuration (env vars + config file + precedence table)/Write safety (read-only modes, `--yes`, `GALAXY_READ_ONLY`)/Development (`just setup`, `just test`, live markers).
+- [ ] **Step 1:** README sections: What/Install (`pip install get-connected-client`)/Quickstart (library: `with GalaxyClient() as c: for u in c.users.list(): ...`; CLI: `galaxy users list --per-page 10`)/Configuration (env vars + config file + precedence table)/Write safety (read-only modes, `--yes`, `GALAXY_READ_ONLY`)/Development (`just setup`, `just test`, live markers).
 - [ ] **Step 2:** Sphinx pages; `api.rst` uses `automodule` for each public module. Match the existing `doc/` scaffold conventions.
 - [ ] **Step 3:** `just docs && just check-docs` → build clean. **Commit:** `docs: sphinx docs and README`
 
@@ -2261,17 +2261,17 @@ def test_cluster_round_trip(live_client):
 **Goal:** Clean public API surface; whole-project quality gates pass.
 
 **Files:**
-- Modify: `src/galaxy_digital_cli/__init__.py`
+- Modify: `src/get_connected_client/__init__.py`
 
 **Acceptance Criteria:**
-- [ ] `from galaxy_digital_cli import GalaxyClient` works; exceptions importable from top level
+- [ ] `from get_connected_client import GalaxyClient` works; exceptions importable from top level
 - [ ] `just check` passes (ruff, bandit, doc8, readme)
 - [ ] `just check-types` passes (mypy + pyright)
-- [ ] `just test-all` passes; coverage of `src/galaxy_digital_cli` ≥ 90%
+- [ ] `just test-all` passes; coverage of `src/get_connected_client` ≥ 90%
 
 **Steps:**
 
-- [ ] **Step 1:** Append to `src/galaxy_digital_cli/__init__.py` (keep the banner):
+- [ ] **Step 1:** Append to `src/get_connected_client/__init__.py` (keep the banner):
 
 ```python
 from .client import GalaxyClient

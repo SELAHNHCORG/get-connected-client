@@ -1,5 +1,5 @@
-from galaxy_digital_cli.models.common import Tag
-from galaxy_digital_cli.resources.base import (
+from get_connected_client.models.common import Tag
+from get_connected_client.resources.base import (
     CreateMixin,
     DeleteMixin,
     GetMixin,

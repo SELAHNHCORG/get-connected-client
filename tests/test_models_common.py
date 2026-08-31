@@ -1,4 +1,4 @@
-from galaxy_digital_cli import models
+from get_connected_client import models
 
 
 def test_extra_fields_survive():
@@ -57,7 +57,7 @@ def test_int_fields_tolerate_loose_api_strings():
 
 def test_need_parses_shift_with_blank_slots():
     """The exact payload shape that crashed `galaxy needs list` live."""
-    from galaxy_digital_cli.models.needs import Need
+    from get_connected_client.models.needs import Need
 
     need = Need.model_validate(
         {"id": "1", "need_title": "Help out", "shifts": [{"id": "2", "slots": ""}]}

@@ -2,7 +2,7 @@
 
 import pytest
 
-from galaxy_digital_cli import config
+from get_connected_client import config
 
 
 @pytest.fixture

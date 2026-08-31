@@ -4,9 +4,14 @@ This file is for Claude Code and other Claude-based AI assistants working in thi
 
 ## What This Repo Is
 
-**galaxy-digital-cli** — A CLI interface to Galaxy Digital's API
+**get-connected-client** — A typed Python client (and optional CLI) for Galaxy Digital's Get Connected API
 
-A Python library. Source lives in `src/galaxy_digital_cli/`. Tests are in `tests/`. Documentation is in `doc/`.
+A Python library. Source lives in `src/get_connected_client/`. Tests are in `tests/`. Documentation is in `doc/`.
+
+The base install is the typed client library only (`httpx` + `pydantic`). The `galaxy`
+CLI and its `typer`/`rich` dependencies live in the optional `cli` extra
+(`pip install "get-connected-client[cli]"`), so development environments must sync
+with `--all-extras`.
 
 ## Tooling
 
@@ -63,7 +68,7 @@ newest Python on Windows and macOS. Lower dependency bounds are tested with
 ## Project Structure
 
 ```
-src/galaxy_digital_cli/   # library source
-tests/                               # pytest test suite
-doc/source/                          # Sphinx documentation source
+src/get_connected_client/   # library source
+tests/                   # pytest test suite
+doc/source/              # Sphinx documentation source
 ```

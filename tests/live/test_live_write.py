@@ -31,7 +31,7 @@ pytestmark = [
 
 @pytest.fixture(scope="module")
 def live_client():
-    from galaxy_digital_cli.client import GalaxyClient
+    from get_connected_client.client import GalaxyClient
 
     # base_url is passed explicitly here because GalaxyClient itself never
     # reads GALAXY_API_URL -- see tests/live/conftest.py's module docstring.
@@ -40,7 +40,7 @@ def live_client():
         yield client
 
 
-_SELFTEST_PREFIX = "galaxy-digital-cli-selftest"
+_SELFTEST_PREFIX = "get-connected-client-selftest"
 
 
 def test_cluster_round_trip(live_client):

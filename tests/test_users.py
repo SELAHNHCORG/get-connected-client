@@ -12,10 +12,10 @@ import pytest
 import yaml
 from typer.testing import CliRunner
 
-from galaxy_digital_cli.cli import app
-from galaxy_digital_cli.client import GalaxyClient
-from galaxy_digital_cli.exceptions import GalaxyHTTPError, ReadOnlyError
-from galaxy_digital_cli.models.common import (
+from get_connected_client.cli import app
+from get_connected_client.client import GalaxyClient
+from get_connected_client.exceptions import GalaxyHTTPError, ReadOnlyError
+from get_connected_client.models.common import (
     AgencyMini,
     BenchmarkMini,
     Cause,
@@ -25,8 +25,8 @@ from galaxy_digital_cli.models.common import (
     Tag,
     TrackMini,
 )
-from galaxy_digital_cli.models.hours import Hour
-from galaxy_digital_cli.models.users import (
+from get_connected_client.models.hours import Hour
+from get_connected_client.models.users import (
     RegistrationAnswer,
     User,
     UserOneclick,
@@ -34,7 +34,7 @@ from galaxy_digital_cli.models.users import (
     UserQualification,
     UserResponse,
 )
-from galaxy_digital_cli.resources.users import Users
+from get_connected_client.resources.users import Users
 
 from .conftest import BASE
 
@@ -271,7 +271,7 @@ def test_send_welcome_email_is_never_retried(client, api, monkeypatch):
     the endpoint is a write wearing a read's clothes.
     """
     monkeypatch.setattr(
-        "galaxy_digital_cli.client.time.sleep",
+        "get_connected_client.client.time.sleep",
         lambda _seconds: pytest.fail("a treat_as_write request must not back off"),
     )
     route = api.get("/users/5/welcomeEmail").respond(status_code=500)
@@ -408,9 +408,9 @@ def test_users_covers_every_spec_path_except_credential_exchange():
     only ``/users`` paths this namespace may legitimately leave uncovered
     are the credential-exchange pair, ``/users/authenticate`` and
     ``/users/login`` -- they belong to
-    :class:`~galaxy_digital_cli.resources.auth.Auth`, which covers both, so
+    :class:`~get_connected_client.resources.auth.Auth`, which covers both, so
     the split is one of ownership, not of coverage. If the spec grows a new
-    ``/users`` path, this fails until :mod:`galaxy_digital_cli.resources
+    ``/users`` path, this fails until :mod:`get_connected_client.resources
     .users` (and ``_COVERED_USERS_PATHS`` above) catch up.
     """
     spec_path = Path(__file__).resolve().parent.parent / "doc" / "api.yml"

@@ -1,7 +1,7 @@
 [project]
-name = "galaxy-digital-cli"
+name = "get-connected-client"
 version = "2026.8.17"
-description = "A CLI interface to Galaxy Digital's API"
+description = "A typed Python client (and optional CLI) for Galaxy Digital's Get Connected API"
 requires-python = ">=3.10,<4.0"
 authors = [
   {name = "Brian Kohan", email = "bckohan@gmail.com"},
@@ -13,8 +13,6 @@ keywords = []
 dependencies = [
     "httpx>=0.27",
     "pydantic>=2.7",
-    "typer>=0.12",
-    "rich>=13.0",
 ]
 classifiers = [
     "Operating System :: OS Independent",
@@ -34,6 +32,12 @@ classifiers = [
     "Topic :: Software Development :: Libraries",
 ]
 
+[project.optional-dependencies]
+cli = [
+    "typer>=0.12",
+    "rich>=13.0",
+]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
@@ -42,17 +46,17 @@ build-backend = "hatchling.build"
 package = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/galaxy_digital_cli"]
+packages = ["src/get_connected_client"]
 
 [project.urls]
 "Homepage"      = "https://github.com/SELAHNHCORG/galaxy-digital-cli"
-"Documentation" = "https://galaxy-digital-cli.readthedocs.io/en/latest/"
+"Documentation" = "https://get-connected-client.readthedocs.io/en/latest/"
 "Repository"    = "https://github.com/SELAHNHCORG/galaxy-digital-cli"
 "Issues"        = "https://github.com/SELAHNHCORG/galaxy-digital-cli/issues"
-"Changelog"     = "https://galaxy-digital-cli.readthedocs.io/en/latest/"
+"Changelog"     = "https://get-connected-client.readthedocs.io/en/latest/"
 
 [project.scripts]
-galaxy = "galaxy_digital_cli.cli:app"
+galaxy = "get_connected_client.cli:app"
 
 [dependency-groups]
 typing = [
@@ -94,12 +98,12 @@ dev = [
 check_untyped_defs = true
 ignore_missing_imports = true
 mypy_path = ["src"]
-packages = ["galaxy_digital_cli"]
+packages = ["get_connected_client"]
 
 [tool.pyright]
 pythonVersion = "3.10"
 typeCheckingMode = "basic"
-include = ["src/galaxy_digital_cli"]
+include = ["src/get_connected_client"]
 reportMissingImports = true
 reportMissingTypeStubs = false
 reportUnusedImport = true
@@ -114,7 +118,7 @@ python_files = "test*.py"
 norecursedirs = "*.egg .eggs dist build doc docs .tox .git .worktrees .venv __pycache__"
 addopts = [
     "--strict-markers",
-    "--cov=galaxy_digital_cli",
+    "--cov=get_connected_client",
     "--cov-branch",
     "--cov-report=term-missing:skip-covered",
     "-m",
@@ -127,14 +131,14 @@ markers = [
 
 [tool.coverage.run]
 branch = true
-source = ["galaxy_digital_cli"]
+source = ["get_connected_client"]
 concurrency = ["thread", "multiprocessing"]
 parallel = true
 relative_files = true
-command_line = "-m pytest --cov=galaxy_digital_cli"
+command_line = "-m pytest --cov=get_connected_client"
 
 [tool.coverage.paths]
-source = ["galaxy_digital_cli"]
+source = ["get_connected_client"]
 
 [tool.ruff]
 line-length = 88
