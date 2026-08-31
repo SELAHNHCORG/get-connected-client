@@ -178,7 +178,7 @@ def test_config_show_reports_flag_source_for_url():
     out = runner.invoke(app, ["--url", "us2", "config", "show"]).output
     lines = out.splitlines()
     url_row = next(line for line in lines if "url" in line)
-    assert "volunteerapi.com" in url_row
+    assert "https://www.volunteerapi.com/api" in url_row
     assert "flag" in url_row
 
 
@@ -278,7 +278,8 @@ def test_confirm_write_without_payload(monkeypatch, capsys):
 def test_json_output_flag(monkeypatch):
     monkeypatch.setenv("GALAXY_API_URL", "us2")
     out = runner.invoke(app, ["--json", "config", "show"]).output
-    assert '"url"' in out and "volunteerapi.com" in out
+    rows = {row["setting"]: row for row in json.loads(out)}
+    assert rows["url"]["value"] == "https://www.volunteerapi.com/api"
 
 
 def test_format_json_is_identical_to_the_json_shorthand():
