@@ -1,8 +1,9 @@
 get-connected-client
 ====================
 
-**get-connected-client** is a typed Python client for
-`Galaxy Digital's Get Connected API <https://www.galaxydigital.com/>`_, with an
+:pypi:`get-connected-client` is a typed Python client for
+`Galaxy Digital's <https://www.galaxydigital.com/>`_
+`Get Connected API <https://api.galaxydigital.com/docs/>`_, with an
 optional command line interface. It wraps all 66 documented API paths behind a
 typed, synchronous :class:`~get_connected_client.client.GalaxyClient` -- the sole
 choke point for every request. Installing the optional ``cli`` extra

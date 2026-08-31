@@ -49,8 +49,31 @@ napoleon_use_rtype = False
 # object naming collision rather than a broken reference.
 suppress_warnings = ["ref.python"]
 
+html_static_path = ['_static']
+html_css_files = ['style.css']
+
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 html_theme = "furo"
-html_static_path = []
+html_theme_options = {
+    "source_repository": "https://github.com/django-commons/django-typer/",
+    "source_branch": "main",
+    "source_directory": "doc/source",
+}
+html_title = f"{project} {release}"
+
+
+def pypi_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
+    from docutils import nodes
+
+    url = f"https://pypi.org/project/{text}/"
+    node = nodes.reference(rawtext, text, refuri=url, **options)
+    return [node], []
+
+
+def setup(app):
+    from docutils.parsers.rst import roles
+
+    # app.connect('html-page-context', add_page_class)
+    roles.register_local_role("pypi", pypi_role)

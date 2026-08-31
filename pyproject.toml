@@ -54,11 +54,11 @@ path = "src/get_connected_client/_version.py"
 expression = "get_version()"
 
 [project.urls]
-"Homepage"      = "https://github.com/SELAHNHCORG/galaxy-digital-cli"
-"Documentation" = "https://get-connected-client.readthedocs.io/en/latest/"
-"Repository"    = "https://github.com/SELAHNHCORG/galaxy-digital-cli"
-"Issues"        = "https://github.com/SELAHNHCORG/galaxy-digital-cli/issues"
-"Changelog"     = "https://get-connected-client.readthedocs.io/en/latest/"
+"Homepage"      = "https://github.com/SELAHNHCORG/get-connected-client"
+"Documentation" = "https://get-connected-client.readthedocs.io"
+"Repository"    = "https://github.com/SELAHNHCORG/get-connected-client"
+"Issues"        = "https://github.com/SELAHNHCORG/get-connected-client/releases"
+"Changelog"     = "https://get-connected-client.readthedocs.io"
 
 [project.scripts]
 galaxy = "get_connected_client.cli:app"
