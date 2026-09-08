@@ -2,7 +2,7 @@
 name = "get-connected-client"
 dynamic = ["version"]
 description = "A typed Python client (and optional CLI) for Galaxy Digital's Get Connected API"
-requires-python = ">=3.10,<4.0"
+requires-python = ">=3.11,<4.0"
 authors = [
   {name = "Brian Kohan", email = "bckohan@gmail.com"},
 ]
@@ -23,7 +23,6 @@ classifiers = [
     "Natural Language :: English",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -35,8 +34,8 @@ classifiers = [
 
 [project.optional-dependencies]
 cli = [
-    "typer>=0.12",
-    "rich>=13.0",
+    "typer>=0.26.8",
+    "rich>=14.0",
 ]
 
 [build-system]
@@ -90,7 +89,7 @@ docs = [
     "furo>=2024.1.29",
     "sphinx-autobuild>=2024.2.4",
     "doc8>=1.1.2",
-    "sphinxcontrib-typer>=0.9.1",
+    "sphinxcontrib-typer>=0.10.0",
 ]
 dev = [
     { include-group = "typing" },
