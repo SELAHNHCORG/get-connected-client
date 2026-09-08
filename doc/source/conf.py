@@ -63,6 +63,10 @@ html_theme_options = {
 }
 html_title = f"{project} {release}"
 
+# pdflatex cannot typeset the Unicode block/box-drawing glyphs in the package
+# banner docstring that the API reference pulls in; xelatex handles them natively.
+latex_engine = "xelatex"
+
 
 def pypi_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
     from docutils import nodes

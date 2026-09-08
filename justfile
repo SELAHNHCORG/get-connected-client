@@ -78,6 +78,12 @@ clean: clean-docs clean-env clean-git-ignored
 build-docs-html:
     @just run --group docs --all-extras --isolated --no-default-groups --exact sphinx-build --fresh-env --builder html --doctree-dir ./doc/build/doctrees ./doc/source ./doc/build/html
 
+# build pdf documentation
+build-docs-pdf:
+    @just run --group docs --exact --no-default-groups --isolated sphinx-build --fresh-env --builder latex --doctree-dir ./doc/build/doctrees ./doc/source ./doc/build/pdf
+    make -C ./doc/build/pdf
+    @just _open-pdf-docs
+
 # build the docs
 build-docs: build-docs-html
 
@@ -99,6 +105,13 @@ open-docs:
     import os
     import webbrowser
     webbrowser.open(f'file://{os.getcwd()}/doc/build/html/index.html')
+
+# open the pdf documentation
+[script]
+_open-pdf-docs:
+    import os
+    import webbrowser
+    webbrowser.open(f'file://{os.getcwd()}/doc/build/pdf/get-connected-client.pdf')
 
 # build and open the documentation
 docs: build-docs-html open-docs
