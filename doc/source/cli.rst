@@ -62,6 +62,7 @@ Command tree
    :make-sections:
    :preferred: svg
    :width: 100
+   :convert-png: latex
 
 There is nothing to set or unset: settings come from the global flags, then
 ``GALAXY_API_KEY`` / ``GALAXY_API_TOKEN`` / ``GALAXY_API_URL`` /
@@ -77,6 +78,7 @@ There is nothing to set or unset: settings come from the global flags, then
    :make-sections:
    :preferred: svg
    :width: 100
+   :convert-png: latex
 
 ``login`` is where every session starts, since the site key cannot
 authenticate requests by itself.
@@ -108,6 +110,7 @@ Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
    :make-sections:
    :preferred: svg
    :width: 100
+   :convert-png: latex
 
 ``agencies`` -- manage agencies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -118,6 +121,7 @@ Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
    :make-sections:
    :preferred: svg
    :width: 100
+   :convert-png: latex
 
 ``needs`` -- manage needs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -128,6 +132,7 @@ Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
    :make-sections:
    :preferred: svg
    :width: 100
+   :convert-png: latex
 
 ``events`` -- manage events
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -138,6 +143,7 @@ Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
    :make-sections:
    :preferred: svg
    :width: 100
+   :convert-png: latex
 
 ``hours`` -- manage hour records
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -148,6 +154,7 @@ Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
    :make-sections:
    :preferred: svg
    :width: 100
+   :convert-png: latex
 
 ``responses`` -- manage responses (need sign-ups)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -158,6 +165,7 @@ Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
    :make-sections:
    :preferred: svg
    :width: 100
+   :convert-png: latex
 
 ``teams`` -- manage teams
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -168,6 +176,7 @@ Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
    :make-sections:
    :preferred: svg
    :width: 100
+   :convert-png: latex
 
 ``groups`` -- manage groups
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -178,6 +187,7 @@ Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
    :make-sections:
    :preferred: svg
    :width: 100
+   :convert-png: latex
 
 ``qualifications`` -- manage qualifications
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -188,6 +198,7 @@ Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
    :make-sections:
    :preferred: svg
    :width: 100
+   :convert-png: latex
 
 ``benchmarks`` -- manage benchmarks
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -198,6 +209,7 @@ Both commands are blocked by ``--read-only`` -- see :doc:`configuration`.
    :make-sections:
    :preferred: svg
    :width: 100
+   :convert-png: latex
 
 ``clusters``, ``causes``, ``interests``, ``impacts``, ``registration-questions``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -210,6 +222,7 @@ Small, mostly read-only lookup endpoints:
    :make-sections:
    :preferred: svg
    :width: 100
+   :convert-png: latex
 
 .. typer:: get_connected_client.cli:app:causes
    :prog: galaxy causes
@@ -217,6 +230,7 @@ Small, mostly read-only lookup endpoints:
    :make-sections:
    :preferred: svg
    :width: 100
+   :convert-png: latex
 
 .. typer:: get_connected_client.cli:app:interests
    :prog: galaxy interests
@@ -224,6 +238,7 @@ Small, mostly read-only lookup endpoints:
    :make-sections:
    :preferred: svg
    :width: 100
+   :convert-png: latex
 
 .. typer:: get_connected_client.cli:app:impacts
    :prog: galaxy impacts
@@ -231,6 +246,7 @@ Small, mostly read-only lookup endpoints:
    :make-sections:
    :preferred: svg
    :width: 100
+   :convert-png: latex
 
 .. typer:: get_connected_client.cli:app:registration-questions
    :prog: galaxy registration-questions
@@ -238,6 +254,7 @@ Small, mostly read-only lookup endpoints:
    :make-sections:
    :preferred: svg
    :width: 100
+   :convert-png: latex
 
 ``reports`` -- aggregate answers the API will not compute
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -248,6 +265,7 @@ Small, mostly read-only lookup endpoints:
    :make-sections:
    :preferred: svg
    :width: 100
+   :convert-png: latex
 
 Every command here only reads, so none of them prompts and all of them work
 under ``--read-only``.

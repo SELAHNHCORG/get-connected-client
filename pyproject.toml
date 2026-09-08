@@ -89,7 +89,7 @@ docs = [
     "furo>=2024.1.29",
     "sphinx-autobuild>=2024.2.4",
     "doc8>=1.1.2",
-    "sphinxcontrib-typer[pdf]>=0.10.0",
+    "sphinxcontrib-typer[png,pdf]>=0.10.0",
 ]
 dev = [
     { include-group = "typing" },
