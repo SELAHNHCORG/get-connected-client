@@ -4,6 +4,9 @@ import pytest
 
 from get_connected_client.exceptions import NotFoundError
 from get_connected_client.models.common import Tag
+from get_connected_client.models.hours import Hour
+from get_connected_client.models.needs import Need
+from get_connected_client.models.responses import Response
 from get_connected_client.resources.base import (
     Change,
     CreateMixin,
@@ -17,6 +20,9 @@ from get_connected_client.resources.base import (
     _id_strs,
     _names,
 )
+from get_connected_client.resources.hours import Hours
+from get_connected_client.resources.needs import Needs
+from get_connected_client.resources.responses import Responses
 
 
 class Widgets(
@@ -222,3 +228,39 @@ def test_prepare_patch_reports_missing_required_without_refusing(client, api):
 def test_prepare_patch_reports_no_missing_required_when_present(client, api):
     api.get("/rwidgets/5").respond(json={"data": {"id": 5, "name": "a"}})
     assert RequestWidgets(client).prepare_patch(5).missing_required == []
+
+
+#: (resource, model, read attribute, the nested shape, the key it would derive)
+ID_DERIVED = [
+    (Needs, Need, "agency", {"agency_name": "HH"}, "agency_id"),
+    (Needs, Need, "initiative", {"init_title": "Spring"}, "initiative_id"),
+    (Needs, Need, "groups", [{"group_title": "Rotary"}], "groups"),
+    (Hours, Hour, "user", {"user_fname": "Ada"}, "user_id"),
+    (Hours, Hour, "groups", [{"group_title": "Rotary"}], "group_ids"),
+    (Responses, Response, "need", {"need_title": "Cleanup"}, "need_id"),
+    (Responses, Response, "user", {"user_fname": "Ada"}, "user_id"),
+    (Responses, Response, "shift", {"start": "2024-03-01 08:00:00"}, "schedule_ids"),
+    (Responses, Response, "team", {"team_name": "Crew"}, "team_id"),
+]
+
+
+@pytest.mark.parametrize(
+    ("resource", "model", "attr", "nested", "key"),
+    ID_DERIVED,
+    ids=[f"{r.__name__}.{a}" for r, _, a, _, _ in ID_DERIVED],
+)
+def test_nested_object_without_an_id_derives_no_key(
+    client, resource, model, attr, nested, key
+):
+    """A nested object the API returned without an id yields no derived key.
+
+    Omitting the key leaves the server's value alone; guessing one would be
+    worse than the 422 a missing required field earns. The list-valued cases
+    are the exception: the attribute is present, so the key is emitted as
+    ``[]``, the documented "clear the list" semantics rather than absence.
+    """
+    body = resource(client).to_request(model.model_validate({attr: nested}))
+    if isinstance(nested, list):
+        assert body[key] == []
+    else:
+        assert key not in body
