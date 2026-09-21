@@ -95,6 +95,48 @@ def test_agency_contacts_is_a_list():
     assert agency.agency_contacts == ["mary@example.com", "kevin@example.com"]
 
 
+def test_to_request_drops_contacts_and_read_only(client):
+    agency = Agency.model_validate(
+        {
+            **AGENCY_ROW,
+            "agency_contacts": ["a@x.org", "b@x.org"],
+            "logo": "https://img/x.png",
+            "agency_hours": "9-5",
+            "agency_latitude": "1.0",
+            "updated_at": "2024-01-01 00:00:00",
+        }
+    )
+    assert Agencies(client).to_request(agency) == {
+        "agency_name": "Helping Hands",
+        "agency_city": "Springfield",
+        "agency_state": "IL",
+        "agency_status": "active",
+    }
+
+
+def test_to_request_without_contacts(client):
+    assert Agencies(client).to_request(Agency.model_validate(AGENCY_ROW)) == {
+        "agency_name": "Helping Hands",
+        "agency_city": "Springfield",
+        "agency_state": "IL",
+        "agency_status": "active",
+    }
+
+
+def test_patch_sends_filtered_body(client, api):
+    api.get("/agencies/9").respond(
+        json={"data": {**AGENCY_ROW, "agency_contacts": ["a@x.org"], "logo": "x"}}
+    )
+    route = api.put("/agencies/9").respond(json={"data": AGENCY_ROW})
+    Agencies(client).patch(9, agency_city="X")
+    assert json.loads(route.calls.last.request.content) == {
+        "agency_name": "Helping Hands",
+        "agency_city": "X",
+        "agency_state": "IL",
+        "agency_status": "active",
+    }
+
+
 # --------------------------------------------------------------------------
 # resource: URL + verb mapping
 # --------------------------------------------------------------------------

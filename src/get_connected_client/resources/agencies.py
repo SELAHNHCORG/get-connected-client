@@ -39,6 +39,15 @@ class Agencies(
     :meth:`list` accepts the endpoint's standard paging filters -- see
     :meth:`~get_connected_client.resources.base.ListMixin.list` -- ``/agencies``
     defines no filters of its own beyond those.
+
+    .. note::
+       ``agency_contacts`` is a list of strings on ``GET`` but a single
+       string on ``PUT``, and the spec does not say how the two relate.
+       Sending the list back would be rejected or would mangle the field,
+       so :meth:`to_request` never carries it and a merged update sends it
+       absent -- which may clear it on the server. Pass
+       ``agency_contacts="..."`` explicitly to :meth:`patch` to set or
+       preserve it.
     """
 
     path = "/agencies"
@@ -74,6 +83,24 @@ class Agencies(
             "agency_youtube_link",
         }
     )
+
+    def to_request(self, obj: Agency) -> dict[str, Any]:
+        """Filter a fetched agency to the shape ``PUT /agencies/{id}`` wants.
+
+        The request schema is a subset of the read object, so the base
+        filter does nearly all the work. The one exception is
+        ``agency_contacts``, which is **left out** -- see the class note.
+        The three required write fields (``agency_name``, ``agency_status``,
+        ``agency_postal``) are all on the read object; a fetched agency
+        missing one yields a body without it, so supply it explicitly to
+        :meth:`patch` in that case.
+
+        :param obj: the fetched agency.
+        :return: the request body.
+        """
+        body = super().to_request(obj)
+        body.pop("agency_contacts", None)
+        return body
 
     # -- causes -------------------------------------------------------
 
