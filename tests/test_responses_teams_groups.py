@@ -217,6 +217,8 @@ def test_response_to_request_derives_ids(client):
 
 
 def test_response_to_request_without_nested_objects(client):
+    """Pins the body a shiftless response produces; the PUT would 422 on the
+    missing schedule_ids (see Responses.to_request)."""
     body = Responses(client).to_request(Response.model_validate(RESPONSE_ROW))
     assert body == {"response_date_added": "2024-03-01 12:00:00"}
 
@@ -235,6 +237,8 @@ def test_response_patch_sends_derived_body(client, api):
     route = api.put("/responses/7").respond(json={"data": RESPONSE_ROW})
     Responses(client).patch(7, response_note="Bring gloves and hat")
     assert json.loads(route.calls.last.request.content) == {
+        # response_date_added must be re-sent: omitting it resets the
+        # sign-up date to now (spec).
         "response_date_added": "2024-03-01 12:00:00",
         "response_note": "Bring gloves and hat",
         "need_id": "42",

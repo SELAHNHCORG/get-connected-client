@@ -55,17 +55,39 @@ class Responses(
         """Flatten a fetched response into the shape ``PUT /responses/{id}`` wants.
 
         The three required write fields all live inside nested read objects:
-        ``need.id`` becomes ``need_id``, ``user.id`` becomes ``user_id`` and
-        ``shift.id`` becomes ``schedule_ids`` (a one-element list; a response
-        is tied to one shift). ``team.id`` becomes ``team_id`` when present.
-        Ids are sent as strings. A fetched response missing any of those
-        nested objects yields a body without that required field, so supply
-        it explicitly to :meth:`patch` in that case.
+        ``need.id`` becomes ``need_id`` and ``user.id`` becomes ``user_id``;
+        ``shift.id`` becomes ``schedule_ids``, a one-element list: the read
+        object reports a single ``shift`` while the request field is an
+        array, so a merged update can only carry the one shift ``GET``
+        returns. If a response covers more than one shift, pass
+        ``schedule_ids=[...]`` explicitly to :meth:`patch` rather than
+        relying on the merge. ``team.id`` becomes ``team_id`` when present.
+        Ids are sent as strings.
+
+        ``need_id`` and ``user_id`` can be recovered by fetching the missing
+        need or user and passing the id explicitly if the nested object is
+        absent. ``schedule_ids`` cannot: for a response to a need with no
+        shifts, ``shift`` is null on the read object and there is no id to
+        supply, so a merged update yields a body without the required
+        ``schedule_ids`` and the API answers 422.
+
+        .. warning::
+           Passing ``schedule_ids=[]`` to :meth:`patch` for a shiftless
+           response is untested against the live API; it may or may not be
+           accepted in place of an omitted key.
 
         ``questions`` has no counterpart on the read object -- its ``answers``
         list is a different shape and is not carried -- so a merged update
-        always sends it absent. The read-only ``response_status``,
-        ``answers``, ``agency`` and ``initiative`` are dropped.
+        always sends it absent and cannot preserve a response's answers to
+        custom questions; pass ``questions=`` explicitly to :meth:`patch` if
+        the response has any.
+
+        Dropped as read-only, with no request-schema counterpart at all:
+        ``response_status``, ``response_phone``, ``response_address``,
+        ``response_comments``, ``response_source``, ``response_date_updated``,
+        ``answers``, ``agency``, ``initiative``, plus ids. ``response_phone``
+        and ``response_address`` are simply absent from the request schema,
+        so the API offers no way to update them.
 
         :param obj: the fetched response.
         :return: the request body.

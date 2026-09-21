@@ -167,6 +167,13 @@ def test_hour_to_request_without_hour_date_start(client):
     assert "hour_start" not in body
 
 
+def test_hour_to_request_empty_groups_sends_empty_list(client):
+    """An empty ``groups`` list means "no groups" on a replacement PUT,
+    unlike omitting the key entirely (which leaves groups untouched)."""
+    body = Hours(client).to_request(Hour.model_validate({**HOUR_ROW, "groups": []}))
+    assert body["group_ids"] == []
+
+
 def test_hour_patch_sends_derived_body(client, api):
     api.get("/hours/7").respond(
         json={"data": {**HOUR_ROW, "user": {"id": "5"}, "groups": {"id": "9"}}}

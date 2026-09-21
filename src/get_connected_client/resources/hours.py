@@ -34,6 +34,16 @@ class Hours(
     Unlike ``/events``, ``/hours`` list does accept ``show_inactive``::
 
         client.hours.list(show_inactive=True)
+
+    .. note::
+       ``response_id`` ties an hour to the response it was logged against
+       and is **never returned by** ``GET`` -- the read object carries a
+       ``need`` object instead, and ``need.id`` is not a response id.
+       :meth:`to_request` therefore cannot carry it, and a merged update on a
+       need-linked hour (``hour_type == "need"``) sends it absent, which may
+       detach the hour from its response. Look the id up with
+       ``client.needs.responses(need_id)`` and pass ``response_id=`` to
+       :meth:`patch` to preserve the link.
     """
 
     path = "/hours"
@@ -62,12 +72,10 @@ class Hours(
         the first two and calls the third ``hour_date_start``. Ids are sent
         as strings; a group with no id is skipped.
 
-        ``response_id`` has no counterpart on the read object (which carries
-        a ``need`` object the PUT does not take), so a merged update always
-        sends it absent; pass ``response_id=`` explicitly to :meth:`patch`
-        to set it. ``hour_start`` is required by the PUT, so a fetched record
-        with no ``hour_date_start`` yields a body without it and the caller
-        must supply it.
+        ``response_id`` has no counterpart on the read object at all -- see
+        the class docstring's note. ``hour_start`` is required by the PUT,
+        so a fetched record with no ``hour_date_start`` yields a body
+        without it and the caller must supply it.
 
         :param obj: the fetched hour record.
         :return: the request body.
