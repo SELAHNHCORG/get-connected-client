@@ -96,6 +96,9 @@ def test_agency_contacts_is_a_list():
 
 
 def test_to_request_drops_contacts_and_read_only(client):
+    """AGENCY_ROW has no agency_postal, so this body is not a valid PUT (the
+    spec requires it); the test pins the filter, not a template request.
+    """
     agency = Agency.model_validate(
         {
             **AGENCY_ROW,
@@ -115,12 +118,10 @@ def test_to_request_drops_contacts_and_read_only(client):
 
 
 def test_to_request_without_contacts(client):
-    assert Agencies(client).to_request(Agency.model_validate(AGENCY_ROW)) == {
-        "agency_name": "Helping Hands",
-        "agency_city": "Springfield",
-        "agency_state": "IL",
-        "agency_status": "active",
-    }
+    """An agency with no contacts must not raise on the pop."""
+    assert "agency_contacts" not in Agencies(client).to_request(
+        Agency.model_validate(AGENCY_ROW)
+    )
 
 
 def test_patch_sends_filtered_body(client, api):
@@ -135,6 +136,16 @@ def test_patch_sends_filtered_body(client, api):
         "agency_state": "IL",
         "agency_status": "active",
     }
+
+
+def test_patch_can_set_contacts_explicitly(client, api):
+    """The class note's escape hatch: a supplied value survives the drop."""
+    api.get("/agencies/9").respond(
+        json={"data": {**AGENCY_ROW, "agency_contacts": ["a@x.org"]}}
+    )
+    route = api.put("/agencies/9").respond(json={"data": AGENCY_ROW})
+    Agencies(client).patch(9, agency_contacts="a@x.org")
+    assert json.loads(route.calls.last.request.content)["agency_contacts"] == "a@x.org"
 
 
 # --------------------------------------------------------------------------
