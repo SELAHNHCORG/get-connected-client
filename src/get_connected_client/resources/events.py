@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from ..models.events import Event
 from .base import (
     CreateMixin,
@@ -66,3 +68,24 @@ class Events(
             "event_title",
         }
     )
+
+    def to_request(self, obj: Event) -> dict[str, Any]:
+        """Flatten a fetched event into the shape ``PUT /events/{id}`` wants.
+
+        The read object's ``tags`` (objects) become the request schema's
+        ``event_tags`` (names; an empty name is not a tag). The spec warns
+        that submitted tags replace the event's existing tags, which is
+        exactly why they must be carried over here.
+
+        Four request fields have no counterpart on the read object, so a
+        merged update always sends them absent: ``event_capacity``,
+        ``event_contact``, ``event_country`` and ``event_phone``. Pass them
+        explicitly to :meth:`patch` to set or preserve them.
+
+        :param obj: the fetched event.
+        :return: the request body.
+        """
+        body = super().to_request(obj)
+        if obj.tags is not None:
+            body["event_tags"] = [t.name for t in obj.tags if t.name]
+        return body

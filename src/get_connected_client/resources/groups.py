@@ -39,6 +39,15 @@ class Groups(
 
     :meth:`list` accepts ``show_inactive`` in addition to the standard paging
     filters -- see :meth:`~get_connected_client.resources.base.ListMixin.list`.
+
+    .. note::
+       ``ug_type`` (``gc`` or ``slm``) is required by every
+       ``PUT /groups/{id}`` but never returned by ``GET``, so
+       :meth:`to_request` cannot carry it and a merged update must supply it
+       explicitly -- ``patch(9, ug_type="gc", ...)`` -- or the API answers
+       422. Everything else on the read object that the request schema does
+       not take (``users``, ``needs``, ``agencies``, the question lists) is
+       dropped by the base filter.
     """
 
     path = "/groups"

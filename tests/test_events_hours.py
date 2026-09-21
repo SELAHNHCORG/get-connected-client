@@ -86,6 +86,36 @@ def test_event_nested_fields_parse():
     assert event.tags[0].name == "Outdoors"
 
 
+def test_event_to_request_renames_tags(client):
+    event = Event.model_validate(
+        {
+            **EVENT_ROW,
+            "tags": [{"id": "1", "name": "Fair"}, {"id": "2", "name": "Family"}],
+            "update_at": "2024-01-01 00:00:00",
+        }
+    )
+    assert Events(client).to_request(event) == {
+        "event_title": "Volunteer Fair",
+        "event_date_start": "2024-03-01 08:00:00",
+        "event_location": "Community Center",
+        "event_tags": ["Fair", "Family"],
+    }
+
+
+def test_event_patch_sends_event_tags(client, api):
+    api.get("/events/42").respond(
+        json={"data": {**EVENT_ROW, "tags": [{"id": "1", "name": "Fair"}]}}
+    )
+    route = api.put("/events/42").respond(json={"data": EVENT_ROW})
+    Events(client).patch(42, event_location="Town Hall")
+    assert json.loads(route.calls.last.request.content) == {
+        "event_title": "Volunteer Fair",
+        "event_date_start": "2024-03-01 08:00:00",
+        "event_location": "Town Hall",
+        "event_tags": ["Fair"],
+    }
+
+
 # Hour's fields are already covered by Task 8's model tests; only the wire
 # mapping for CRUD is retested here.
 

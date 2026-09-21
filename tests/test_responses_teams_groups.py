@@ -163,6 +163,36 @@ def test_group_user_model_fields():
     assert len(GroupUser.model_fields) == 6
 
 
+def test_group_to_request_drops_membership_and_keeps_ug_type_absent(client):
+    group = Group.model_validate(
+        {
+            **GROUP_ROW,
+            "users": [{"id": "1", "user_fname": "A"}],
+            "needs": [{"id": "2", "need_title": "N"}],
+            "agencies": [{"id": "3", "agency_name": "G"}],
+            "questions_join": [],
+            "created_at": "2024-01-01 00:00:00",
+        }
+    )
+    body = Groups(client).to_request(group)
+    assert body == {"ug_title": "Rotary Club", "ug_status": "active"}
+    assert "ug_type" not in body
+
+
+def test_group_patch_sends_filtered_body(client, api):
+    api.get("/groups/9").respond(
+        json={"data": {**GROUP_ROW, "users": [{"id": "1", "user_fname": "A"}]}}
+    )
+    route = api.put("/groups/9").respond(json={"data": GROUP_ROW})
+    Groups(client).patch(9, ug_type="gc", ug_description="Local service club")
+    assert json.loads(route.calls.last.request.content) == {
+        "ug_title": "Rotary Club",
+        "ug_status": "active",
+        "ug_type": "gc",
+        "ug_description": "Local service club",
+    }
+
+
 # --------------------------------------------------------------------------
 # resource: responses -- URL + verb mapping
 # --------------------------------------------------------------------------
