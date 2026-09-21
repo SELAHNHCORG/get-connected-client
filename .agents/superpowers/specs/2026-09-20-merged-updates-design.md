@@ -103,20 +103,22 @@ All ids in translated bodies are sent as strings, matching the spec's
 ```python
 @dataclass
 class PatchPlan:
-    current: dict[str, Any]   # to_request(fetched row)
-    body: dict[str, Any]      # current | supplied fields
-    changes: list[Change]     # keys whose value differs, with old and new
+    current: dict[str, Any]  # to_request(fetched row)
+    body: dict[str, Any]  # current | supplied fields
+    changes: list[Change]  # keys whose value differs, with old and new
+
 
 @dataclass
 class Change:
     field: str
-    old: Any   # None when the field was absent
+    old: Any  # None when the field was absent
     new: Any
 
+
 class UpdateMixin(Resource[M]):
-    def update(self, id, **fields): ...           # unchanged raw PUT
+    def update(self, id, **fields): ...  # unchanged raw PUT
     def prepare_patch(self, id, **fields) -> PatchPlan: ...
-    def patch(self, id, **fields): ...            # prepare_patch + update(**plan.body)
+    def patch(self, id, **fields): ...  # prepare_patch + update(**plan.body)
 ```
 
 `prepare_patch` requires the resource to also be a `GetMixin`; every resource

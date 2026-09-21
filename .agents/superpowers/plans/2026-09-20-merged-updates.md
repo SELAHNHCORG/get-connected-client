@@ -398,10 +398,22 @@ def test_every_updatable_resource_is_covered():
     covered = {cls for cls, _ in PAIRS}
     found = set()
     for module_name in (
-        "agencies", "benchmarks", "events", "groups", "hours", "misc",
-        "needs", "qualifications", "responses", "teams", "users",
+        "agencies",
+        "benchmarks",
+        "events",
+        "groups",
+        "hours",
+        "misc",
+        "needs",
+        "qualifications",
+        "responses",
+        "teams",
+        "users",
     ):
-        module = getattr(__import__(f"{resources.__name__}.{module_name}", fromlist=["x"]), "__dict__")
+        module = getattr(
+            __import__(f"{resources.__name__}.{module_name}", fromlist=["x"]),
+            "__dict__",
+        )
         for _, obj in module.items():
             if (
                 inspect.isclass(obj)
@@ -425,114 +437,250 @@ Each goes directly under `model = ...` in the class body. The literal sets below
 `users.py` (class `Users`):
 
 ```python
-    request_fields = frozenset({
-        "user_address", "user_address2", "user_age_range", "user_birthday",
-        "user_city", "user_comments", "user_company", "user_company_title",
-        "user_country", "user_county", "user_department", "user_disaster",
-        "user_email", "user_ethnicity", "user_fname", "user_gender",
-        "user_grad_semester", "user_grad_year", "user_lname", "user_mname",
-        "user_notes", "user_phone", "user_phone_cell", "user_postal",
-        "user_reference_id", "user_state", "user_status", "user_username",
-    })
+request_fields = frozenset(
+    {
+        "user_address",
+        "user_address2",
+        "user_age_range",
+        "user_birthday",
+        "user_city",
+        "user_comments",
+        "user_company",
+        "user_company_title",
+        "user_country",
+        "user_county",
+        "user_department",
+        "user_disaster",
+        "user_email",
+        "user_ethnicity",
+        "user_fname",
+        "user_gender",
+        "user_grad_semester",
+        "user_grad_year",
+        "user_lname",
+        "user_mname",
+        "user_notes",
+        "user_phone",
+        "user_phone_cell",
+        "user_postal",
+        "user_reference_id",
+        "user_state",
+        "user_status",
+        "user_username",
+    }
+)
 ```
 
 `needs.py` (class `Needs`):
 
 ```python
-    request_fields = frozenset({
-        "accessible", "agency_id", "attributes", "event_id", "family_friendly",
-        "groups", "initiative_id", "interests", "need_address", "need_address2",
-        "need_allow_groups", "need_body", "need_city", "need_comments",
-        "need_contact", "need_date", "need_date_close", "need_date_type",
-        "need_hours", "need_hours_description", "need_impact_area",
-        "need_latitude", "need_longitude", "need_postal", "need_public",
-        "need_response_notify", "need_state", "need_status", "need_title",
-        "need_type", "need_volunteers_needed", "outdoors", "shifts", "tags",
+request_fields = frozenset(
+    {
+        "accessible",
+        "agency_id",
+        "attributes",
+        "event_id",
+        "family_friendly",
+        "groups",
+        "initiative_id",
+        "interests",
+        "need_address",
+        "need_address2",
+        "need_allow_groups",
+        "need_body",
+        "need_city",
+        "need_comments",
+        "need_contact",
+        "need_date",
+        "need_date_close",
+        "need_date_type",
+        "need_hours",
+        "need_hours_description",
+        "need_impact_area",
+        "need_latitude",
+        "need_longitude",
+        "need_postal",
+        "need_public",
+        "need_response_notify",
+        "need_state",
+        "need_status",
+        "need_title",
+        "need_type",
+        "need_volunteers_needed",
+        "outdoors",
+        "shifts",
+        "tags",
         "virtual_need",
-    })
+    }
+)
 ```
 
 `events.py` (class `Events`):
 
 ```python
-    request_fields = frozenset({
-        "event_address", "event_address2", "event_all_day", "event_area",
-        "event_area_id", "event_capacity", "event_city", "event_comments",
-        "event_contact", "event_country", "event_date_end", "event_date_start",
-        "event_description", "event_email", "event_location", "event_phone",
-        "event_postal", "event_rsvp", "event_state", "event_tags",
+request_fields = frozenset(
+    {
+        "event_address",
+        "event_address2",
+        "event_all_day",
+        "event_area",
+        "event_area_id",
+        "event_capacity",
+        "event_city",
+        "event_comments",
+        "event_contact",
+        "event_country",
+        "event_date_end",
+        "event_date_start",
+        "event_description",
+        "event_email",
+        "event_location",
+        "event_phone",
+        "event_postal",
+        "event_rsvp",
+        "event_state",
+        "event_tags",
         "event_title",
-    })
+    }
+)
 ```
 
 `groups.py` (class `Groups`):
 
 ```python
-    request_fields = frozenset({
-        "ug_allow_member_remove", "ug_approval", "ug_block_id", "ug_color",
-        "ug_description", "ug_description_private", "ug_domains", "ug_goal",
-        "ug_icon", "ug_limit", "ug_status", "ug_submitted_hours",
-        "ug_suppress_resume", "ug_text_color", "ug_title", "ug_type",
-    })
+request_fields = frozenset(
+    {
+        "ug_allow_member_remove",
+        "ug_approval",
+        "ug_block_id",
+        "ug_color",
+        "ug_description",
+        "ug_description_private",
+        "ug_domains",
+        "ug_goal",
+        "ug_icon",
+        "ug_limit",
+        "ug_status",
+        "ug_submitted_hours",
+        "ug_suppress_resume",
+        "ug_text_color",
+        "ug_title",
+        "ug_type",
+    }
+)
 ```
 
 `hours.py` (class `Hours`):
 
 ```python
-    request_fields = frozenset({
-        "group_ids", "hour_contact_details", "hour_contact_name", "hour_hours",
-        "hour_location", "hour_miles", "hour_relationship", "hour_start",
-        "hour_status", "response_id", "user_id",
-    })
+request_fields = frozenset(
+    {
+        "group_ids",
+        "hour_contact_details",
+        "hour_contact_name",
+        "hour_hours",
+        "hour_location",
+        "hour_miles",
+        "hour_relationship",
+        "hour_start",
+        "hour_status",
+        "response_id",
+        "user_id",
+    }
+)
 ```
 
 `responses.py` (class `Responses`):
 
 ```python
-    request_fields = frozenset({
-        "need_id", "questions", "response_date_added", "response_note",
-        "schedule_ids", "team_id", "user_id",
-    })
+request_fields = frozenset(
+    {
+        "need_id",
+        "questions",
+        "response_date_added",
+        "response_note",
+        "schedule_ids",
+        "team_id",
+        "user_id",
+    }
+)
 ```
 
 `agencies.py` (class `Agencies`):
 
 ```python
-    request_fields = frozenset({
-        "agency_address", "agency_address2", "agency_city", "agency_comments",
-        "agency_contact", "agency_contact_title", "agency_contacts",
-        "agency_ein", "agency_email", "agency_facebook_link", "agency_fax",
-        "agency_instagram_link", "agency_link", "agency_linkedin_link",
-        "agency_mission", "agency_name", "agency_news", "agency_partner",
-        "agency_phone", "agency_phone_extension", "agency_postal",
-        "agency_state", "agency_status", "agency_twitter_link", "agency_url",
-        "agency_video", "agency_youtube_link",
-    })
+request_fields = frozenset(
+    {
+        "agency_address",
+        "agency_address2",
+        "agency_city",
+        "agency_comments",
+        "agency_contact",
+        "agency_contact_title",
+        "agency_contacts",
+        "agency_ein",
+        "agency_email",
+        "agency_facebook_link",
+        "agency_fax",
+        "agency_instagram_link",
+        "agency_link",
+        "agency_linkedin_link",
+        "agency_mission",
+        "agency_name",
+        "agency_news",
+        "agency_partner",
+        "agency_phone",
+        "agency_phone_extension",
+        "agency_postal",
+        "agency_state",
+        "agency_status",
+        "agency_twitter_link",
+        "agency_url",
+        "agency_video",
+        "agency_youtube_link",
+    }
+)
 ```
 
 `qualifications.py` (class `Qualifications`):
 
 ```python
-    request_fields = frozenset({
-        "qualification_approval", "qualification_correct_answer",
-        "qualification_duration", "qualification_hide_from_registration",
-        "qualification_level", "qualification_link_show",
-        "qualification_link_text", "qualification_link_url",
-        "qualification_options", "qualification_question",
-        "qualification_required", "qualification_status",
-        "qualification_title", "qualification_type",
-    })
+request_fields = frozenset(
+    {
+        "qualification_approval",
+        "qualification_correct_answer",
+        "qualification_duration",
+        "qualification_hide_from_registration",
+        "qualification_level",
+        "qualification_link_show",
+        "qualification_link_text",
+        "qualification_link_url",
+        "qualification_options",
+        "qualification_question",
+        "qualification_required",
+        "qualification_status",
+        "qualification_title",
+        "qualification_type",
+    }
+)
 ```
 
 `benchmarks.py` (class `Benchmarks`):
 
 ```python
-    request_fields = frozenset({
-        "benchmark_allow_indv_hours", "benchmark_approval_required",
-        "benchmark_date_end", "benchmark_date_start", "benchmark_group_id",
-        "benchmark_hours", "benchmark_icon", "benchmark_status",
+request_fields = frozenset(
+    {
+        "benchmark_allow_indv_hours",
+        "benchmark_approval_required",
+        "benchmark_date_end",
+        "benchmark_date_start",
+        "benchmark_group_id",
+        "benchmark_hours",
+        "benchmark_icon",
+        "benchmark_status",
         "benchmark_title",
-    })
+    }
+)
 ```
 
 `ruff format` will reflow these; let it.
@@ -1011,7 +1159,16 @@ def test_cli_update_merges_over_current_record(api, cli_env):
     route = api.put("/users/5").respond(json={"data": USER_ROW})
     result = runner.invoke(
         app,
-        ["--yes", "users", "update", "5", "--fname", "Ada", "--data", '{"user_city":"X"}'],
+        [
+            "--yes",
+            "users",
+            "update",
+            "5",
+            "--fname",
+            "Ada",
+            "--data",
+            '{"user_city":"X"}',
+        ],
     )
     assert result.exit_code == 0, result.output
     assert json.loads(route.calls.last.request.content) == {
@@ -1069,7 +1226,17 @@ def test_cli_update_replace_sends_raw_body(api, cli_env):
     route = api.put("/users/5").respond(json={"data": USER_ROW})
     result = runner.invoke(
         app,
-        ["--yes", "users", "update", "5", "--replace", "--fname", "Ada", "--data", '{"user_city":"X"}'],
+        [
+            "--yes",
+            "users",
+            "update",
+            "5",
+            "--replace",
+            "--fname",
+            "Ada",
+            "--data",
+            '{"user_city":"X"}',
+        ],
     )
     assert result.exit_code == 0, result.output
     assert [c.request.method for c in api.calls] == ["PUT"]
@@ -1243,7 +1410,13 @@ def update_user(
 ) -> None:
     """Update a user, merging the fields you name over the current record."""
     state = get_state(ctx)
-    run_update(state, state.client.users, id, _user_fields(data, fname, lname, email), replace=replace)
+    run_update(
+        state,
+        state.client.users,
+        id,
+        _user_fields(data, fname, lname, email),
+        replace=replace,
+    )
 ```
 
 `confirm_write` stays imported in `users.py` because `create` and the sub-resource commands still use it.
@@ -1324,7 +1497,11 @@ Each existing `..._update_merges_data` test gains a GET route on the line before
 
 `tests/test_responses_teams_groups.py::test_cli_groups_update_merges_data` — add `api.get("/groups/9").respond(json={"data": GROUP_ROW})`; expected body:
 ```python
-    {"ug_title": "Rotary Club", "ug_status": "inactive", "ug_description": "Local service club"}
+{
+    "ug_title": "Rotary Club",
+    "ug_status": "inactive",
+    "ug_description": "Local service club",
+}
 ```
 
 `tests/test_quals_benchmarks_misc.py::test_cli_qualifications_update_merges_data` — add `api.get("/qualifications/11").respond(json={"data": QUALIFICATION_ROW})`; expected body:
@@ -1358,7 +1535,8 @@ def test_cli_update_translates_nested_need(api, cli_env):
     )
     route = api.put("/needs/42").respond(json={"data": NEED_ROW})
     result = runner.invoke(
-        app, ["--yes", "needs", "update", "42", "--data", '{"need_body":"Bring gloves"}']
+        app,
+        ["--yes", "needs", "update", "42", "--data", '{"need_body":"Bring gloves"}'],
     )
     assert result.exit_code == 0, result.output
     assert json.loads(route.calls.last.request.content) == {
@@ -1396,24 +1574,34 @@ In each of the eight CLI modules: add `from ._update import REPLACE, run_update`
 
 `agencies.py`:
 ```python
-    state = get_state(ctx)
-    run_update(state, state.client.agencies, id, _agency_fields(data, name), replace=replace)
+state = get_state(ctx)
+run_update(
+    state, state.client.agencies, id, _agency_fields(data, name), replace=replace
+)
 ```
 
 `needs.py`:
 ```python
-    state = get_state(ctx)
-    run_update(
-        state, state.client.needs, id, _need_fields(data, title, body, agency_id), replace=replace
-    )
+state = get_state(ctx)
+run_update(
+    state,
+    state.client.needs,
+    id,
+    _need_fields(data, title, body, agency_id),
+    replace=replace,
+)
 ```
 
 `events.py`:
 ```python
-    state = get_state(ctx)
-    run_update(
-        state, state.client.events, id, _event_fields(data, title, description), replace=replace
-    )
+state = get_state(ctx)
+run_update(
+    state,
+    state.client.events,
+    id,
+    _event_fields(data, title, description),
+    replace=replace,
+)
 ```
 
 `hours.py`:
@@ -1442,24 +1630,34 @@ In each of the eight CLI modules: add `from ._update import REPLACE, run_update`
 
 `groups.py` (also extend the `--data` help to `"JSON object of any further ug_* fields. ug_type is required by the API and never returned, so a merged update must include it."`):
 ```python
-    state = get_state(ctx)
-    run_update(state, state.client.groups, id, _group_fields(data, title, status), replace=replace)
+state = get_state(ctx)
+run_update(
+    state, state.client.groups, id, _group_fields(data, title, status), replace=replace
+)
 ```
 
 `qualifications.py`:
 ```python
-    state = get_state(ctx)
-    run_update(
-        state, state.client.qualifications, id, _qualification_fields(data, title), replace=replace
-    )
+state = get_state(ctx)
+run_update(
+    state,
+    state.client.qualifications,
+    id,
+    _qualification_fields(data, title),
+    replace=replace,
+)
 ```
 
 `benchmarks.py`:
 ```python
-    state = get_state(ctx)
-    run_update(
-        state, state.client.benchmarks, id, _benchmark_fields(data, title, hours), replace=replace
-    )
+state = get_state(ctx)
+run_update(
+    state,
+    state.client.benchmarks,
+    id,
+    _benchmark_fields(data, title, hours),
+    replace=replace,
+)
 ```
 
 If `confirm_write` is no longer referenced in a module after this (check with `grep -n confirm_write`), remove it from that module's imports; ruff will flag it otherwise.
