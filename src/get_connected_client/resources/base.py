@@ -167,11 +167,20 @@ def _wire(value: Any) -> Any:
     a hazard of its own -- and booleans are excluded so ``True`` never
     becomes ``"True"``.
 
-    :param value: one value from the filtered dump.
-    :return: *value*, stringified if it is an int.
+    Lists are walked so id arrays (``schedule_ids``, ``group_ids``,
+    ``groups``) come out as strings too; the same pass is applied to the
+    fields a caller supplies to :meth:`UpdateMixin.prepare_patch`, so a
+    merged body is uniformly string-typed whichever side a value came from.
+
+    :param value: one value from the filtered dump, or one supplied field.
+    :return: *value*, with ints stringified, recursing into lists.
     """
-    if isinstance(value, int) and not isinstance(value, bool):
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, int):
         return str(value)
+    if isinstance(value, list):
+        return [_wire(item) for item in value]
     return value
 
 
@@ -421,7 +430,8 @@ class UpdateMixin(Resource[M]):
 
         The current record is fetched, passed through
         :meth:`~get_connected_client.resources.base.Resource.to_request`, and
-        *fields* are merged on top; the supplied fields always win, including
+        *fields* are merged on top after the same int-to-string wire pass
+        the fetched values get; the supplied fields always win, including
         keys outside
         :attr:`~get_connected_client.resources.base.Resource.request_fields`
         (the caller may know something the spec does not). The returned plan
@@ -445,10 +455,14 @@ class UpdateMixin(Resource[M]):
                 "update has no base to merge over; use update() with a full body"
             )
         current = self.to_request(self._get_one(self._url(id)))
-        body = {**current, **fields}
+        # Supplied fields win, but go through the same wire pass as the
+        # fetched ones: a caller's ``agency_id=4`` or ``schedule_ids=[77]``
+        # must not put a JSON number in a body the spec types as strings.
+        supplied = {name: _wire(value) for name, value in fields.items()}
+        body = {**current, **supplied}
         changes = [
             Change(field=name, old=current.get(name), new=value)
-            for name, value in fields.items()
+            for name, value in supplied.items()
             if name not in current or not _same(current[name], value)
         ]
         return PatchPlan(

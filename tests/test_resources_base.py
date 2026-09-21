@@ -19,6 +19,7 @@ from get_connected_client.resources.base import (
     _id_str,
     _id_strs,
     _names,
+    _wire,
 )
 from get_connected_client.resources.hours import Hours
 from get_connected_client.resources.needs import Needs
@@ -271,3 +272,24 @@ def test_nested_object_without_an_id_derives_no_key(
         assert body[key] == []
     else:
         assert key not in body
+
+
+def test_wire_stringifies_ints_and_walks_lists():
+    """The one wire convention: ints become strings, lists are walked."""
+    assert _wire(4) == "4"
+    assert _wire(True) is True
+    assert _wire(1.5) == 1.5
+    assert _wire("x") == "x"
+    assert _wire([1, "2", [3], True]) == ["1", "2", ["3"], True]
+
+
+def test_prepare_patch_wires_supplied_ints_and_id_lists(client, api):
+    """Supplied fields go through the same int->str pass as fetched ones,
+    so a merged body never mixes a JSON number with the spec's string ids."""
+    api.get("/rwidgets/5").respond(json={"data": {"id": 5, "name": "old"}})
+    plan = RequestWidgets(client).prepare_patch(5, name=42, tags=[7, "8"])
+    assert plan.body == {"name": "42", "tags": ["7", "8"]}
+    assert plan.changes == [
+        Change(field="name", old="old", new="42"),
+        Change(field="tags", old=None, new=["7", "8"]),
+    ]

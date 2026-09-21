@@ -178,7 +178,7 @@ About to write to the API: PUT /users/10253823 (merged over the current record)
 Proceed? [y/N]:
 ```
 
-Long values are truncated in the table (rich handles wrapping). `--yes`
+Long values are folded across lines, never truncated. `--yes`
 skips the prompt exactly as `confirm_write` does. `--read-only` is enforced
 by the client, unchanged.
 
