@@ -82,6 +82,11 @@ class Events(
         ``event_contact``, ``event_country`` and ``event_phone``. Pass them
         explicitly to :meth:`patch` to set or preserve them.
 
+        ``event_area`` and ``event_area_id`` are required by the PUT and
+        come from the read object; a fetched event missing either yields a
+        body without it, so supply it explicitly to :meth:`patch` in that
+        case.
+
         :param obj: the fetched event.
         :return: the request body.
         """

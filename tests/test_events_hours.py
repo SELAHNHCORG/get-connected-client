@@ -90,7 +90,11 @@ def test_event_to_request_renames_tags(client):
     event = Event.model_validate(
         {
             **EVENT_ROW,
-            "tags": [{"id": "1", "name": "Fair"}, {"id": "2", "name": "Family"}],
+            "tags": [
+                {"id": "1", "name": "Fair"},
+                {"id": "2", "name": "Family"},
+                {"id": "3", "name": ""},
+            ],
             "update_at": "2024-01-01 00:00:00",
         }
     )
@@ -100,6 +104,13 @@ def test_event_to_request_renames_tags(client):
         "event_location": "Community Center",
         "event_tags": ["Fair", "Family"],
     }
+
+
+def test_event_to_request_without_tags(client):
+    """No tags on the read object -- no event_tags key, not an empty list."""
+    body = Events(client).to_request(Event.model_validate(EVENT_ROW))
+    assert "event_tags" not in body
+    assert "tags" not in body
 
 
 def test_event_patch_sends_event_tags(client, api):
