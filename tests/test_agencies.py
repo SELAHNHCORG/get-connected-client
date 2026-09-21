@@ -17,6 +17,8 @@ from get_connected_client.models.agencies import Agency
 from get_connected_client.models.common import Cause, Cluster, Tag, UserMini
 from get_connected_client.resources.agencies import Agencies
 
+from .conftest import NOT_ENDPOINTS
+
 
 runner = CliRunner()
 
@@ -180,12 +182,13 @@ def test_client_attaches_namespace(client):
 def test_agencies_covers_every_spec_operation():
     """Keep the class docstring's "17 operations" claim from going stale.
 
-    ``url`` is excluded: it builds paths, it is not an endpoint.
+    ``NOT_ENDPOINTS`` (``url`` and the patch helpers) are excluded: they
+    build paths or compose endpoints, they are not endpoints.
     """
     endpoints = {
         name
         for name, member in inspect.getmembers(Agencies, inspect.isfunction)
-        if not name.startswith("_") and name != "url"
+        if not name.startswith("_") and name not in NOT_ENDPOINTS
     }
     assert len(endpoints) == 17
 

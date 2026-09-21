@@ -36,7 +36,7 @@ from get_connected_client.models.users import (
 )
 from get_connected_client.resources.users import Users
 
-from .conftest import BASE
+from .conftest import BASE, NOT_ENDPOINTS
 
 runner = CliRunner()
 
@@ -362,12 +362,13 @@ def test_client_attaches_namespace(client):
 def test_users_covers_every_spec_operation():
     """Keep the class docstring's "32 operations" claim from going stale.
 
-    ``url`` is excluded: it builds paths, it is not an endpoint.
+    ``NOT_ENDPOINTS`` (``url`` and the patch helpers) are excluded: they
+    build paths or compose endpoints, they are not endpoints.
     """
     endpoints = {
         name
         for name, member in inspect.getmembers(Users, inspect.isfunction)
-        if not name.startswith("_") and name != "url"
+        if not name.startswith("_") and name not in NOT_ENDPOINTS
     }
     assert len(endpoints) == 32
 

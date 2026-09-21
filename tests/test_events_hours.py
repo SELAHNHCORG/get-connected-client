@@ -18,6 +18,8 @@ from get_connected_client.models.hours import Hour
 from get_connected_client.resources.events import Events
 from get_connected_client.resources.hours import Hours
 
+from .conftest import NOT_ENDPOINTS
+
 
 runner = CliRunner()
 
@@ -134,7 +136,7 @@ def test_events_covers_every_spec_operation():
     endpoints = {
         name
         for name, member in inspect.getmembers(Events, inspect.isfunction)
-        if not name.startswith("_") and name != "url"
+        if not name.startswith("_") and name not in NOT_ENDPOINTS
     }
     assert len(endpoints) == 5
 
@@ -222,7 +224,7 @@ def test_hours_covers_every_spec_operation():
     endpoints = {
         name
         for name, member in inspect.getmembers(Hours, inspect.isfunction)
-        if not name.startswith("_") and name != "url"
+        if not name.startswith("_") and name not in NOT_ENDPOINTS
     }
     assert len(endpoints) == 5
 

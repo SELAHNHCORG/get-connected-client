@@ -8,6 +8,12 @@ from packaging.version import parse as parse_version
 
 BASE = "https://api.test/api"
 
+#: Public methods on resource classes that are not API operations: ``url``
+#: builds paths, the other three compose existing endpoints (see
+#: ``resources/base.py``). The ``*_covers_every_spec_operation`` tests
+#: exclude them so their operation counts stay honest.
+NOT_ENDPOINTS = frozenset({"url", "to_request", "prepare_patch", "patch"})
+
 
 def pytest_addoption(parser):
     parser.addoption(

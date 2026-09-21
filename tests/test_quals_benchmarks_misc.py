@@ -32,6 +32,7 @@ from get_connected_client.resources.benchmarks import Benchmarks
 from get_connected_client.resources.misc import Clusters, Lookups
 from get_connected_client.resources.qualifications import Qualifications
 
+from .conftest import NOT_ENDPOINTS
 from .test_agencies import _COVERED_AGENCIES_PATHS
 from .test_events_hours import _COVERED_EVENTS_PATHS, _COVERED_HOURS_PATHS
 from .test_needs import _COVERED_NEEDS_PATHS
@@ -197,7 +198,7 @@ def test_qualifications_covers_every_spec_operation():
     endpoints = {
         name
         for name, member in inspect.getmembers(Qualifications, inspect.isfunction)
-        if not name.startswith("_") and name != "url"
+        if not name.startswith("_") and name not in NOT_ENDPOINTS
     }
     assert len(endpoints) == 6
 
@@ -282,7 +283,7 @@ def test_benchmarks_covers_every_spec_operation():
     endpoints = {
         name
         for name, member in inspect.getmembers(Benchmarks, inspect.isfunction)
-        if not name.startswith("_") and name != "url"
+        if not name.startswith("_") and name not in NOT_ENDPOINTS
     }
     assert len(endpoints) == 6
 
@@ -348,7 +349,7 @@ def test_clusters_covers_every_spec_operation():
     endpoints = {
         name
         for name, member in inspect.getmembers(Clusters, inspect.isfunction)
-        if not name.startswith("_") and name != "url"
+        if not name.startswith("_") and name not in NOT_ENDPOINTS
     }
     assert len(endpoints) == 3
 
@@ -418,7 +419,7 @@ def test_lookups_covers_every_spec_operation():
     endpoints = {
         name
         for name, member in inspect.getmembers(Lookups, inspect.isfunction)
-        if not name.startswith("_") and name != "url"
+        if not name.startswith("_") and name not in NOT_ENDPOINTS
     }
     assert len(endpoints) == 4
 
@@ -536,7 +537,7 @@ def test_auth_covers_every_spec_operation():
     endpoints = {
         name
         for name, member in inspect.getmembers(Auth, inspect.isfunction)
-        if not name.startswith("_") and name != "url"
+        if not name.startswith("_") and name not in NOT_ENDPOINTS
     }
     assert len(endpoints) == 2
 

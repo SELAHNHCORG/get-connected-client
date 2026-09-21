@@ -20,6 +20,8 @@ from get_connected_client.resources.groups import Groups
 from get_connected_client.resources.responses import Responses
 from get_connected_client.resources.teams import Teams
 
+from .conftest import NOT_ENDPOINTS
+
 
 runner = CliRunner()
 
@@ -224,7 +226,7 @@ def test_responses_covers_every_spec_operation():
     endpoints = {
         name
         for name, member in inspect.getmembers(Responses, inspect.isfunction)
-        if not name.startswith("_") and name != "url"
+        if not name.startswith("_") and name not in NOT_ENDPOINTS
     }
     assert len(endpoints) == 5
 
@@ -315,7 +317,7 @@ def test_teams_covers_every_spec_operation():
     endpoints = {
         name
         for name, member in inspect.getmembers(Teams, inspect.isfunction)
-        if not name.startswith("_") and name != "url"
+        if not name.startswith("_") and name not in NOT_ENDPOINTS
     }
     assert len(endpoints) == 6
 
@@ -393,7 +395,7 @@ def test_groups_covers_every_spec_operation():
     endpoints = {
         name
         for name, member in inspect.getmembers(Groups, inspect.isfunction)
-        if not name.startswith("_") and name != "url"
+        if not name.startswith("_") and name not in NOT_ENDPOINTS
     }
     assert len(endpoints) == 9
 
