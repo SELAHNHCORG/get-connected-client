@@ -258,7 +258,7 @@ def test_benchmarks_crud(client, api):
 def test_benchmark_to_request_stringifies_group_id(client):
     """benchmark_group_id is int on the model but `type: string` on the PUT."""
     body = Benchmarks(client).to_request(
-        Benchmark.model_validate({**BENCHMARK_ROW, "benchmark_group_id": "3"})
+        Benchmark.model_validate({**BENCHMARK_ROW, "benchmark_group_id": 3})
     )
     assert body["benchmark_group_id"] == "3"
 

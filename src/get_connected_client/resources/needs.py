@@ -34,17 +34,21 @@ class Needs(
     of 8 paths, 13 of 13 operations, full coverage, nothing excluded. They
     group as:
 
-    * **CRUD** on the collection and the row -- :meth:`list`, :meth:`get`,
-      :meth:`create`, :meth:`update`, :meth:`delete`, inherited from the
-      mixins.
+    * **CRUD** on the collection and the row --
+      :meth:`~get_connected_client.resources.base.ListMixin.list`,
+      :meth:`~get_connected_client.resources.base.GetMixin.get`,
+      :meth:`~get_connected_client.resources.base.CreateMixin.create`,
+      :meth:`~get_connected_client.resources.base.UpdateMixin.update`,
+      :meth:`~get_connected_client.resources.base.DeleteMixin.delete`,
+      inherited from the mixins.
     * **Read-only** sub-resources -- :meth:`responses` and :meth:`questions`.
     * **Shifts** -- :meth:`add_shift` and :meth:`remove_shift`.
     * **Membership** sub-resources, add/remove only (the API has no read
       endpoint for either) -- :meth:`add_interest`/:meth:`remove_interest`
       and :meth:`add_qualification`/:meth:`remove_qualification`.
 
-    :meth:`list` accepts the endpoint's own filters on top of the standard
-    paging ones::
+    :meth:`~get_connected_client.resources.base.ListMixin.list` accepts the
+    endpoint's own filters on top of the standard paging ones::
 
         client.needs.list(agency_id=9, need_status="active")
 
@@ -129,19 +133,21 @@ class Needs(
         objects become their ids. All ids are sent as strings.
 
         ``shifts`` is deliberately **left out**: the read shape
-        (``shiftObject``) does not match ``shiftRequestSchema``, and
-        resending shifts on every update risks duplicating rows that
+        (``shiftObject``) does not match ``shiftRequestSchema``, and resending
+        shifts on every update risks duplicating rows that
         :meth:`add_shift`/:meth:`remove_shift` already manage. Pass
-        ``shifts=[...]`` explicitly to :meth:`patch` if you mean to.
+        ``shifts=[...]`` explicitly to
+        :meth:`~get_connected_client.resources.base.UpdateMixin.patch` if you
+        mean to.
 
-        ``needRequestSchema`` also has write-only fields with no counterpart
-        on the read object -- ``virtual_need``, ``need_hours_description``,
+        ``needRequestSchema`` also has write-only fields with no counterpart on
+        the read object -- ``virtual_need``, ``need_hours_description``,
         ``event_id``, ``interests`` and ``attributes`` -- so a merged update
         always sends them absent; pass any of these explicitly to
-        :meth:`patch` if you rely on them. ``agency_id`` is required by the
-        PUT, but a fetched need with no ``agency`` object yields a body
-        without it, so the caller must supply ``agency_id=`` explicitly in
-        that case too.
+        :meth:`~get_connected_client.resources.base.UpdateMixin.patch` if you
+        rely on them. ``agency_id`` is required by the PUT, but a fetched need
+        with no ``agency`` object yields a body without it, so the caller must
+        supply ``agency_id=`` explicitly in that case too.
 
         :param obj: the fetched need.
         :return: the request body.

@@ -20,8 +20,12 @@ class Benchmarks(
     This namespace covers every ``/benchmarks`` endpoint in ``doc/api.yml``
     -- 3 of 3 paths, 6 of 6 operations, full coverage. They group as:
 
-    * **CRUD** -- :meth:`list`, :meth:`get`, :meth:`create`, :meth:`update`,
-      :meth:`delete`, inherited from the mixins.
+    * **CRUD** -- :meth:`~get_connected_client.resources.base.ListMixin.list`,
+      :meth:`~get_connected_client.resources.base.GetMixin.get`,
+      :meth:`~get_connected_client.resources.base.CreateMixin.create`,
+      :meth:`~get_connected_client.resources.base.UpdateMixin.update`,
+      :meth:`~get_connected_client.resources.base.DeleteMixin.delete`,
+      inherited from the mixins.
     * **Membership** -- :meth:`users`, the volunteers who have earned this
       benchmark. The spec answers with ``userMiniObject`` rows, not the
       full ``benchmarkMiniObject``-flavored user -- confirmed against

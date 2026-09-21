@@ -31,27 +31,34 @@ class Change:
 
 @dataclass
 class PatchPlan:
-    """What :meth:`UpdateMixin.prepare_patch` worked out, before any write.
+    """What a merged update will do, worked out before any write.
 
-    ``current`` is the fetched row translated by
-    :meth:`Resource.to_request`; ``body`` is ``current`` with the supplied
-    fields laid over it -- the exact JSON a following PUT sends; ``changes``
-    lists the supplied fields whose value differs from ``current``, in the
-    order they were supplied.
+    :meth:`~get_connected_client.resources.base.UpdateMixin.prepare_patch`
+    returns this. ``current`` is the fetched row translated by
+    :meth:`~get_connected_client.resources.base.Resource.to_request`; ``body``
+    is ``current`` with the supplied fields laid over it -- the exact JSON a
+    following PUT sends; ``changes`` lists the supplied fields whose value
+    differs from ``current``, in the order they were supplied.
 
-    ``missing_required`` names the fields this endpoint's request schema
-    marks required that ``body`` does not carry. It is advisory only:
-    :meth:`UpdateMixin.patch` still sends the body and lets the API answer.
+    ``missing_required`` names the fields this endpoint's request schema marks
+    required that ``body`` does not carry. A field the caller supplied as
+    ``None`` counts as present, so it is not flagged even though the API may
+    reject a null. It is advisory only:
+    :meth:`~get_connected_client.resources.base.UpdateMixin.patch` still sends
+    the body and lets the API answer.
 
     The plan is deliberately mutable: a caller may adjust ``body`` before
-    handing it to :meth:`UpdateMixin.update`.
+    handing it to
+    :meth:`~get_connected_client.resources.base.UpdateMixin.update`.
     """
 
     current: dict[str, Any]
     body: dict[str, Any]
     changes: list[Change]
-    #: Fields in :attr:`Resource.required_fields` that ``body`` lacks. A
-    #: non-empty list means the API will almost certainly answer 422.
+    #: Fields in
+    #: :attr:`~get_connected_client.resources.base.Resource.required_fields`
+    #: that ``body`` lacks. A non-empty list means the API will almost
+    #: certainly answer 422.
     missing_required: list[str] = field(default_factory=list)
 
 
@@ -152,10 +159,13 @@ def _wire(value: Any) -> Any:
 
     Every scalar property of every ``*RequestSchema`` in ``doc/api.yml`` is
     ``type: string`` -- there is no integer-typed request property in the
-    spec -- but a handful of read fields are typed ``int`` on the model
+    spec. Only ints are coerced, because ints are the only non-string scalar
+    the models produce: two read fields are typed ``int``
     (``Event.event_area_id``, ``Benchmark.benchmark_group_id``), so
     ``model_dump(mode="json")`` hands back a JSON int where the PUT wants a
-    string. Booleans are excluded so ``True`` never becomes ``"True"``.
+    string. Floats are deliberately left alone -- ``str(1.0)`` is ``"1.0"``,
+    a hazard of its own -- and booleans are excluded so ``True`` never
+    becomes ``"True"``.
 
     :param value: one value from the filtered dump.
     :return: *value*, stringified if it is an int.
@@ -191,8 +201,9 @@ class Resource(Generic[M]):
     model: type[M]
 
     #: Property names of this endpoint's PUT request schema (the
-    #: ``*RequestSchema`` in ``doc/api.yml``). :meth:`to_request` keeps only
-    #: these keys, so a fetched row can be sent back without the read-only
+    #: ``*RequestSchema`` in ``doc/api.yml``).
+    #: :meth:`~get_connected_client.resources.base.Resource.to_request` keeps
+    #: only these keys, so a fetched row can be sent back without the read-only
     #: fields -- ``id``, timestamps, nested objects -- the PUT would reject.
     #: ``tests/test_request_fields.py`` asserts each set matches the spec.
     request_fields: ClassVar[frozenset[str]] = frozenset()
@@ -228,17 +239,20 @@ class Resource(Generic[M]):
     def to_request(self, obj: M) -> dict[str, Any]:
         """Turn a fetched *obj* into a body the endpoint's PUT accepts.
 
-        Keeps every non-``None`` field named in :attr:`request_fields` and
-        drops the rest; ints become strings, since every scalar property of
-        every request schema is ``type: string``. Resources whose read
-        object nests what the request schema wants flat -- an ``agency``
-        object where the PUT takes ``agency_id`` -- override this, call it
-        first, then reshape.
+        Keeps every non-``None`` field named in
+        :attr:`~get_connected_client.resources.base.Resource.request_fields`
+        and drops the rest; ints become strings, since every scalar property of
+        every request schema is ``type: string``. Resources whose read object
+        nests what the request schema wants flat -- an ``agency`` object where
+        the PUT takes ``agency_id`` -- override this, call it first, then
+        reshape.
 
-        This is the read half of :meth:`UpdateMixin.prepare_patch`; it never
-        touches the network.
+        This is the read half of
+        :meth:`~get_connected_client.resources.base.UpdateMixin.prepare_patch`;
+        it never touches the network.
 
-        :param obj: a parsed row, as returned by :meth:`GetMixin.get`.
+        :param obj: a parsed row, as returned by
+            :meth:`~get_connected_client.resources.base.GetMixin.get`.
         :return: the subset of *obj* the PUT request schema accepts.
         """
         data = obj.model_dump(mode="json", exclude_none=True, by_alias=True)
@@ -406,18 +420,22 @@ class UpdateMixin(Resource[M]):
         """Fetch the row, translate it and lay *fields* over it -- no write.
 
         The current record is fetched, passed through
-        :meth:`Resource.to_request`, and *fields* are merged on top; the
-        supplied fields always win, including keys outside
-        :attr:`Resource.request_fields` (the caller may know something the
-        spec does not). The returned plan carries the body a PUT would send
-        and the list of fields that actually differ, so a caller can show
-        or log the diff before committing to :meth:`update`.
+        :meth:`~get_connected_client.resources.base.Resource.to_request`, and
+        *fields* are merged on top; the supplied fields always win, including
+        keys outside
+        :attr:`~get_connected_client.resources.base.Resource.request_fields`
+        (the caller may know something the spec does not). The returned plan
+        carries the body a PUT would send and the list of fields that actually
+        differ, so a caller can show or log the diff before committing to
+        :meth:`update`.
 
         :param id: the row to modify.
         :param fields: the attributes to change.
         :raises NotImplementedError: this resource declares no
-            :attr:`Resource.request_fields` and does not override
-            :meth:`Resource.to_request`, so there is no base to merge over.
+            :attr:`~get_connected_client.resources.base.Resource.request_fields`
+            and does not override
+            :meth:`~get_connected_client.resources.base.Resource.to_request`,
+            so there is no base to merge over.
         :raises NotFoundError: no such row.
         :return: the :class:`PatchPlan`.
         """

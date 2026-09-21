@@ -49,9 +49,13 @@ class Users(
     paths, 32 of 34 operations, one method apiece. Rather than enumerate the rest here
     (a list that rots the moment one is added), they group as:
 
-    * **CRUD** on the collection and the row -- :meth:`list`, :meth:`get`,
-      :meth:`create`, :meth:`update`, :meth:`delete`, inherited from the
-      mixins.
+    * **CRUD** on the collection and the row --
+      :meth:`~get_connected_client.resources.base.ListMixin.list`,
+      :meth:`~get_connected_client.resources.base.GetMixin.get`,
+      :meth:`~get_connected_client.resources.base.CreateMixin.create`,
+      :meth:`~get_connected_client.resources.base.UpdateMixin.update`,
+      :meth:`~get_connected_client.resources.base.DeleteMixin.delete`,
+      inherited from the mixins.
     * **Membership** sub-resources, each a read plus add/remove --
       :meth:`agencies`, :meth:`causes`, :meth:`interests` and :meth:`tags`,
       with :meth:`benchmarks` read-and-remove only.
@@ -63,8 +67,8 @@ class Users(
       :meth:`optouts`/:meth:`add_optout`/:meth:`remove_optout`.
     * **Actions** -- :meth:`send_welcome_email` and :meth:`oneclick`.
 
-    :meth:`list` accepts the endpoint's own filters on top of the standard
-    paging ones::
+    :meth:`~get_connected_client.resources.base.ListMixin.list` accepts the
+    endpoint's own filters on top of the standard paging ones::
 
         client.users.list(user_status="active", user_email_like="@example.com")
 

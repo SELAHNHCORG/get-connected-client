@@ -226,8 +226,15 @@ def test_prepare_patch_reports_missing_required_without_refusing(client, api):
 
 
 def test_prepare_patch_reports_no_missing_required_when_present(client, api):
+    """A required field the fetched row already carries is not flagged."""
     api.get("/rwidgets/5").respond(json={"data": {"id": 5, "name": "a"}})
     assert RequestWidgets(client).prepare_patch(5).missing_required == []
+
+
+def test_supplied_field_clears_missing_required(client, api):
+    """Computed against ``body``, not ``current``: a supplied field counts."""
+    api.get("/rwidgets/5").respond(json={"data": {"id": 5}})
+    assert RequestWidgets(client).prepare_patch(5, name="a").missing_required == []
 
 
 #: (resource, model, read attribute, the nested shape, the key it would derive)

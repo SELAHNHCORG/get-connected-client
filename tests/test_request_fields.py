@@ -74,7 +74,9 @@ def test_every_scalar_request_property_is_a_string(schemas, cls, schema):
     """``Resource.to_request`` stringifies ints on the strength of this.
 
     If this ever fails, the blanket int->str pass in ``_wire`` has to become
-    a per-field decision driven by the spec.
+    a per-field decision driven by the spec. Element types inside ``array``
+    and ``object`` properties are deliberately out of scope: ``_wire`` is a
+    top-level pass and does not recurse into them.
     """
     offenders = {
         name: prop.get("type")

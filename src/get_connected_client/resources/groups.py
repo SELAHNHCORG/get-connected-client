@@ -29,25 +29,30 @@ class Groups(
     of 4 paths, 9 of 9 operations, full coverage, nothing excluded. They
     group as:
 
-    * **CRUD** on the collection and the row -- :meth:`list`, :meth:`get`,
-      :meth:`create`, :meth:`update`, :meth:`delete`, inherited from the
-      mixins.
+    * **CRUD** on the collection and the row --
+      :meth:`~get_connected_client.resources.base.ListMixin.list`,
+      :meth:`~get_connected_client.resources.base.GetMixin.get`,
+      :meth:`~get_connected_client.resources.base.CreateMixin.create`,
+      :meth:`~get_connected_client.resources.base.UpdateMixin.update`,
+      :meth:`~get_connected_client.resources.base.DeleteMixin.delete`,
+      inherited from the mixins.
     * **Membership**, add/remove only (the API has no dedicated read
       endpoint for either -- both live on the ``needs``/``users`` arrays of
       the group object itself) -- :meth:`add_need`/:meth:`remove_need` and
       :meth:`add_user`/:meth:`remove_user`.
 
-    :meth:`list` accepts ``show_inactive`` in addition to the standard paging
-    filters -- see :meth:`~get_connected_client.resources.base.ListMixin.list`.
+    :meth:`~get_connected_client.resources.base.ListMixin.list` accepts
+    ``show_inactive`` in addition to the standard paging filters.
 
     .. note::
        ``ug_type`` (``gc`` or ``slm``) is required by every
        ``PUT /groups/{id}`` but never returned by ``GET``, so
-       :meth:`to_request` cannot carry it and a merged update must supply it
-       explicitly -- ``patch(9, ug_type="gc", ...)`` -- or the API answers
-       422. Everything else on the read object that the request schema does
-       not take (``users``, ``needs``, ``agencies``, the question lists) is
-       dropped by the base filter.
+       :meth:`~get_connected_client.resources.base.Resource.to_request` cannot
+       carry it and a merged update must supply it explicitly --
+       ``patch(9, ug_type="gc", ...)`` -- or the API answers 422. Everything
+       else on the read object that the request schema does not take
+       (``users``, ``needs``, ``agencies``, the question lists) is dropped by
+       the base filter.
     """
 
     path = "/groups"

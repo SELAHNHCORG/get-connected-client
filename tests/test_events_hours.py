@@ -116,9 +116,7 @@ def test_event_to_request_without_tags(client):
 def test_event_to_request_stringifies_event_area_id(client):
     """event_area_id is int on the model but `type: string` on the PUT."""
     body = Events(client).to_request(
-        Event.model_validate(
-            {**EVENT_ROW, "event_area": "agency", "event_area_id": "9"}
-        )
+        Event.model_validate({**EVENT_ROW, "event_area": "agency", "event_area_id": 9})
     )
     assert body["event_area_id"] == "9"
 

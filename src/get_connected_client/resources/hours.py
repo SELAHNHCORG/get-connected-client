@@ -27,11 +27,15 @@ class Hours(
 ):
     """Volunteer hour records.
 
-    This namespace covers every ``/hours`` endpoint in ``doc/api.yml`` -- 2
-    of 2 paths, 5 of 5 operations, full coverage. There are no sub-resources:
-    just CRUD on the collection and the row -- :meth:`list`, :meth:`get`,
-    :meth:`create`, :meth:`update`, :meth:`delete`, inherited from the
-    mixins.
+    This namespace covers every ``/hours`` endpoint in ``doc/api.yml`` -- 2 of
+    2 paths, 5 of 5 operations, full coverage. There are no sub-resources: just
+    CRUD on the collection and the row --
+    :meth:`~get_connected_client.resources.base.ListMixin.list`,
+    :meth:`~get_connected_client.resources.base.GetMixin.get`,
+    :meth:`~get_connected_client.resources.base.CreateMixin.create`,
+    :meth:`~get_connected_client.resources.base.UpdateMixin.update`,
+    :meth:`~get_connected_client.resources.base.DeleteMixin.delete`, inherited
+    from the mixins.
 
     Unlike ``/events``, ``/hours`` list does accept ``show_inactive``::
 
@@ -44,7 +48,7 @@ class Hours(
        :meth:`to_request` therefore cannot carry it, and a merged update on a
        need-linked hour (``hour_type == "need"``) sends it absent, which may
        detach the hour from its response. Look the id up with
-       ``client.needs.responses(need.id)`` and match on the volunteer
+       ``client.needs.responses(hour.need.id)`` and match on the volunteer
        (``response.user.id == hour.user.id``), then pass ``response_id=`` to
        :meth:`~get_connected_client.resources.base.UpdateMixin.patch` to
        preserve the link.

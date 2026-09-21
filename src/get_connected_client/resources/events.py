@@ -26,17 +26,22 @@ class Events(
 ):
     """Agency events.
 
-    This namespace covers every ``/events`` endpoint in ``doc/api.yml`` -- 2
-    of 2 paths, 5 of 5 operations, full coverage. There are no sub-resources:
-    just CRUD on the collection and the row -- :meth:`list`, :meth:`get`,
-    :meth:`create`, :meth:`update`, :meth:`delete`, inherited from the
-    mixins.
+    This namespace covers every ``/events`` endpoint in ``doc/api.yml`` -- 2 of
+    2 paths, 5 of 5 operations, full coverage. There are no sub-resources: just
+    CRUD on the collection and the row --
+    :meth:`~get_connected_client.resources.base.ListMixin.list`,
+    :meth:`~get_connected_client.resources.base.GetMixin.get`,
+    :meth:`~get_connected_client.resources.base.CreateMixin.create`,
+    :meth:`~get_connected_client.resources.base.UpdateMixin.update`,
+    :meth:`~get_connected_client.resources.base.DeleteMixin.delete`, inherited
+    from the mixins.
 
     .. note::
        Unlike most other list endpoints, ``/events`` does *not* accept
        ``show_inactive`` -- the spec's ``listEvents`` operation only takes
        ``per_page``, ``since_id``, ``since_created`` and ``since_updated``.
-       :meth:`list` still inherits the parameter from
+       :meth:`~get_connected_client.resources.base.ListMixin.list` still
+       inherits the parameter from
        :class:`~get_connected_client.resources.base.ListMixin`, but passing it
        has no effect on the server; the CLI does not expose it for this
        resource.
@@ -87,14 +92,16 @@ class Events(
         that submitted tags replace the event's existing tags, which is
         exactly why they must be carried over here.
 
-        Four request fields have no counterpart on the read object, so a
-        merged update always sends them absent: ``event_capacity``,
-        ``event_contact``, ``event_country`` and ``event_phone``. Pass them
-        explicitly to :meth:`patch` to set or preserve them.
+        Four request fields have no counterpart on the read object, so a merged
+        update always sends them absent: ``event_capacity``, ``event_contact``,
+        ``event_country`` and ``event_phone``. Pass them explicitly to
+        :meth:`~get_connected_client.resources.base.UpdateMixin.patch` to set
+        or preserve them.
 
-        ``event_area`` and ``event_area_id`` are required by the PUT and
-        come from the read object; a fetched event missing either yields a
-        body without it, so supply it explicitly to :meth:`patch` in that
+        ``event_area`` and ``event_area_id`` are required by the PUT and come
+        from the read object; a fetched event missing either yields a body
+        without it, so supply it explicitly to
+        :meth:`~get_connected_client.resources.base.UpdateMixin.patch` in that
         case.
 
         :param obj: the fetched event.

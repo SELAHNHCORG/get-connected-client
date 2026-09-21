@@ -26,14 +26,18 @@ class Responses(
 ):
     """Volunteer responses (sign-ups) to needs.
 
-    This namespace covers every ``/responses`` endpoint in ``doc/api.yml`` --
-    2 of 2 paths, 5 of 5 operations, full coverage. There are no
-    sub-resources: just CRUD on the collection and the row -- :meth:`list`,
-    :meth:`get`, :meth:`create`, :meth:`update`, :meth:`delete`, inherited
+    This namespace covers every ``/responses`` endpoint in ``doc/api.yml`` -- 2
+    of 2 paths, 5 of 5 operations, full coverage. There are no sub-resources:
+    just CRUD on the collection and the row --
+    :meth:`~get_connected_client.resources.base.ListMixin.list`,
+    :meth:`~get_connected_client.resources.base.GetMixin.get`,
+    :meth:`~get_connected_client.resources.base.CreateMixin.create`,
+    :meth:`~get_connected_client.resources.base.UpdateMixin.update`,
+    :meth:`~get_connected_client.resources.base.DeleteMixin.delete`, inherited
     from the mixins.
 
-    :meth:`list` accepts ``show_inactive`` in addition to the standard paging
-    filters -- see :meth:`~get_connected_client.resources.base.ListMixin.list`::
+    :meth:`~get_connected_client.resources.base.ListMixin.list` accepts
+    ``show_inactive`` in addition to the standard paging filters::
 
         client.responses.list(show_inactive=True)
 
@@ -77,12 +81,13 @@ class Responses(
         The three required write fields all live inside nested read objects:
         ``need.id`` becomes ``need_id`` and ``user.id`` becomes ``user_id``;
         ``shift.id`` becomes ``schedule_ids``, a one-element list: the read
-        object reports a single ``shift`` while the request field is an
-        array, so a merged update can only carry the one shift ``GET``
-        returns. If a response covers more than one shift, pass
-        ``schedule_ids=[...]`` explicitly to :meth:`patch` rather than
-        relying on the merge. ``team.id`` becomes ``team_id`` when present.
-        Ids are sent as strings.
+        object reports a single ``shift`` while the request field is an array,
+        so a merged update can only carry the one shift ``GET`` returns. If a
+        response covers more than one shift, pass ``schedule_ids=[...]``
+        explicitly to
+        :meth:`~get_connected_client.resources.base.UpdateMixin.patch` rather
+        than relying on the merge. ``team.id`` becomes ``team_id`` when
+        present. Ids are sent as strings.
 
         ``response_date_added`` is carried deliberately: the spec says the
         server uses the current date when it is not provided, so omitting it
@@ -93,9 +98,10 @@ class Responses(
         absent. ``schedule_ids`` cannot -- see the class note.
 
         .. warning::
-           Passing ``schedule_ids=[]`` to :meth:`patch` for a shiftless
-           response is untested against the live API; it may or may not be
-           accepted in place of an omitted key.
+           Passing ``schedule_ids=[]`` to
+           :meth:`~get_connected_client.resources.base.UpdateMixin.patch` for a
+           shiftless response is untested against the live API; it may or may
+           not be accepted in place of an omitted key.
 
         ``questions`` has no counterpart on the read object -- see the class
         note.
