@@ -75,6 +75,38 @@ class Users(
 
     path = "/users"
     model = User
+    request_fields = frozenset(
+        {
+            "user_address",
+            "user_address2",
+            "user_age_range",
+            "user_birthday",
+            "user_city",
+            "user_comments",
+            "user_company",
+            "user_company_title",
+            "user_country",
+            "user_county",
+            "user_department",
+            "user_disaster",
+            "user_email",
+            "user_ethnicity",
+            "user_fname",
+            "user_gender",
+            "user_grad_semester",
+            "user_grad_year",
+            "user_lname",
+            "user_mname",
+            "user_notes",
+            "user_phone",
+            "user_phone_cell",
+            "user_postal",
+            "user_reference_id",
+            "user_state",
+            "user_status",
+            "user_username",
+        }
+    )
 
     # -- agencies ---------------------------------------------------------
 

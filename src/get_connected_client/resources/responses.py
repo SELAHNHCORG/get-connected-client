@@ -37,3 +37,14 @@ class Responses(
 
     path = "/responses"
     model = Response
+    request_fields = frozenset(
+        {
+            "need_id",
+            "questions",
+            "response_date_added",
+            "response_note",
+            "schedule_ids",
+            "team_id",
+            "user_id",
+        }
+    )

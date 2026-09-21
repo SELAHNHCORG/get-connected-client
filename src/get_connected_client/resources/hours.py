@@ -36,3 +36,18 @@ class Hours(
 
     path = "/hours"
     model = Hour
+    request_fields = frozenset(
+        {
+            "group_ids",
+            "hour_contact_details",
+            "hour_contact_name",
+            "hour_hours",
+            "hour_location",
+            "hour_miles",
+            "hour_relationship",
+            "hour_start",
+            "hour_status",
+            "response_id",
+            "user_id",
+        }
+    )

@@ -30,6 +30,19 @@ class Benchmarks(
 
     path = "/benchmarks"
     model = Benchmark
+    request_fields = frozenset(
+        {
+            "benchmark_allow_indv_hours",
+            "benchmark_approval_required",
+            "benchmark_date_end",
+            "benchmark_date_start",
+            "benchmark_group_id",
+            "benchmark_hours",
+            "benchmark_icon",
+            "benchmark_status",
+            "benchmark_title",
+        }
+    )
 
     def users(self, id: int) -> list[UserMini]:
         """The users who have earned this benchmark."""

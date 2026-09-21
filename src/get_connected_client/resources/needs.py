@@ -62,6 +62,45 @@ class Needs(
 
     path = "/needs"
     model = Need
+    request_fields = frozenset(
+        {
+            "accessible",
+            "agency_id",
+            "attributes",
+            "event_id",
+            "family_friendly",
+            "groups",
+            "initiative_id",
+            "interests",
+            "need_address",
+            "need_address2",
+            "need_allow_groups",
+            "need_body",
+            "need_city",
+            "need_comments",
+            "need_contact",
+            "need_date",
+            "need_date_close",
+            "need_date_type",
+            "need_hours",
+            "need_hours_description",
+            "need_impact_area",
+            "need_latitude",
+            "need_longitude",
+            "need_postal",
+            "need_public",
+            "need_response_notify",
+            "need_state",
+            "need_status",
+            "need_title",
+            "need_type",
+            "need_volunteers_needed",
+            "outdoors",
+            "shifts",
+            "tags",
+            "virtual_need",
+        }
+    )
 
     # -- responses ----------------------------------------------------
 

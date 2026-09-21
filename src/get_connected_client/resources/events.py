@@ -41,3 +41,28 @@ class Events(
 
     path = "/events"
     model = Event
+    request_fields = frozenset(
+        {
+            "event_address",
+            "event_address2",
+            "event_all_day",
+            "event_area",
+            "event_area_id",
+            "event_capacity",
+            "event_city",
+            "event_comments",
+            "event_contact",
+            "event_country",
+            "event_date_end",
+            "event_date_start",
+            "event_description",
+            "event_email",
+            "event_location",
+            "event_phone",
+            "event_postal",
+            "event_rsvp",
+            "event_state",
+            "event_tags",
+            "event_title",
+        }
+    )

@@ -277,6 +277,7 @@ class UpdateMixin(Resource[M]):
     """
 
     def _put(self, id: int, body: dict[str, Any]) -> M | dict[str, Any] | None:
+        """PUT *body* to the row with this *id* and parse the reply."""
         payload = self._client.request("PUT", self._url(id), json=body)
         data = payload.get("data") if isinstance(payload, dict) else None
         if isinstance(data, dict):
@@ -345,7 +346,10 @@ class UpdateMixin(Resource[M]):
         :param fields: the attributes to change.
         :raises ReadOnlyError: the client is in read-only mode.
         :raises NotFoundError: no such row.
-        :return: whatever :meth:`update` returns.
+        :raises NotImplementedError: the resource declares no
+            request_fields (see :meth:`prepare_patch`).
+        :return: the parsed model when the API returns a ``data`` object;
+            otherwise the raw response payload.
         """
         return self._put(id, self.prepare_patch(id, **fields).body)
 

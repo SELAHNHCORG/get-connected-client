@@ -43,6 +43,26 @@ class Groups(
 
     path = "/groups"
     model = Group
+    request_fields = frozenset(
+        {
+            "ug_allow_member_remove",
+            "ug_approval",
+            "ug_block_id",
+            "ug_color",
+            "ug_description",
+            "ug_description_private",
+            "ug_domains",
+            "ug_goal",
+            "ug_icon",
+            "ug_limit",
+            "ug_status",
+            "ug_submitted_hours",
+            "ug_suppress_resume",
+            "ug_text_color",
+            "ug_title",
+            "ug_type",
+        }
+    )
 
     # -- needs ----------------------------------------------------------
 

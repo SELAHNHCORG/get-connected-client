@@ -43,6 +43,37 @@ class Agencies(
 
     path = "/agencies"
     model = Agency
+    request_fields = frozenset(
+        {
+            "agency_address",
+            "agency_address2",
+            "agency_city",
+            "agency_comments",
+            "agency_contact",
+            "agency_contact_title",
+            "agency_contacts",
+            "agency_ein",
+            "agency_email",
+            "agency_facebook_link",
+            "agency_fax",
+            "agency_instagram_link",
+            "agency_link",
+            "agency_linkedin_link",
+            "agency_mission",
+            "agency_name",
+            "agency_news",
+            "agency_partner",
+            "agency_phone",
+            "agency_phone_extension",
+            "agency_postal",
+            "agency_state",
+            "agency_status",
+            "agency_twitter_link",
+            "agency_url",
+            "agency_video",
+            "agency_youtube_link",
+        }
+    )
 
     # -- causes -------------------------------------------------------
 
