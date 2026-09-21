@@ -649,6 +649,7 @@ def test_cli_qualifications_create_confirmed(api, cli_env):
 
 
 def test_cli_qualifications_update_merges_data(api, cli_env):
+    api.get("/qualifications/11").respond(json={"data": QUALIFICATION_ROW})
     route = api.put("/qualifications/11").respond(json={"data": QUALIFICATION_ROW})
     result = runner.invoke(
         app,
@@ -663,7 +664,9 @@ def test_cli_qualifications_update_merges_data(api, cli_env):
     )
     assert result.exit_code == 0, result.output
     assert json.loads(route.calls.last.request.content) == {
-        "qualification_status": "inactive"
+        "qualification_title": "Background Check",
+        "qualification_status": "inactive",
+        "qualification_type": "select",
     }
 
 
@@ -734,6 +737,7 @@ def test_cli_benchmarks_create_confirmed(api, cli_env):
 
 
 def test_cli_benchmarks_update_merges_data(api, cli_env):
+    api.get("/benchmarks/5").respond(json={"data": BENCHMARK_ROW})
     route = api.put("/benchmarks/5").respond(json={"data": BENCHMARK_ROW})
     result = runner.invoke(
         app,
@@ -748,7 +752,9 @@ def test_cli_benchmarks_update_merges_data(api, cli_env):
     )
     assert result.exit_code == 0, result.output
     assert json.loads(route.calls.last.request.content) == {
-        "benchmark_status": "inactive"
+        "benchmark_status": "inactive",
+        "benchmark_title": "10 Hours",
+        "benchmark_hours": "10",
     }
 
 

@@ -1,7 +1,7 @@
 """``galaxy groups`` -- the /groups endpoints on the command line.
 
 Every command that changes anything on the server goes through
-:func:`~get_connected_client.cli._confirm.confirm_write` first.
+:mod:`~get_connected_client.cli._confirm` first.
 
 The paths shown in those prompts are built with the resource's own
 :meth:`~get_connected_client.resources.base.Resource.url`, never hand-typed, so
@@ -18,6 +18,7 @@ from ..client import MAX_PER_PAGE
 from ._confirm import confirm_write
 from ._output import output, output_one, output_result
 from ._state import _merge_fields, get_state, handle_errors
+from ._update import REPLACE, run_update
 
 groups_app = typer.Typer(help="Manage groups.", no_args_is_help=True)
 
@@ -112,14 +113,24 @@ def update_group(
         None, "--status", help="active, pending or inactive."
     ),
     data: str | None = typer.Option(
-        None, "--data", help="JSON object of any further ug_* fields, e.g. ug_type."
+        None,
+        "--data",
+        help=(
+            "JSON object of any further ug_* fields. ug_type is required by "
+            "the API and never returned, so a merged update must include it."
+        ),
     ),
+    replace: bool = REPLACE,
 ) -> None:
-    """Update a group, sending only the fields you name."""
+    """Update a group, merging the fields you name over the current record."""
     state = get_state(ctx)
-    fields = _group_fields(data, title, status)
-    confirm_write(state, f"PUT {state.client.groups.url(id)}", fields)
-    output_result(state, state.client.groups.update(id, **fields))
+    run_update(
+        state,
+        state.client.groups,
+        id,
+        _group_fields(data, title, status),
+        replace=replace,
+    )
 
 
 @groups_app.command("delete")

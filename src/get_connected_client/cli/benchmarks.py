@@ -1,7 +1,7 @@
 """``galaxy benchmarks`` -- the /benchmarks endpoints on the command line.
 
 Every command that changes anything on the server goes through
-:func:`~get_connected_client.cli._confirm.confirm_write` first.
+:mod:`~get_connected_client.cli._confirm` first.
 
 The paths shown in those prompts are built with the resource's own
 :meth:`~get_connected_client.resources.base.Resource.url`, never hand-typed, so
@@ -18,6 +18,7 @@ from ..client import MAX_PER_PAGE
 from ._confirm import confirm_write
 from ._output import output, output_one, output_result
 from ._state import _merge_fields, get_state, handle_errors
+from ._update import REPLACE, run_update
 
 benchmarks_app = typer.Typer(help="Manage benchmarks.", no_args_is_help=True)
 
@@ -117,12 +118,17 @@ def update_benchmark(
     data: str | None = typer.Option(
         None, "--data", help="JSON object of any further fields."
     ),
+    replace: bool = REPLACE,
 ) -> None:
-    """Update a benchmark, sending only the fields you name."""
+    """Update a benchmark, merging the fields you name over the current record."""
     state = get_state(ctx)
-    fields = _benchmark_fields(data, title, hours)
-    confirm_write(state, f"PUT {state.client.benchmarks.url(id)}", fields)
-    output_result(state, state.client.benchmarks.update(id, **fields))
+    run_update(
+        state,
+        state.client.benchmarks,
+        id,
+        _benchmark_fields(data, title, hours),
+        replace=replace,
+    )
 
 
 @benchmarks_app.command("delete")

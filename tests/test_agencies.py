@@ -326,6 +326,7 @@ def test_cli_create_confirmed(api, cli_env):
 
 
 def test_cli_update_merges_data(api, cli_env):
+    api.get("/agencies/9").respond(json={"data": AGENCY_ROW})
     route = api.put("/agencies/9").respond(json={"data": AGENCY_ROW})
     result = runner.invoke(
         app,
@@ -344,6 +345,8 @@ def test_cli_update_merges_data(api, cli_env):
     assert json.loads(route.calls.last.request.content) == {
         "agency_name": "Helping Hands",
         "agency_city": "X",
+        "agency_state": "IL",
+        "agency_status": "active",
     }
 
 

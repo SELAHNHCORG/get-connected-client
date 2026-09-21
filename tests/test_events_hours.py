@@ -409,6 +409,7 @@ def test_cli_events_create_confirmed(api, cli_env):
 
 
 def test_cli_events_update_merges_data(api, cli_env):
+    api.get("/events/42").respond(json={"data": EVENT_ROW})
     route = api.put("/events/42").respond(json={"data": EVENT_ROW})
     result = runner.invoke(
         app,
@@ -426,6 +427,7 @@ def test_cli_events_update_merges_data(api, cli_env):
     assert result.exit_code == 0, result.output
     assert json.loads(route.calls.last.request.content) == {
         "event_title": "Volunteer Fair",
+        "event_date_start": "2024-03-01 08:00:00",
         "event_location": "Town Hall",
     }
 
@@ -534,6 +536,7 @@ def test_cli_hours_create_confirmed(api, cli_env):
 
 
 def test_cli_hours_update_merges_data(api, cli_env):
+    api.get("/hours/7").respond(json={"data": HOUR_ROW})
     route = api.put("/hours/7").respond(json={"data": HOUR_ROW})
     result = runner.invoke(
         app,
@@ -550,9 +553,13 @@ def test_cli_hours_update_merges_data(api, cli_env):
     )
     assert result.exit_code == 0, result.output
     assert json.loads(route.calls.last.request.content) == {
+        "hour_hours": "3",
+        "hour_start": "2024-03-01 08:00:00",
         "hour_status": "denied",
         "hour_location": "Park",
     }
+    # The merge supplied every required field; nothing to warn about.
+    assert "required" not in result.stderr
 
 
 def test_cli_hours_delete_declined_makes_no_request(api, cli_env):

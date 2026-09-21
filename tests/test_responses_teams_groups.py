@@ -564,6 +564,16 @@ def test_cli_responses_create_confirmed(api, cli_env):
 
 
 def test_cli_responses_update_merges_data(api, cli_env):
+    api.get("/responses/7").respond(
+        json={
+            "data": {
+                **RESPONSE_ROW,
+                "need": {"id": "42", "need_title": "Park Cleanup"},
+                "user": {"id": "4", "user_fname": "Mary"},
+                "shift": {"id": "99"},
+            }
+        }
+    )
     route = api.put("/responses/7").respond(json={"data": RESPONSE_ROW})
     result = runner.invoke(
         app,
@@ -580,7 +590,11 @@ def test_cli_responses_update_merges_data(api, cli_env):
     )
     assert result.exit_code == 0, result.output
     assert json.loads(route.calls.last.request.content) == {
-        "response_note": "Bring gloves and hat"
+        "response_date_added": "2024-03-01 12:00:00",
+        "response_note": "Bring gloves and hat",
+        "need_id": "42",
+        "user_id": "4",
+        "schedule_ids": ["99"],
     }
 
 
@@ -749,6 +763,7 @@ def test_cli_groups_create_confirmed(api, cli_env):
 
 
 def test_cli_groups_update_merges_data(api, cli_env):
+    api.get("/groups/9").respond(json={"data": GROUP_ROW})
     route = api.put("/groups/9").respond(json={"data": GROUP_ROW})
     result = runner.invoke(
         app,
@@ -765,9 +780,13 @@ def test_cli_groups_update_merges_data(api, cli_env):
     )
     assert result.exit_code == 0, result.output
     assert json.loads(route.calls.last.request.content) == {
+        "ug_title": "Rotary Club",
         "ug_status": "inactive",
         "ug_description": "Local service club",
     }
+    # ug_type is required by the PUT and never returned by GET, so the merge
+    # cannot derive it: the operator has to hear about it.
+    assert "ug_type" in result.stderr
 
 
 def test_cli_groups_delete_declined_makes_no_request(api, cli_env):
