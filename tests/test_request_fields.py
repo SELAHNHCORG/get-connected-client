@@ -8,11 +8,13 @@ every merged update.
 
 import importlib
 import inspect
+import pkgutil
 from pathlib import Path
 
 import pytest
 import yaml
 
+from get_connected_client import resources
 from get_connected_client.resources import (
     agencies,
     benchmarks,
@@ -40,22 +42,6 @@ PAIRS = [
     (benchmarks.Benchmarks, "benchmarkRequestSchema"),
 ]
 
-#: Every module under ``get_connected_client.resources`` that defines namespaces.
-RESOURCE_MODULES = (
-    "agencies",
-    "auth",
-    "benchmarks",
-    "events",
-    "groups",
-    "hours",
-    "misc",
-    "needs",
-    "qualifications",
-    "responses",
-    "teams",
-    "users",
-)
-
 
 @pytest.fixture(scope="module")
 def schemas():
@@ -77,8 +63,8 @@ def test_every_updatable_resource_is_covered():
     """A new UpdateMixin subclass must be added to PAIRS (and get an allowlist)."""
     covered = {cls for cls, _ in PAIRS}
     found = set()
-    for name in RESOURCE_MODULES:
-        module = importlib.import_module(f"get_connected_client.resources.{name}")
+    for info in pkgutil.iter_modules(resources.__path__):
+        module = importlib.import_module(f"{resources.__name__}.{info.name}")
         for _, obj in inspect.getmembers(module, inspect.isclass):
             if (
                 issubclass(obj, UpdateMixin)
@@ -86,4 +72,4 @@ def test_every_updatable_resource_is_covered():
                 and obj.__module__ == module.__name__
             ):
                 found.add(obj)
-    assert found == covered, f"uncovered: {found - covered}"
+    assert found == covered, f"uncovered: {found - covered} stale: {covered - found}"
