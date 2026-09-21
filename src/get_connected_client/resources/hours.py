@@ -44,8 +44,10 @@ class Hours(
        :meth:`to_request` therefore cannot carry it, and a merged update on a
        need-linked hour (``hour_type == "need"``) sends it absent, which may
        detach the hour from its response. Look the id up with
-       ``client.needs.responses(need_id)`` and pass ``response_id=`` to
-       :meth:`patch` to preserve the link.
+       ``client.needs.responses(need.id)`` and match on the volunteer
+       (``response.user.id == hour.user.id``), then pass ``response_id=`` to
+       :meth:`~get_connected_client.resources.base.UpdateMixin.patch` to
+       preserve the link.
     """
 
     path = "/hours"

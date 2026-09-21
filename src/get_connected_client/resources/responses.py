@@ -36,6 +36,17 @@ class Responses(
     filters -- see :meth:`~get_connected_client.resources.base.ListMixin.list`::
 
         client.responses.list(show_inactive=True)
+
+    .. note::
+       Two ``PUT`` fields cannot be recovered from a fetched response. A
+       response to a need with no shifts has ``shift`` null, so a merged
+       update yields a body without the required ``schedule_ids`` and the
+       API answers 422 -- there is no id to supply. And the read object's
+       ``answers`` are a different shape from the request schema's
+       ``questions``, so a merged update cannot preserve a response's
+       answers to custom questions; pass ``questions=`` to
+       :meth:`~get_connected_client.resources.base.UpdateMixin.patch`
+       explicitly if the response has any.
     """
 
     path = "/responses"
@@ -73,30 +84,31 @@ class Responses(
         relying on the merge. ``team.id`` becomes ``team_id`` when present.
         Ids are sent as strings.
 
+        ``response_date_added`` is carried deliberately: the spec says the
+        server uses the current date when it is not provided, so omitting it
+        from a merged update silently resets the sign-up date to now.
+
         ``need_id`` and ``user_id`` can be recovered by fetching the missing
         need or user and passing the id explicitly if the nested object is
-        absent. ``schedule_ids`` cannot: for a response to a need with no
-        shifts, ``shift`` is null on the read object and there is no id to
-        supply, so a merged update yields a body without the required
-        ``schedule_ids`` and the API answers 422.
+        absent. ``schedule_ids`` cannot -- see the class note.
 
         .. warning::
            Passing ``schedule_ids=[]`` to :meth:`patch` for a shiftless
            response is untested against the live API; it may or may not be
            accepted in place of an omitted key.
 
-        ``questions`` has no counterpart on the read object -- its ``answers``
-        list is a different shape and is not carried -- so a merged update
-        always sends it absent and cannot preserve a response's answers to
-        custom questions; pass ``questions=`` explicitly to :meth:`patch` if
-        the response has any.
+        ``questions`` has no counterpart on the read object -- see the class
+        note.
 
-        Dropped as read-only, with no request-schema counterpart at all:
-        ``response_status``, ``response_phone``, ``response_address``,
-        ``response_comments``, ``response_source``, ``response_date_updated``,
-        ``answers``, ``agency``, ``initiative``, plus ids. ``response_phone``
-        and ``response_address`` are simply absent from the request schema,
-        so the API offers no way to update them.
+        Dropped as read-only: ``response_status``, ``response_comments``,
+        ``response_source``, ``response_date_updated``, ``answers``,
+        ``agency``, ``initiative``, plus ids.
+
+        Dropped as unsupported: ``response_phone`` and ``response_address``
+        are returned by ``GET`` but appear nowhere in
+        ``responseRequestSchema``, so the API offers no way to update them
+        at all -- not through :meth:`to_request`, and not by passing them to
+        :meth:`~get_connected_client.resources.base.UpdateMixin.patch`.
 
         :param obj: the fetched response.
         :return: the request body.
