@@ -1,9 +1,13 @@
+import json
+
 from get_connected_client.models.common import Tag
 from get_connected_client.resources.base import (
+    Change,
     CreateMixin,
     DeleteMixin,
     GetMixin,
     ListMixin,
+    PatchPlan,
     Resource,
     UpdateMixin,
 )
@@ -76,3 +80,69 @@ def test_sublist_parses_rows(client, api):
 def test_sublist_404_empty(client, api):
     api.get("/widgets/1/things").respond(status_code=404)
     assert Widgets(client)._get_list("/widgets/1/things", Tag) == []
+
+
+class RequestWidgets(Widgets):
+    """Widgets with a request allowlist: `name` is writable, `id` is not."""
+
+    path = "/rwidgets"
+    request_fields = frozenset({"name"})
+
+
+def test_to_request_default_keeps_nothing(client):
+    """With no request_fields declared, nothing is writable."""
+    assert Widgets(client).to_request(Tag(id=1, name="a")) == {}
+
+
+def test_to_request_filters_to_request_fields(client):
+    assert RequestWidgets(client).to_request(Tag(id=1, name="a")) == {"name": "a"}
+
+
+def test_to_request_drops_none(client):
+    assert RequestWidgets(client).to_request(Tag(id=1, name=None)) == {}
+
+
+def test_prepare_patch_merges_and_reports_changes(client, api):
+    api.get("/rwidgets/5").respond(json={"data": {"id": 5, "name": "old"}})
+    plan = RequestWidgets(client).prepare_patch(5, name="new", colour="red")
+    assert plan.current == {"name": "old"}
+    assert plan.body == {"name": "new", "colour": "red"}
+    assert plan.changes == [
+        Change(field="name", old="old", new="new"),
+        Change(field="colour", old=None, new="red"),
+    ]
+
+
+def test_prepare_patch_unchanged_value_is_not_a_change(client, api):
+    api.get("/rwidgets/5").respond(json={"data": {"id": 5, "name": "same"}})
+    plan = RequestWidgets(client).prepare_patch(5, name="same")
+    assert plan.changes == []
+    assert plan.body == {"name": "same"}
+
+
+def test_prepare_patch_int_and_numeric_string_are_same(client, api):
+    """Ids come back as strings; a caller's int must not read as a change."""
+    api.get("/rwidgets/5").respond(json={"data": {"id": 5, "name": "42"}})
+    plan = RequestWidgets(client).prepare_patch(5, name=42)
+    assert plan.changes == []
+
+
+def test_prepare_patch_makes_no_write(client, api):
+    api.get("/rwidgets/5").respond(json={"data": {"id": 5, "name": "old"}})
+    RequestWidgets(client).prepare_patch(5, name="new")
+    assert all(c.request.method == "GET" for c in api.calls)
+
+
+def test_patch_puts_merged_body(client, api):
+    api.get("/rwidgets/5").respond(json={"data": {"id": 5, "name": "old"}})
+    route = api.put("/rwidgets/5").respond(json={"data": {"id": 5, "name": "new"}})
+    made = RequestWidgets(client).patch(5, name="new")
+    assert made.name == "new"
+    assert json.loads(route.calls.last.request.content) == {"name": "new"}
+
+
+def test_patch_plan_exported():
+    import get_connected_client
+
+    assert get_connected_client.PatchPlan is PatchPlan
+    assert get_connected_client.Change is Change

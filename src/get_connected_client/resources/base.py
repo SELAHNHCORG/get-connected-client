@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar
 
 from ..client import MAX_PER_PAGE
@@ -13,6 +14,55 @@ if TYPE_CHECKING:
     from ..client import GalaxyClient
 
 M = TypeVar("M", bound=GalaxyModel)
+
+
+@dataclass(frozen=True)
+class Change:
+    """One field a merged update will alter.
+
+    ``old`` is the value the API holds now, or ``None`` when the field is
+    absent from the current record; ``new`` is what is about to be sent.
+    """
+
+    field: str
+    old: Any
+    new: Any
+
+
+@dataclass
+class PatchPlan:
+    """What :meth:`UpdateMixin.prepare_patch` worked out, before any write.
+
+    ``current`` is the fetched row translated by
+    :meth:`Resource.to_request`; ``body`` is ``current`` with the supplied
+    fields laid over it -- the exact JSON a following PUT sends; ``changes``
+    lists the supplied fields whose value differs from ``current``, in the
+    order they were supplied.
+    """
+
+    current: dict[str, Any]
+    body: dict[str, Any]
+    changes: list[Change]
+
+
+def _same(a: Any, b: Any) -> bool:
+    """True when *a* and *b* mean the same thing on the wire.
+
+    The API sends numeric ids as strings, so a caller's ``42`` must not read
+    as a change against a stored ``"42"``. Booleans are excluded from the
+    string comparison so ``True`` never equals ``"True"``.
+    """
+    if a == b:
+        return True
+    scalar = (str, int, float)
+    if (
+        isinstance(a, scalar)
+        and isinstance(b, scalar)
+        and not isinstance(a, bool)
+        and not isinstance(b, bool)
+    ):
+        return str(a) == str(b)
+    return False
 
 
 class Resource(Generic[M]):
@@ -40,6 +90,13 @@ class Resource(Generic[M]):
     path: ClassVar[str]
     model: type[M]
 
+    #: Property names of this endpoint's PUT/POST request schema (the
+    #: ``*RequestSchema`` in ``doc/api.yml``). :meth:`to_request` keeps only
+    #: these keys, so a fetched row can be sent back without the read-only
+    #: fields -- ``id``, timestamps, nested objects -- the PUT would reject.
+    #: ``tests/test_request_fields.py`` asserts each set matches the spec.
+    request_fields: ClassVar[frozenset[str]] = frozenset()
+
     def __init__(self, client: GalaxyClient):
         """Bind this namespace to *client*, which performs all I/O."""
         self._client = client
@@ -60,6 +117,20 @@ class Resource(Generic[M]):
         With no *parts* this is the collection itself, ``self.path``.
         """
         return self._url(*parts)
+
+    def to_request(self, obj: M) -> dict[str, Any]:
+        """Turn a fetched *obj* into a body the endpoint's PUT accepts.
+
+        Keeps every non-``None`` field named in :attr:`request_fields` and
+        drops the rest. Resources whose read object nests what the request
+        schema wants flat -- an ``agency`` object where the PUT takes
+        ``agency_id`` -- override this, call it first, then reshape.
+
+        This is the read half of :meth:`UpdateMixin.prepare_patch`; it never
+        touches the network.
+        """
+        data = obj.model_dump(mode="json", exclude_none=True)
+        return {k: v for k, v in data.items() if k in self.request_fields}
 
     def _parse(self, payload: Any, model: type[GalaxyModel] | None = None) -> Any:
         """Validate *payload* into *model*, defaulting to ``self.model``.
@@ -185,15 +256,20 @@ class CreateMixin(Resource[M]):
 
 
 class UpdateMixin(Resource[M]):
-    """Adds :meth:`update` to a namespace whose endpoint accepts PUTs."""
+    """Adds :meth:`update`, :meth:`prepare_patch` and :meth:`patch` to a
+    namespace whose endpoint accepts PUTs."""
 
     def update(self, id: int, **fields: Any) -> M | dict[str, Any] | None:
-        """PUT *fields* to the row with this *id*.
+        """PUT *fields* to the row with this *id*, verbatim.
 
-        Only the supplied fields are sent, so this is a partial update.
+        The API treats PUT as a **full replacement**: every field the request
+        schema marks required must be present or the server answers 422,
+        whatever the row already holds. To change a subset of fields use
+        :meth:`patch`, which fetches the row and merges for you. Use this
+        method when you already have a complete, valid body.
 
         :param id: the row to modify.
-        :param fields: the attributes to change, sent as the JSON body.
+        :param fields: the request body, sent as-is.
         :raises ReadOnlyError: the client is in read-only mode.
         :return: the parsed model when the API returns a ``data`` object;
             otherwise the raw response payload, since some endpoints return
@@ -204,6 +280,46 @@ class UpdateMixin(Resource[M]):
         if isinstance(data, dict):
             return self._parse(data)
         return payload
+
+    def prepare_patch(self, id: int, **fields: Any) -> PatchPlan:
+        """Fetch the row, translate it and lay *fields* over it -- no write.
+
+        The current record is fetched, passed through
+        :meth:`Resource.to_request`, and *fields* are merged on top; the
+        supplied fields always win, including keys outside
+        :attr:`Resource.request_fields` (the caller may know something the
+        spec does not). The returned plan carries the body a PUT would send
+        and the list of fields that actually differ, so a caller can show
+        or log the diff before committing to :meth:`update`.
+
+        :param id: the row to modify.
+        :param fields: the attributes to change.
+        :raises NotFoundError: no such row.
+        :return: the :class:`PatchPlan`.
+        """
+        current = self.to_request(self._get_one(self._url(id)))
+        body = {**current, **fields}
+        changes = [
+            Change(field=name, old=current.get(name), new=value)
+            for name, value in fields.items()
+            if name not in current or not _same(current[name], value)
+        ]
+        return PatchPlan(current=current, body=body, changes=changes)
+
+    def patch(self, id: int, **fields: Any) -> M | dict[str, Any] | None:
+        """Change only *fields* on the row with this *id*.
+
+        Two requests: a GET to read the row and a PUT of the merged body
+        (see :meth:`prepare_patch`). This is what you want for "set the
+        notes on this user"; :meth:`update` is for sending a complete body.
+
+        :param id: the row to modify.
+        :param fields: the attributes to change.
+        :raises ReadOnlyError: the client is in read-only mode.
+        :raises NotFoundError: no such row.
+        :return: whatever :meth:`update` returns.
+        """
+        return self.update(id, **self.prepare_patch(id, **fields).body)
 
 
 class DeleteMixin(Resource[M]):
