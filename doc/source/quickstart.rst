@@ -134,6 +134,31 @@ Both credentials can equally come from ``GALAXY_API_KEY`` and
    with GalaxyClient() as client:
        agency = client.agencies.get(1)
 
+To change a few fields on a record, use ``patch``: it fetches the row,
+merges your fields over it and sends the whole body, which is what the
+API's full-replacement ``PUT`` demands. ``update`` sends exactly what you
+give it, for when you already hold a complete body:
+
+.. code-block:: python
+
+   with GalaxyClient() as client:
+       client.users.patch(8821, user_notes="Prefers mornings.")
+
+       # Or look before you leap:
+       plan = client.users.prepare_patch(8821, user_notes="Prefers mornings.")
+       for change in plan.changes:
+           print(change.field, change.old, "->", change.new)
+       if plan.missing_required:
+           print("the API will want:", plan.missing_required)
+       client.users.update(8821, **plan.body)
+
+``prepare_patch`` writes nothing: its
+:class:`~get_connected_client.resources.base.PatchPlan` carries the
+``body`` a ``PUT`` would send, the ``changes`` your fields make to the
+record, and ``missing_required``, the required fields the merge could not
+supply. A few fields cannot be carried over from a fetched record at all
+-- see :ref:`Updates are merged <cli-updates-are-merged>` for the list.
+
 Write safety, in brief
 -----------------------
 
@@ -146,6 +171,10 @@ and asks for confirmation before touching the network:
    $ galaxy needs delete 123
    About to write to the API: DELETE /needs/123
    Proceed? [y/N]:
+
+``update`` commands go further and show only the fields that will change,
+since the body they send is the whole record merged with your input -- see
+:ref:`Updates are merged <cli-updates-are-merged>`.
 
 Pass ``--yes``/``-y`` to skip the prompt in scripts, or ``--read-only`` (or
 ``GALAXY_READ_ONLY=1``) to block writes outright, at the client or CLI

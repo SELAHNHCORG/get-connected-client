@@ -47,6 +47,11 @@ napoleon_use_rtype = False
 # name, which collides with those fields under the same domain, producing
 # an unresolvable "more than one target" warning that reflects a real
 # object naming collision rather than a broken reference.
+#
+# This suppression covers only "more than one target found" ambiguity
+# warnings; unresolved references are silent because nitpicky mode is off.
+# Turning `nitpicky = True` on would need `nitpick_ignore` entries for the
+# `M` TypeVar, `httpx.Client` and `pydantic.main.BaseModel` first.
 suppress_warnings = ["ref.python"]
 
 html_static_path = ['_static']

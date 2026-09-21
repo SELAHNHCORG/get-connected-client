@@ -21,13 +21,17 @@ class Teams(
     of 3 paths, 6 of 6 operations, full coverage, nothing excluded. They
     group as:
 
-    * **CRUD**, minus update -- :meth:`list`, :meth:`get`, :meth:`create`,
-      :meth:`delete`, inherited from the mixins. There is no
-      ``UpdateMixin``: the spec defines no ``PUT /teams/{id}``.
+    * **CRUD**, minus update --
+      :meth:`~get_connected_client.resources.base.ListMixin.list`,
+      :meth:`~get_connected_client.resources.base.GetMixin.get`,
+      :meth:`~get_connected_client.resources.base.CreateMixin.create`,
+      :meth:`~get_connected_client.resources.base.DeleteMixin.delete`,
+      inherited from the mixins. There is no ``UpdateMixin``: the spec defines
+      no ``PUT /teams/{id}``.
     * **Membership** -- :meth:`add_member`/:meth:`remove_member`.
 
-    :meth:`list` accepts ``show_inactive`` in addition to the standard paging
-    filters -- see :meth:`~get_connected_client.resources.base.ListMixin.list`.
+    :meth:`~get_connected_client.resources.base.ListMixin.list` accepts
+    ``show_inactive`` in addition to the standard paging filters.
     """
 
     path = "/teams"

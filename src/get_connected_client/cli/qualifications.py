@@ -1,7 +1,7 @@
 """``galaxy qualifications`` -- the /qualifications endpoints on the command line.
 
 Every command that changes anything on the server goes through
-:func:`~get_connected_client.cli._confirm.confirm_write` first.
+:mod:`~get_connected_client.cli._confirm` first.
 
 The paths shown in those prompts are built with the resource's own
 :meth:`~get_connected_client.resources.base.Resource.url`, never hand-typed, so
@@ -18,6 +18,7 @@ from ..client import MAX_PER_PAGE
 from ._confirm import confirm_write
 from ._output import output, output_one, output_result
 from ._state import _merge_fields, get_state, handle_errors
+from ._update import REPLACE, run_update
 
 qualifications_app = typer.Typer(help="Manage qualifications.", no_args_is_help=True)
 
@@ -114,12 +115,17 @@ def update_qualification(
     data: str | None = typer.Option(
         None, "--data", help="JSON object of any further fields."
     ),
+    replace: bool = REPLACE,
 ) -> None:
-    """Update a qualification, sending only the fields you name."""
+    """Update a qualification, merging the fields you name over the current record."""
     state = get_state(ctx)
-    fields = _qualification_fields(data, title)
-    confirm_write(state, f"PUT {state.client.qualifications.url(id)}", fields)
-    output_result(state, state.client.qualifications.update(id, **fields))
+    run_update(
+        state,
+        state.client.qualifications,
+        id,
+        _qualification_fields(data, title),
+        replace=replace,
+    )
 
 
 @qualifications_app.command("delete")

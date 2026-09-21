@@ -18,6 +18,8 @@ from get_connected_client.models.hours import Hour
 from get_connected_client.resources.events import Events
 from get_connected_client.resources.hours import Hours
 
+from .conftest import NOT_ENDPOINTS
+
 
 runner = CliRunner()
 
@@ -84,8 +86,115 @@ def test_event_nested_fields_parse():
     assert event.tags[0].name == "Outdoors"
 
 
+def test_event_to_request_renames_tags(client):
+    event = Event.model_validate(
+        {
+            **EVENT_ROW,
+            "tags": [
+                {"id": "1", "name": "Fair"},
+                {"id": "2", "name": "Family"},
+                {"id": "3", "name": ""},
+            ],
+            "update_at": "2024-01-01 00:00:00",
+        }
+    )
+    assert Events(client).to_request(event) == {
+        "event_title": "Volunteer Fair",
+        "event_date_start": "2024-03-01 08:00:00",
+        "event_location": "Community Center",
+        "event_tags": ["Fair", "Family"],
+    }
+
+
+def test_event_to_request_without_tags(client):
+    """No tags on the read object -- no event_tags key, not an empty list."""
+    body = Events(client).to_request(Event.model_validate(EVENT_ROW))
+    assert "event_tags" not in body
+    assert "tags" not in body
+
+
+def test_event_to_request_stringifies_event_area_id(client):
+    """event_area_id is int on the model but `type: string` on the PUT."""
+    body = Events(client).to_request(
+        Event.model_validate({**EVENT_ROW, "event_area": "agency", "event_area_id": 9})
+    )
+    assert body["event_area_id"] == "9"
+
+
+def test_event_patch_sends_event_tags(client, api):
+    api.get("/events/42").respond(
+        json={"data": {**EVENT_ROW, "tags": [{"id": "1", "name": "Fair"}]}}
+    )
+    route = api.put("/events/42").respond(json={"data": EVENT_ROW})
+    Events(client).patch(42, event_location="Town Hall")
+    assert json.loads(route.calls.last.request.content) == {
+        "event_title": "Volunteer Fair",
+        "event_date_start": "2024-03-01 08:00:00",
+        "event_location": "Town Hall",
+        "event_tags": ["Fair"],
+    }
+
+
 # Hour's fields are already covered by Task 8's model tests; only the wire
 # mapping for CRUD is retested here.
+
+
+def test_hour_to_request_derives_ids_and_start(client):
+    hour = Hour.model_validate(
+        {
+            **HOUR_ROW,
+            "user": {"id": "5", "user_fname": "Ada"},
+            "need": {"id": "42", "need_title": "Park Cleanup"},
+            "groups": [{"id": "9", "group_title": "Rotary"}, {"group_title": "No id"}],
+            "hour_date_end": "2024-03-01 11:00:00",
+            "hour_description": "Raking",
+            "hour_type": "need",
+        }
+    )
+    assert Hours(client).to_request(hour) == {
+        "hour_hours": "3",
+        "hour_status": "approved",
+        "hour_start": "2024-03-01 08:00:00",
+        "user_id": "5",
+        "group_ids": ["9"],
+    }
+
+
+def test_hour_to_request_without_nested_objects(client):
+    assert Hours(client).to_request(Hour.model_validate(HOUR_ROW)) == {
+        "hour_hours": "3",
+        "hour_status": "approved",
+        "hour_start": "2024-03-01 08:00:00",
+    }
+
+
+def test_hour_to_request_without_hour_date_start(client):
+    """No ``hour_date_start`` on the read object -- no ``hour_start`` key."""
+    row = {k: v for k, v in HOUR_ROW.items() if k != "hour_date_start"}
+    body = Hours(client).to_request(Hour.model_validate(row))
+    assert "hour_start" not in body
+
+
+def test_hour_to_request_empty_groups_sends_empty_list(client):
+    """An empty ``groups`` list means "no groups" on a replacement PUT,
+    unlike omitting the key entirely (which leaves groups untouched)."""
+    body = Hours(client).to_request(Hour.model_validate({**HOUR_ROW, "groups": []}))
+    assert body["group_ids"] == []
+
+
+def test_hour_patch_sends_derived_body(client, api):
+    api.get("/hours/7").respond(
+        json={"data": {**HOUR_ROW, "user": {"id": "5"}, "groups": {"id": "9"}}}
+    )
+    route = api.put("/hours/7").respond(json={"data": HOUR_ROW})
+    Hours(client).patch(7, hour_status="denied")
+    assert json.loads(route.calls.last.request.content) == {
+        "hour_hours": "3",
+        "hour_status": "denied",
+        "hour_start": "2024-03-01 08:00:00",
+        "user_id": "5",
+        "group_ids": ["9"],
+    }
 
 
 # --------------------------------------------------------------------------
@@ -134,7 +243,7 @@ def test_events_covers_every_spec_operation():
     endpoints = {
         name
         for name, member in inspect.getmembers(Events, inspect.isfunction)
-        if not name.startswith("_") and name != "url"
+        if not name.startswith("_") and name not in NOT_ENDPOINTS
     }
     assert len(endpoints) == 5
 
@@ -222,7 +331,7 @@ def test_hours_covers_every_spec_operation():
     endpoints = {
         name
         for name, member in inspect.getmembers(Hours, inspect.isfunction)
-        if not name.startswith("_") and name != "url"
+        if not name.startswith("_") and name not in NOT_ENDPOINTS
     }
     assert len(endpoints) == 5
 
@@ -300,6 +409,7 @@ def test_cli_events_create_confirmed(api, cli_env):
 
 
 def test_cli_events_update_merges_data(api, cli_env):
+    api.get("/events/42").respond(json={"data": EVENT_ROW})
     route = api.put("/events/42").respond(json={"data": EVENT_ROW})
     result = runner.invoke(
         app,
@@ -317,6 +427,7 @@ def test_cli_events_update_merges_data(api, cli_env):
     assert result.exit_code == 0, result.output
     assert json.loads(route.calls.last.request.content) == {
         "event_title": "Volunteer Fair",
+        "event_date_start": "2024-03-01 08:00:00",
         "event_location": "Town Hall",
     }
 
@@ -425,6 +536,7 @@ def test_cli_hours_create_confirmed(api, cli_env):
 
 
 def test_cli_hours_update_merges_data(api, cli_env):
+    api.get("/hours/7").respond(json={"data": HOUR_ROW})
     route = api.put("/hours/7").respond(json={"data": HOUR_ROW})
     result = runner.invoke(
         app,
@@ -441,9 +553,13 @@ def test_cli_hours_update_merges_data(api, cli_env):
     )
     assert result.exit_code == 0, result.output
     assert json.loads(route.calls.last.request.content) == {
+        "hour_hours": "3",
+        "hour_start": "2024-03-01 08:00:00",
         "hour_status": "denied",
         "hour_location": "Park",
     }
+    # The merge supplied every required field; nothing to warn about.
+    assert "required" not in result.stderr
 
 
 def test_cli_hours_delete_declined_makes_no_request(api, cli_env):

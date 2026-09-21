@@ -18,6 +18,8 @@ from get_connected_client.models.needs import Need
 from get_connected_client.models.responses import Response
 from get_connected_client.resources.needs import Needs
 
+from .conftest import NOT_ENDPOINTS
+
 
 runner = CliRunner()
 
@@ -107,6 +109,67 @@ def test_need_nested_fields_parse():
     assert need.groups[0].group_title == "Rotary"
     assert need.tags[0].name == "Outdoors"
     assert need.shifts[0].slots == 10
+
+
+def test_to_request_flattens_nested_objects(client):
+    need = Need.model_validate(
+        {
+            "id": "42",
+            "domain_id": "1",
+            "need_title": "Park Cleanup",
+            "need_status": "active",
+            "agency": {"id": "3", "agency_name": "Helping Hands"},
+            "initiative": {"id": "8", "init_title": "Spring"},
+            "tags": [{"id": "1", "name": "Outdoors"}, {"id": "2", "name": None}],
+            "groups": [{"id": "7", "group_title": "Rotary"}],
+            "shifts": [{"id": "99", "start": "2024-03-01 08:00:00", "slots": 5}],
+            "background_check_required": "No",
+            "created_at": "2024-01-01 00:00:00",
+        }
+    )
+    body = Needs(client).to_request(need)
+    assert body == {
+        "need_title": "Park Cleanup",
+        "need_status": "active",
+        "agency_id": "3",
+        "initiative_id": "8",
+        "tags": ["Outdoors"],
+        "groups": ["7"],
+    }
+
+
+def test_to_request_without_nested_objects(client):
+    body = Needs(client).to_request(Need.model_validate(NEED_ROW))
+    assert body == {
+        "need_title": "Park Cleanup",
+        "need_status": "active",
+        "need_date": "2024-03-01",
+    }
+
+
+def test_patch_sends_flattened_body(client, api):
+    api.get("/needs/42").respond(
+        json={
+            "data": {
+                **NEED_ROW,
+                "agency": {"id": "3", "agency_name": "Helping Hands"},
+                "tags": [{"id": "1", "name": "Outdoors"}],
+                "groups": [{"id": "7", "group_title": "Rotary"}],
+                "shifts": [{"id": "99", "start": "2024-03-01 08:00:00", "slots": 5}],
+            }
+        }
+    )
+    route = api.put("/needs/42").respond(json={"data": NEED_ROW})
+    Needs(client).patch(42, need_body="Bring gloves")
+    assert json.loads(route.calls.last.request.content) == {
+        "need_title": "Park Cleanup",
+        "need_status": "active",
+        "need_date": "2024-03-01",
+        "need_body": "Bring gloves",
+        "agency_id": "3",
+        "tags": ["Outdoors"],
+        "groups": ["7"],
+    }
 
 
 def test_response_model_fields():
@@ -251,12 +314,13 @@ def test_client_attaches_namespace(client):
 def test_needs_covers_every_spec_operation():
     """Keep the class docstring's "13 operations" claim from going stale.
 
-    ``url`` is excluded: it builds paths, it is not an endpoint.
+    ``NOT_ENDPOINTS`` (``url`` and the patch helpers) are excluded: they
+    build paths or compose endpoints, they are not endpoints.
     """
     endpoints = {
         name
         for name, member in inspect.getmembers(Needs, inspect.isfunction)
-        if not name.startswith("_") and name != "url"
+        if not name.startswith("_") and name not in NOT_ENDPOINTS
     }
     assert len(endpoints) == 13
 
@@ -388,6 +452,7 @@ def test_cli_create_confirmed(api, cli_env):
 
 
 def test_cli_update_merges_data(api, cli_env):
+    api.get("/needs/42").respond(json={"data": NEED_ROW})
     route = api.put("/needs/42").respond(json={"data": NEED_ROW})
     result = runner.invoke(
         app,
@@ -403,10 +468,51 @@ def test_cli_update_merges_data(api, cli_env):
         ],
     )
     assert result.exit_code == 0, result.output
+    assert [c.request.method for c in api.calls] == ["GET", "PUT"]
     assert json.loads(route.calls.last.request.content) == {
         "need_title": "Park Cleanup",
         "need_status": "inactive",
+        "need_date": "2024-03-01",
     }
+
+
+def test_cli_update_translates_nested_need(api, cli_env):
+    api.get("/needs/42").respond(
+        json={
+            "data": {
+                **NEED_ROW,
+                "agency": {"id": "3", "agency_name": "Helping Hands"},
+                "tags": [{"id": "1", "name": "Outdoors"}],
+                "groups": [{"id": "7", "group_title": "Rotary"}],
+                "shifts": [{"id": "99", "start": "2024-03-01 08:00:00", "slots": 5}],
+            }
+        }
+    )
+    route = api.put("/needs/42").respond(json={"data": NEED_ROW})
+    result = runner.invoke(
+        app,
+        ["--yes", "needs", "update", "42", "--data", '{"need_body":"Bring gloves"}'],
+    )
+    assert result.exit_code == 0, result.output
+    assert json.loads(route.calls.last.request.content) == {
+        "need_title": "Park Cleanup",
+        "need_status": "active",
+        "need_date": "2024-03-01",
+        "need_body": "Bring gloves",
+        "agency_id": "3",
+        "tags": ["Outdoors"],
+        "groups": ["7"],
+    }
+
+
+def test_cli_update_replace_skips_fetch(api, cli_env):
+    route = api.put("/needs/42").respond(json={"data": NEED_ROW})
+    result = runner.invoke(
+        app, ["--yes", "needs", "update", "42", "--replace", "--title", "T"]
+    )
+    assert result.exit_code == 0, result.output
+    assert [c.request.method for c in api.calls] == ["PUT"]
+    assert json.loads(route.calls.last.request.content) == {"need_title": "T"}
 
 
 def test_cli_delete_declined_makes_no_request(api, cli_env):

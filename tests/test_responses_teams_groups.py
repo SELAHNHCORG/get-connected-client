@@ -20,6 +20,8 @@ from get_connected_client.resources.groups import Groups
 from get_connected_client.resources.responses import Responses
 from get_connected_client.resources.teams import Teams
 
+from .conftest import NOT_ENDPOINTS
+
 
 runner = CliRunner()
 
@@ -161,6 +163,90 @@ def test_group_user_model_fields():
     assert len(GroupUser.model_fields) == 6
 
 
+def test_group_to_request_drops_membership_and_keeps_ug_type_absent(client):
+    group = Group.model_validate(
+        {
+            **GROUP_ROW,
+            "users": [{"id": "1", "user_fname": "A"}],
+            "needs": [{"id": "2", "need_title": "N"}],
+            "agencies": [{"id": "3", "agency_name": "G"}],
+            "questions_join": [],
+            "created_at": "2024-01-01 00:00:00",
+        }
+    )
+    body = Groups(client).to_request(group)
+    assert body == {"ug_title": "Rotary Club", "ug_status": "active"}
+    assert "ug_type" not in body
+
+
+def test_group_patch_sends_filtered_body(client, api):
+    api.get("/groups/9").respond(
+        json={"data": {**GROUP_ROW, "users": [{"id": "1", "user_fname": "A"}]}}
+    )
+    route = api.put("/groups/9").respond(json={"data": GROUP_ROW})
+    Groups(client).patch(9, ug_type="gc", ug_description="Local service club")
+    assert json.loads(route.calls.last.request.content) == {
+        "ug_title": "Rotary Club",
+        "ug_status": "active",
+        "ug_type": "gc",
+        "ug_description": "Local service club",
+    }
+
+
+def test_response_to_request_derives_ids(client):
+    response = Response.model_validate(
+        {
+            **RESPONSE_ROW,
+            "need": {"id": "42", "need_title": "Park Cleanup"},
+            "user": {"id": "5", "user_fname": "Ada"},
+            "shift": {"id": "77", "start": "2024-03-01 08:00:00"},
+            "team": {"id": "3", "team_name": "Crew"},
+            "agency": {"id": "9", "agency_name": "HH"},
+            "response_note": "Bring gloves",
+            "answers": [{"key": "q1", "answer": "yes"}],
+        }
+    )
+    assert Responses(client).to_request(response) == {
+        "response_date_added": "2024-03-01 12:00:00",
+        "response_note": "Bring gloves",
+        "need_id": "42",
+        "user_id": "5",
+        "schedule_ids": ["77"],
+        "team_id": "3",
+    }
+
+
+def test_response_to_request_without_nested_objects(client):
+    """Pins the body a shiftless response produces; the PUT would 422 on the
+    missing schedule_ids (see Responses.to_request)."""
+    body = Responses(client).to_request(Response.model_validate(RESPONSE_ROW))
+    assert body == {"response_date_added": "2024-03-01 12:00:00"}
+
+
+def test_response_patch_sends_derived_body(client, api):
+    api.get("/responses/7").respond(
+        json={
+            "data": {
+                **RESPONSE_ROW,
+                "need": {"id": "42"},
+                "user": {"id": "5"},
+                "shift": {"id": "77"},
+            }
+        }
+    )
+    route = api.put("/responses/7").respond(json={"data": RESPONSE_ROW})
+    Responses(client).patch(7, response_note="Bring gloves and hat")
+    assert json.loads(route.calls.last.request.content) == {
+        # response_date_added must be re-sent: omitting it resets the
+        # sign-up date to now (spec).
+        "response_date_added": "2024-03-01 12:00:00",
+        "response_note": "Bring gloves and hat",
+        "need_id": "42",
+        "user_id": "5",
+        "schedule_ids": ["77"],
+    }
+
+
 # --------------------------------------------------------------------------
 # resource: responses -- URL + verb mapping
 # --------------------------------------------------------------------------
@@ -224,7 +310,7 @@ def test_responses_covers_every_spec_operation():
     endpoints = {
         name
         for name, member in inspect.getmembers(Responses, inspect.isfunction)
-        if not name.startswith("_") and name != "url"
+        if not name.startswith("_") and name not in NOT_ENDPOINTS
     }
     assert len(endpoints) == 5
 
@@ -315,7 +401,7 @@ def test_teams_covers_every_spec_operation():
     endpoints = {
         name
         for name, member in inspect.getmembers(Teams, inspect.isfunction)
-        if not name.startswith("_") and name != "url"
+        if not name.startswith("_") and name not in NOT_ENDPOINTS
     }
     assert len(endpoints) == 6
 
@@ -393,7 +479,7 @@ def test_groups_covers_every_spec_operation():
     endpoints = {
         name
         for name, member in inspect.getmembers(Groups, inspect.isfunction)
-        if not name.startswith("_") and name != "url"
+        if not name.startswith("_") and name not in NOT_ENDPOINTS
     }
     assert len(endpoints) == 9
 
@@ -478,6 +564,16 @@ def test_cli_responses_create_confirmed(api, cli_env):
 
 
 def test_cli_responses_update_merges_data(api, cli_env):
+    api.get("/responses/7").respond(
+        json={
+            "data": {
+                **RESPONSE_ROW,
+                "need": {"id": "42", "need_title": "Park Cleanup"},
+                "user": {"id": "4", "user_fname": "Mary"},
+                "shift": {"id": "99"},
+            }
+        }
+    )
     route = api.put("/responses/7").respond(json={"data": RESPONSE_ROW})
     result = runner.invoke(
         app,
@@ -494,7 +590,11 @@ def test_cli_responses_update_merges_data(api, cli_env):
     )
     assert result.exit_code == 0, result.output
     assert json.loads(route.calls.last.request.content) == {
-        "response_note": "Bring gloves and hat"
+        "response_date_added": "2024-03-01 12:00:00",
+        "response_note": "Bring gloves and hat",
+        "need_id": "42",
+        "user_id": "4",
+        "schedule_ids": ["99"],
     }
 
 
@@ -663,6 +763,7 @@ def test_cli_groups_create_confirmed(api, cli_env):
 
 
 def test_cli_groups_update_merges_data(api, cli_env):
+    api.get("/groups/9").respond(json={"data": GROUP_ROW})
     route = api.put("/groups/9").respond(json={"data": GROUP_ROW})
     result = runner.invoke(
         app,
@@ -679,9 +780,13 @@ def test_cli_groups_update_merges_data(api, cli_env):
     )
     assert result.exit_code == 0, result.output
     assert json.loads(route.calls.last.request.content) == {
+        "ug_title": "Rotary Club",
         "ug_status": "inactive",
         "ug_description": "Local service club",
     }
+    # ug_type is required by the PUT and never returned by GET, so the merge
+    # cannot derive it: the operator has to hear about it.
+    assert "ug_type" in result.stderr
 
 
 def test_cli_groups_delete_declined_makes_no_request(api, cli_env):

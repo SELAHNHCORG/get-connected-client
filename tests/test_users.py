@@ -36,7 +36,7 @@ from get_connected_client.models.users import (
 )
 from get_connected_client.resources.users import Users
 
-from .conftest import BASE
+from .conftest import BASE, NOT_ENDPOINTS
 
 runner = CliRunner()
 
@@ -362,12 +362,13 @@ def test_client_attaches_namespace(client):
 def test_users_covers_every_spec_operation():
     """Keep the class docstring's "32 operations" claim from going stale.
 
-    ``url`` is excluded: it builds paths, it is not an endpoint.
+    ``NOT_ENDPOINTS`` (``url`` and the patch helpers) are excluded: they
+    build paths or compose endpoints, they are not endpoints.
     """
     endpoints = {
         name
         for name, member in inspect.getmembers(Users, inspect.isfunction)
-        if not name.startswith("_") and name != "url"
+        if not name.startswith("_") and name not in NOT_ENDPOINTS
     }
     assert len(endpoints) == 32
 
@@ -516,7 +517,8 @@ def test_cli_create_confirmed(api, cli_env):
     }
 
 
-def test_cli_update_merges_data(api, cli_env):
+def test_cli_update_merges_over_current_record(api, cli_env):
+    api.get("/users/5").respond(json={"data": USER_ROW})
     route = api.put("/users/5").respond(json={"data": USER_ROW})
     result = runner.invoke(
         app,
@@ -534,8 +536,167 @@ def test_cli_update_merges_data(api, cli_env):
     assert result.exit_code == 0, result.output
     assert json.loads(route.calls.last.request.content) == {
         "user_fname": "Ada",
+        "user_lname": "Lovelace",
+        "user_email": "ada@example.com",
+        "user_status": "active",
         "user_city": "X",
     }
+
+
+def test_cli_update_prompt_shows_only_changes(api, cli_env):
+    api.get("/users/5").respond(json={"data": USER_ROW})
+    route = api.put("/users/5").respond(json={})
+    result = runner.invoke(
+        app, ["users", "update", "5", "--data", '{"user_city":"X"}'], input="y\n"
+    )
+    assert result.exit_code == 0, result.output
+    assert "PUT /users/5" in result.output
+    assert "merged over the current record" in result.output
+    assert "user_city" in result.output
+    assert "(none)" in result.output
+    # Unchanged fields are carried over silently, not listed.
+    assert "Lovelace" not in result.output
+    assert "required" not in result.output  # nothing missing on a full row
+    assert route.called
+
+
+def test_cli_update_warns_about_missing_required(api, cli_env):
+    """A fetched row lacking a required field: warn, but still offer the write."""
+    row = {k: v for k, v in USER_ROW.items() if k != "user_status"}
+    api.get("/users/5").respond(json={"data": row})
+    route = api.put("/users/5").respond(json={})
+    result = runner.invoke(
+        app, ["--yes", "users", "update", "5", "--data", '{"user_city":"X"}']
+    )
+    assert result.exit_code == 0, result.output
+    assert "required" in result.stderr
+    assert "user_status" in result.stderr
+    assert route.called
+
+
+def test_cli_update_missing_required_warning_keeps_stdout_parseable(api, cli_env):
+    """The warning goes to stderr only: ``--format json`` stdout stays JSON."""
+    row = {k: v for k, v in USER_ROW.items() if k != "user_status"}
+    api.get("/users/5").respond(json={"data": row})
+    api.put("/users/5").respond(json={"data": USER_ROW})
+    result = runner.invoke(
+        app,
+        [
+            "--yes",
+            "--format",
+            "json",
+            "users",
+            "update",
+            "5",
+            "--data",
+            '{"user_city":"X"}',
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert "required" in result.stderr
+    assert json.loads(result.stdout)
+    assert "required" not in result.stdout
+
+
+def test_cli_update_declined_makes_no_put(api, cli_env):
+    api.get("/users/5").respond(json={"data": USER_ROW})
+    result = runner.invoke(
+        app, ["users", "update", "5", "--data", '{"user_city":"X"}'], input="n\n"
+    )
+    assert result.exit_code != 0
+    assert [c.request.method for c in api.calls] == ["GET"]
+
+
+def test_cli_update_no_changes_makes_no_put(api, cli_env):
+    api.get("/users/5").respond(json={"data": USER_ROW})
+    result = runner.invoke(app, ["--yes", "users", "update", "5", "--fname", "Ada"])
+    assert result.exit_code == 0, result.output
+    assert "No changes" in result.stderr
+    assert [c.request.method for c in api.calls] == ["GET"]
+
+
+def test_cli_update_no_changes_json(api, cli_env):
+    api.get("/users/5").respond(json={"data": USER_ROW})
+    result = runner.invoke(
+        app, ["--yes", "--format", "json", "users", "update", "5", "--fname", "Ada"]
+    )
+    assert result.exit_code == 0, result.output
+    assert json.loads(result.stdout) == {"changes": []}
+
+
+def test_cli_update_replace_sends_raw_body(api, cli_env):
+    route = api.put("/users/5").respond(json={"data": USER_ROW})
+    result = runner.invoke(
+        app,
+        [
+            "--yes",
+            "users",
+            "update",
+            "5",
+            "--replace",
+            "--fname",
+            "Ada",
+            "--data",
+            '{"user_city":"X"}',
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert [c.request.method for c in api.calls] == ["PUT"]
+    assert json.loads(route.calls.last.request.content) == {
+        "user_fname": "Ada",
+        "user_city": "X",
+    }
+
+
+def test_cli_update_replace_warns_about_missing_required(api, cli_env):
+    # --replace skips the merge, so the body is whatever was typed: say which
+    # required fields it lacks before it is sent.
+    route = api.put("/users/5").respond(json={"data": USER_ROW})
+    result = runner.invoke(
+        app, ["--yes", "users", "update", "5", "--replace", "--fname", "Ada"]
+    )
+    assert result.exit_code == 0, result.output
+    assert [c.request.method for c in api.calls] == ["PUT"]
+    assert json.loads(route.calls.last.request.content) == {"user_fname": "Ada"}
+    assert "required" in result.stderr
+    assert "user_lname" in result.stderr
+
+
+def test_cli_update_rejects_id_in_data(api, cli_env):
+    result = runner.invoke(
+        app, ["--yes", "users", "update", "5", "--data", '{"id": 7, "user_city": "X"}']
+    )
+    assert result.exit_code != 0
+    assert "must not set 'id'" in result.output
+    assert "--data" in result.output
+    assert not api.calls
+
+
+def test_cli_update_prompt_renders_values_literally(api, cli_env):
+    """Non-string values are JSON-rendered and rich markup in data is inert."""
+    api.get("/users/5").respond(json={"data": USER_ROW})
+    result = runner.invoke(
+        app,
+        [
+            "users",
+            "update",
+            "5",
+            "--data",
+            '{"user_tags":["a","b"],"user_notes":"[red]danger[/] {x}"}',
+        ],
+        input="n\n",
+    )
+    assert result.exit_code != 0
+    assert '["a", "b"]' in result.output
+    assert "[red]danger[/] {x}" in result.output
+    assert [c.request.method for c in api.calls] == ["GET"]
+
+
+def test_cli_update_without_fields_makes_no_request(api, cli_env):
+    result = runner.invoke(app, ["--yes", "users", "update", "5"])
+    assert result.exit_code == 0, result.output
+    assert "Nothing to update" in result.stderr
+    assert not api.calls
 
 
 def test_cli_delete_declined_makes_no_request(api, cli_env):

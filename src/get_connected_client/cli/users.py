@@ -1,7 +1,7 @@
 """``galaxy users`` -- the /users endpoints on the command line.
 
 Every command that changes anything on the server goes through
-:func:`~get_connected_client.cli._confirm.confirm_write` first. That includes
+:mod:`~get_connected_client.cli._confirm` first. That includes
 ``welcome-email``, which the API models as a GET but which really does put
 mail in someone's inbox.
 
@@ -20,6 +20,7 @@ from ..client import MAX_PER_PAGE
 from ._confirm import confirm_write
 from ._output import output, output_one, output_result
 from ._state import _merge_fields, get_state, handle_errors
+from ._update import REPLACE, run_update
 
 users_app = typer.Typer(help="Manage users.", no_args_is_help=True)
 
@@ -140,12 +141,17 @@ def update_user(
     data: str | None = typer.Option(
         None, "--data", help="JSON object of any further user_* fields."
     ),
+    replace: bool = REPLACE,
 ) -> None:
-    """Update a user, sending only the fields you name."""
+    """Update a user, merging the fields you name over the current record."""
     state = get_state(ctx)
-    fields = _user_fields(data, fname, lname, email)
-    confirm_write(state, f"PUT {state.client.users.url(id)}", fields)
-    output_result(state, state.client.users.update(id, **fields))
+    run_update(
+        state,
+        state.client.users,
+        id,
+        _user_fields(data, fname, lname, email),
+        replace=replace,
+    )
 
 
 @users_app.command("delete")

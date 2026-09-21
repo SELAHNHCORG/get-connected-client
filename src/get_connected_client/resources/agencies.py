@@ -30,19 +30,91 @@ class Agencies(
     10 of 10 paths, 17 of 17 operations, full coverage, nothing excluded.
     They group as:
 
-    * **CRUD** on the collection and the row -- :meth:`list`, :meth:`get`,
-      :meth:`create`, :meth:`update`, :meth:`delete`, inherited from the
-      mixins.
+    * **CRUD** on the collection and the row --
+      :meth:`~get_connected_client.resources.base.ListMixin.list`,
+      :meth:`~get_connected_client.resources.base.GetMixin.get`,
+      :meth:`~get_connected_client.resources.base.CreateMixin.create`,
+      :meth:`~get_connected_client.resources.base.UpdateMixin.update`,
+      :meth:`~get_connected_client.resources.base.DeleteMixin.delete`,
+      inherited from the mixins.
     * **Membership** sub-resources, each a read plus add/remove --
       :meth:`causes`, :meth:`clusters`, :meth:`managers` and :meth:`tags`.
 
-    :meth:`list` accepts the endpoint's standard paging filters -- see
-    :meth:`~get_connected_client.resources.base.ListMixin.list` -- ``/agencies``
-    defines no filters of its own beyond those.
+    :meth:`~get_connected_client.resources.base.ListMixin.list` accepts the
+    endpoint's standard paging filters -- ``/agencies`` defines no filters of
+    its own beyond those.
+
+    .. note::
+       ``agency_contacts`` is a list of strings on ``GET`` but a single string
+       on ``PUT``, and the spec does not say how the two relate. Sending the
+       list back would be rejected or would mangle the field, so
+       :meth:`to_request` never carries it and a merged update sends it absent
+       -- which may clear it on the server. Pass ``agency_contacts="..."``
+       explicitly to
+       :meth:`~get_connected_client.resources.base.UpdateMixin.patch` to set or
+       preserve it.
     """
 
     path = "/agencies"
     model = Agency
+    request_fields = frozenset(
+        {
+            "agency_address",
+            "agency_address2",
+            "agency_city",
+            "agency_comments",
+            "agency_contact",
+            "agency_contact_title",
+            "agency_contacts",
+            "agency_ein",
+            "agency_email",
+            "agency_facebook_link",
+            "agency_fax",
+            "agency_instagram_link",
+            "agency_link",
+            "agency_linkedin_link",
+            "agency_mission",
+            "agency_name",
+            "agency_news",
+            "agency_partner",
+            "agency_phone",
+            "agency_phone_extension",
+            "agency_postal",
+            "agency_state",
+            "agency_status",
+            "agency_twitter_link",
+            "agency_url",
+            "agency_video",
+            "agency_youtube_link",
+        }
+    )
+
+    required_fields = frozenset(
+        {
+            "agency_name",
+            "agency_postal",
+            "agency_status",
+        }
+    )
+
+    def to_request(self, obj: Agency) -> dict[str, Any]:
+        """Filter a fetched agency to the shape ``PUT /agencies/{id}`` wants.
+
+        The request schema is a subset of the read object, so the base filter
+        does nearly all the work. The one exception is ``agency_contacts``,
+        which is **left out** -- see the class note. The three required write
+        fields (``agency_name``, ``agency_status``, ``agency_postal``) are all
+        on the read object; a fetched agency missing one yields a body without
+        it, so supply it explicitly to
+        :meth:`~get_connected_client.resources.base.UpdateMixin.patch` in that
+        case.
+
+        :param obj: the fetched agency.
+        :return: the request body.
+        """
+        body = super().to_request(obj)
+        body.pop("agency_contacts", None)
+        return body
 
     # -- causes -------------------------------------------------------
 

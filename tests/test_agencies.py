@@ -17,6 +17,8 @@ from get_connected_client.models.agencies import Agency
 from get_connected_client.models.common import Cause, Cluster, Tag, UserMini
 from get_connected_client.resources.agencies import Agencies
 
+from .conftest import NOT_ENDPOINTS
+
 
 runner = CliRunner()
 
@@ -91,6 +93,59 @@ def test_agency_contacts_is_a_list():
         {"id": "1", "agency_contacts": ["mary@example.com", "kevin@example.com"]}
     )
     assert agency.agency_contacts == ["mary@example.com", "kevin@example.com"]
+
+
+def test_to_request_drops_contacts_and_read_only(client):
+    """AGENCY_ROW has no agency_postal, so this body is not a valid PUT (the
+    spec requires it); the test pins the filter, not a template request.
+    """
+    agency = Agency.model_validate(
+        {
+            **AGENCY_ROW,
+            "agency_contacts": ["a@x.org", "b@x.org"],
+            "logo": "https://img/x.png",
+            "agency_hours": "9-5",
+            "agency_latitude": "1.0",
+            "updated_at": "2024-01-01 00:00:00",
+        }
+    )
+    assert Agencies(client).to_request(agency) == {
+        "agency_name": "Helping Hands",
+        "agency_city": "Springfield",
+        "agency_state": "IL",
+        "agency_status": "active",
+    }
+
+
+def test_to_request_without_contacts(client):
+    """An agency with no contacts must not raise on the pop."""
+    assert "agency_contacts" not in Agencies(client).to_request(
+        Agency.model_validate(AGENCY_ROW)
+    )
+
+
+def test_patch_sends_filtered_body(client, api):
+    api.get("/agencies/9").respond(
+        json={"data": {**AGENCY_ROW, "agency_contacts": ["a@x.org"], "logo": "x"}}
+    )
+    route = api.put("/agencies/9").respond(json={"data": AGENCY_ROW})
+    Agencies(client).patch(9, agency_city="X")
+    assert json.loads(route.calls.last.request.content) == {
+        "agency_name": "Helping Hands",
+        "agency_city": "X",
+        "agency_state": "IL",
+        "agency_status": "active",
+    }
+
+
+def test_patch_can_set_contacts_explicitly(client, api):
+    """The class note's escape hatch: a supplied value survives the drop."""
+    api.get("/agencies/9").respond(
+        json={"data": {**AGENCY_ROW, "agency_contacts": ["a@x.org"]}}
+    )
+    route = api.put("/agencies/9").respond(json={"data": AGENCY_ROW})
+    Agencies(client).patch(9, agency_contacts="a@x.org")
+    assert json.loads(route.calls.last.request.content)["agency_contacts"] == "a@x.org"
 
 
 # --------------------------------------------------------------------------
@@ -180,12 +235,13 @@ def test_client_attaches_namespace(client):
 def test_agencies_covers_every_spec_operation():
     """Keep the class docstring's "17 operations" claim from going stale.
 
-    ``url`` is excluded: it builds paths, it is not an endpoint.
+    ``NOT_ENDPOINTS`` (``url`` and the patch helpers) are excluded: they
+    build paths or compose endpoints, they are not endpoints.
     """
     endpoints = {
         name
         for name, member in inspect.getmembers(Agencies, inspect.isfunction)
-        if not name.startswith("_") and name != "url"
+        if not name.startswith("_") and name not in NOT_ENDPOINTS
     }
     assert len(endpoints) == 17
 
@@ -270,6 +326,7 @@ def test_cli_create_confirmed(api, cli_env):
 
 
 def test_cli_update_merges_data(api, cli_env):
+    api.get("/agencies/9").respond(json={"data": AGENCY_ROW})
     route = api.put("/agencies/9").respond(json={"data": AGENCY_ROW})
     result = runner.invoke(
         app,
@@ -288,6 +345,8 @@ def test_cli_update_merges_data(api, cli_env):
     assert json.loads(route.calls.last.request.content) == {
         "agency_name": "Helping Hands",
         "agency_city": "X",
+        "agency_state": "IL",
+        "agency_status": "active",
     }
 
 

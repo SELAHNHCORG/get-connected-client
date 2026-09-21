@@ -26,7 +26,8 @@ class Clusters(
 
     ``GET /clusters`` declares no query parameters at all in the spec -- not
     even the usual paging trio ``per_page``/``since_id``/``since_created`` --
-    unlike every other list endpoint in this API. :meth:`list` still accepts
+    unlike every other list endpoint in this API.
+    :meth:`~get_connected_client.resources.base.ListMixin.list` still accepts
     them, for the same call signature as every other namespace; any
     unrecognized parameter is simply not documented as doing anything.
     """

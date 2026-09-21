@@ -49,9 +49,13 @@ class Users(
     paths, 32 of 34 operations, one method apiece. Rather than enumerate the rest here
     (a list that rots the moment one is added), they group as:
 
-    * **CRUD** on the collection and the row -- :meth:`list`, :meth:`get`,
-      :meth:`create`, :meth:`update`, :meth:`delete`, inherited from the
-      mixins.
+    * **CRUD** on the collection and the row --
+      :meth:`~get_connected_client.resources.base.ListMixin.list`,
+      :meth:`~get_connected_client.resources.base.GetMixin.get`,
+      :meth:`~get_connected_client.resources.base.CreateMixin.create`,
+      :meth:`~get_connected_client.resources.base.UpdateMixin.update`,
+      :meth:`~get_connected_client.resources.base.DeleteMixin.delete`,
+      inherited from the mixins.
     * **Membership** sub-resources, each a read plus add/remove --
       :meth:`agencies`, :meth:`causes`, :meth:`interests` and :meth:`tags`,
       with :meth:`benchmarks` read-and-remove only.
@@ -63,8 +67,8 @@ class Users(
       :meth:`optouts`/:meth:`add_optout`/:meth:`remove_optout`.
     * **Actions** -- :meth:`send_welcome_email` and :meth:`oneclick`.
 
-    :meth:`list` accepts the endpoint's own filters on top of the standard
-    paging ones::
+    :meth:`~get_connected_client.resources.base.ListMixin.list` accepts the
+    endpoint's own filters on top of the standard paging ones::
 
         client.users.list(user_status="active", user_email_like="@example.com")
 
@@ -75,6 +79,47 @@ class Users(
 
     path = "/users"
     model = User
+    request_fields = frozenset(
+        {
+            "user_address",
+            "user_address2",
+            "user_age_range",
+            "user_birthday",
+            "user_city",
+            "user_comments",
+            "user_company",
+            "user_company_title",
+            "user_country",
+            "user_county",
+            "user_department",
+            "user_disaster",
+            "user_email",
+            "user_ethnicity",
+            "user_fname",
+            "user_gender",
+            "user_grad_semester",
+            "user_grad_year",
+            "user_lname",
+            "user_mname",
+            "user_notes",
+            "user_phone",
+            "user_phone_cell",
+            "user_postal",
+            "user_reference_id",
+            "user_state",
+            "user_status",
+            "user_username",
+        }
+    )
+
+    required_fields = frozenset(
+        {
+            "user_email",
+            "user_fname",
+            "user_lname",
+            "user_status",
+        }
+    )
 
     # -- agencies ---------------------------------------------------------
 

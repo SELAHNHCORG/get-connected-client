@@ -1,7 +1,7 @@
 """``galaxy events`` -- the /events endpoints on the command line.
 
 Every command that changes anything on the server goes through
-:func:`~get_connected_client.cli._confirm.confirm_write` first.
+:mod:`~get_connected_client.cli._confirm` first.
 
 The paths shown in those prompts are built with the resource's own
 :meth:`~get_connected_client.resources.base.Resource.url`, never hand-typed, so
@@ -24,6 +24,7 @@ from ..client import MAX_PER_PAGE
 from ._confirm import confirm_write
 from ._output import output, output_one, output_result
 from ._state import _merge_fields, get_state, handle_errors
+from ._update import REPLACE, run_update
 
 events_app = typer.Typer(help="Manage events.", no_args_is_help=True)
 
@@ -122,12 +123,17 @@ def update_event(
     data: str | None = typer.Option(
         None, "--data", help="JSON object of any further event_* fields."
     ),
+    replace: bool = REPLACE,
 ) -> None:
-    """Update an event, sending only the fields you name."""
+    """Update an event, merging the fields you name over the current record."""
     state = get_state(ctx)
-    fields = _event_fields(data, title, description)
-    confirm_write(state, f"PUT {state.client.events.url(id)}", fields)
-    output_result(state, state.client.events.update(id, **fields))
+    run_update(
+        state,
+        state.client.events,
+        id,
+        _event_fields(data, title, description),
+        replace=replace,
+    )
 
 
 @events_app.command("delete")

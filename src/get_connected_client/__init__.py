@@ -45,15 +45,18 @@ from .exceptions import (
     ReadOnlyError,
     ValidationFailedError,
 )
+from .resources.base import Change, PatchPlan
 
 __all__ = [
     "AuthError",
+    "Change",
     "GalaxyClient",
     "GalaxyConnectionError",
     "GalaxyError",
     "GalaxyHTTPError",
     "MissingAPIKeyError",
     "NotFoundError",
+    "PatchPlan",
     "RateLimitError",
     "ReadOnlyError",
     "ValidationFailedError",

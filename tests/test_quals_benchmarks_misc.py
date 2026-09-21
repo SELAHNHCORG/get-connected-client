@@ -32,6 +32,7 @@ from get_connected_client.resources.benchmarks import Benchmarks
 from get_connected_client.resources.misc import Clusters, Lookups
 from get_connected_client.resources.qualifications import Qualifications
 
+from .conftest import NOT_ENDPOINTS
 from .test_agencies import _COVERED_AGENCIES_PATHS
 from .test_events_hours import _COVERED_EVENTS_PATHS, _COVERED_HOURS_PATHS
 from .test_needs import _COVERED_NEEDS_PATHS
@@ -197,7 +198,7 @@ def test_qualifications_covers_every_spec_operation():
     endpoints = {
         name
         for name, member in inspect.getmembers(Qualifications, inspect.isfunction)
-        if not name.startswith("_") and name != "url"
+        if not name.startswith("_") and name not in NOT_ENDPOINTS
     }
     assert len(endpoints) == 6
 
@@ -254,6 +255,14 @@ def test_benchmarks_crud(client, api):
     assert removed.called
 
 
+def test_benchmark_to_request_stringifies_group_id(client):
+    """benchmark_group_id is int on the model but `type: string` on the PUT."""
+    body = Benchmarks(client).to_request(
+        Benchmark.model_validate({**BENCHMARK_ROW, "benchmark_group_id": 3})
+    )
+    assert body["benchmark_group_id"] == "3"
+
+
 def test_benchmarks_list_show_inactive_is_sent(client, api):
     route = api.get("/benchmarks").respond(json={"data": [BENCHMARK_ROW]})
     rows = list(Benchmarks(client).list(show_inactive=True))
@@ -282,7 +291,7 @@ def test_benchmarks_covers_every_spec_operation():
     endpoints = {
         name
         for name, member in inspect.getmembers(Benchmarks, inspect.isfunction)
-        if not name.startswith("_") and name != "url"
+        if not name.startswith("_") and name not in NOT_ENDPOINTS
     }
     assert len(endpoints) == 6
 
@@ -348,7 +357,7 @@ def test_clusters_covers_every_spec_operation():
     endpoints = {
         name
         for name, member in inspect.getmembers(Clusters, inspect.isfunction)
-        if not name.startswith("_") and name != "url"
+        if not name.startswith("_") and name not in NOT_ENDPOINTS
     }
     assert len(endpoints) == 3
 
@@ -418,7 +427,7 @@ def test_lookups_covers_every_spec_operation():
     endpoints = {
         name
         for name, member in inspect.getmembers(Lookups, inspect.isfunction)
-        if not name.startswith("_") and name != "url"
+        if not name.startswith("_") and name not in NOT_ENDPOINTS
     }
     assert len(endpoints) == 4
 
@@ -536,7 +545,7 @@ def test_auth_covers_every_spec_operation():
     endpoints = {
         name
         for name, member in inspect.getmembers(Auth, inspect.isfunction)
-        if not name.startswith("_") and name != "url"
+        if not name.startswith("_") and name not in NOT_ENDPOINTS
     }
     assert len(endpoints) == 2
 
@@ -640,6 +649,7 @@ def test_cli_qualifications_create_confirmed(api, cli_env):
 
 
 def test_cli_qualifications_update_merges_data(api, cli_env):
+    api.get("/qualifications/11").respond(json={"data": QUALIFICATION_ROW})
     route = api.put("/qualifications/11").respond(json={"data": QUALIFICATION_ROW})
     result = runner.invoke(
         app,
@@ -654,7 +664,9 @@ def test_cli_qualifications_update_merges_data(api, cli_env):
     )
     assert result.exit_code == 0, result.output
     assert json.loads(route.calls.last.request.content) == {
-        "qualification_status": "inactive"
+        "qualification_title": "Background Check",
+        "qualification_status": "inactive",
+        "qualification_type": "select",
     }
 
 
@@ -725,6 +737,7 @@ def test_cli_benchmarks_create_confirmed(api, cli_env):
 
 
 def test_cli_benchmarks_update_merges_data(api, cli_env):
+    api.get("/benchmarks/5").respond(json={"data": BENCHMARK_ROW})
     route = api.put("/benchmarks/5").respond(json={"data": BENCHMARK_ROW})
     result = runner.invoke(
         app,
@@ -739,7 +752,9 @@ def test_cli_benchmarks_update_merges_data(api, cli_env):
     )
     assert result.exit_code == 0, result.output
     assert json.loads(route.calls.last.request.content) == {
-        "benchmark_status": "inactive"
+        "benchmark_status": "inactive",
+        "benchmark_title": "10 Hours",
+        "benchmark_hours": "10",
     }
 
 
