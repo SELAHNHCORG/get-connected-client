@@ -131,6 +131,57 @@ def test_event_patch_sends_event_tags(client, api):
 # mapping for CRUD is retested here.
 
 
+def test_hour_to_request_derives_ids_and_start(client):
+    hour = Hour.model_validate(
+        {
+            **HOUR_ROW,
+            "user": {"id": "5", "user_fname": "Ada"},
+            "need": {"id": "42", "need_title": "Park Cleanup"},
+            "groups": [{"id": "9", "group_title": "Rotary"}, {"group_title": "No id"}],
+            "hour_date_end": "2024-03-01 11:00:00",
+            "hour_description": "Raking",
+            "hour_type": "need",
+        }
+    )
+    assert Hours(client).to_request(hour) == {
+        "hour_hours": "3",
+        "hour_status": "approved",
+        "hour_start": "2024-03-01 08:00:00",
+        "user_id": "5",
+        "group_ids": ["9"],
+    }
+
+
+def test_hour_to_request_without_nested_objects(client):
+    assert Hours(client).to_request(Hour.model_validate(HOUR_ROW)) == {
+        "hour_hours": "3",
+        "hour_status": "approved",
+        "hour_start": "2024-03-01 08:00:00",
+    }
+
+
+def test_hour_to_request_without_hour_date_start(client):
+    """No ``hour_date_start`` on the read object -- no ``hour_start`` key."""
+    row = {k: v for k, v in HOUR_ROW.items() if k != "hour_date_start"}
+    body = Hours(client).to_request(Hour.model_validate(row))
+    assert "hour_start" not in body
+
+
+def test_hour_patch_sends_derived_body(client, api):
+    api.get("/hours/7").respond(
+        json={"data": {**HOUR_ROW, "user": {"id": "5"}, "groups": {"id": "9"}}}
+    )
+    route = api.put("/hours/7").respond(json={"data": HOUR_ROW})
+    Hours(client).patch(7, hour_status="denied")
+    assert json.loads(route.calls.last.request.content) == {
+        "hour_hours": "3",
+        "hour_status": "denied",
+        "hour_start": "2024-03-01 08:00:00",
+        "user_id": "5",
+        "group_ids": ["9"],
+    }
+
+
 # --------------------------------------------------------------------------
 # resource: URL + verb mapping -- events
 # --------------------------------------------------------------------------

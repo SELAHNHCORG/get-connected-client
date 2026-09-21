@@ -193,6 +193,56 @@ def test_group_patch_sends_filtered_body(client, api):
     }
 
 
+def test_response_to_request_derives_ids(client):
+    response = Response.model_validate(
+        {
+            **RESPONSE_ROW,
+            "need": {"id": "42", "need_title": "Park Cleanup"},
+            "user": {"id": "5", "user_fname": "Ada"},
+            "shift": {"id": "77", "start": "2024-03-01 08:00:00"},
+            "team": {"id": "3", "team_name": "Crew"},
+            "agency": {"id": "9", "agency_name": "HH"},
+            "response_note": "Bring gloves",
+            "answers": [{"key": "q1", "answer": "yes"}],
+        }
+    )
+    assert Responses(client).to_request(response) == {
+        "response_date_added": "2024-03-01 12:00:00",
+        "response_note": "Bring gloves",
+        "need_id": "42",
+        "user_id": "5",
+        "schedule_ids": ["77"],
+        "team_id": "3",
+    }
+
+
+def test_response_to_request_without_nested_objects(client):
+    body = Responses(client).to_request(Response.model_validate(RESPONSE_ROW))
+    assert body == {"response_date_added": "2024-03-01 12:00:00"}
+
+
+def test_response_patch_sends_derived_body(client, api):
+    api.get("/responses/7").respond(
+        json={
+            "data": {
+                **RESPONSE_ROW,
+                "need": {"id": "42"},
+                "user": {"id": "5"},
+                "shift": {"id": "77"},
+            }
+        }
+    )
+    route = api.put("/responses/7").respond(json={"data": RESPONSE_ROW})
+    Responses(client).patch(7, response_note="Bring gloves and hat")
+    assert json.loads(route.calls.last.request.content) == {
+        "response_date_added": "2024-03-01 12:00:00",
+        "response_note": "Bring gloves and hat",
+        "need_id": "42",
+        "user_id": "5",
+        "schedule_ids": ["77"],
+    }
+
+
 # --------------------------------------------------------------------------
 # resource: responses -- URL + verb mapping
 # --------------------------------------------------------------------------

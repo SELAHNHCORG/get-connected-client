@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from ..models.hours import Hour
 from .base import (
     CreateMixin,
@@ -51,3 +53,30 @@ class Hours(
             "user_id",
         }
     )
+
+    def to_request(self, obj: Hour) -> dict[str, Any]:
+        """Flatten a fetched hour record into the shape ``PUT /hours/{id}`` wants.
+
+        The request schema names the volunteer as ``user_id``, the groups as
+        ``group_ids`` and the start as ``hour_start``; the read object nests
+        the first two and calls the third ``hour_date_start``. Ids are sent
+        as strings; a group with no id is skipped.
+
+        ``response_id`` has no counterpart on the read object (which carries
+        a ``need`` object the PUT does not take), so a merged update always
+        sends it absent; pass ``response_id=`` explicitly to :meth:`patch`
+        to set it. ``hour_start`` is required by the PUT, so a fetched record
+        with no ``hour_date_start`` yields a body without it and the caller
+        must supply it.
+
+        :param obj: the fetched hour record.
+        :return: the request body.
+        """
+        body = super().to_request(obj)
+        if obj.hour_date_start is not None:
+            body["hour_start"] = obj.hour_date_start
+        if obj.user is not None and obj.user.id is not None:
+            body["user_id"] = str(obj.user.id)
+        if obj.groups is not None:
+            body["group_ids"] = [str(g.id) for g in obj.groups if g.id is not None]
+        return body
