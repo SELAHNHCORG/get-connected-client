@@ -57,7 +57,9 @@ class Needs(
        one combined ``start`` datetime rather than a separate date/time
        pair. :meth:`add_shift` keeps the friendlier separate
        ``start_date``/``start_time`` arguments and joins them into ``start``
-       to match what the endpoint actually expects on the wire.
+       to match what the endpoint actually expects on the wire. For the
+       same reason :meth:`to_request` never carries a fetched need's shifts
+       into a merged update.
     """
 
     path = "/needs"
@@ -101,6 +103,35 @@ class Needs(
             "virtual_need",
         }
     )
+
+    def to_request(self, obj: Need) -> dict[str, Any]:
+        """Flatten a fetched need into the shape ``PUT /needs/{id}`` wants.
+
+        The read object nests what the request schema takes flat:
+        ``agency``/``initiative`` objects become ``agency_id``/
+        ``initiative_id``, ``tags`` objects become their names, ``groups``
+        objects become their ids. All ids are sent as strings.
+
+        ``shifts`` is deliberately **left out**: the read shape
+        (``shiftObject``) does not match ``shiftRequestSchema``, and
+        resending shifts on every update risks duplicating rows that
+        :meth:`add_shift`/:meth:`remove_shift` already manage. Pass
+        ``shifts=[...]`` explicitly to :meth:`patch` if you mean to.
+
+        :param obj: the fetched need.
+        :return: the request body.
+        """
+        body = super().to_request(obj)
+        body.pop("shifts", None)
+        if obj.agency is not None and obj.agency.id is not None:
+            body["agency_id"] = str(obj.agency.id)
+        if obj.initiative is not None and obj.initiative.id is not None:
+            body["initiative_id"] = str(obj.initiative.id)
+        if obj.tags is not None:
+            body["tags"] = [t.name for t in obj.tags if t.name]
+        if obj.groups is not None:
+            body["groups"] = [str(g.id) for g in obj.groups if g.id is not None]
+        return body
 
     # -- responses ----------------------------------------------------
 
