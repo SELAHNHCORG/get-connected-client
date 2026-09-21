@@ -322,3 +322,92 @@ set the same field.
 
 ``clusters create`` is the exception: the endpoint takes a name and nothing
 else, so it offers ``--name`` alone.
+
+.. _cli-updates-are-merged:
+
+Updates are merged
+------------------
+
+The API's ``PUT`` replaces the whole record: every field its request
+schema marks required must be present, whatever the record already holds.
+Sending only ``--data '{"user_notes": "..."}'`` on a user would be
+answered with a 422 naming ``user_email``, ``user_fname``, ``user_lname``
+and ``user_status`` as missing.
+
+So every ``update`` command first fetches the record, converts it into a
+request body, lays the fields you named over it, and sends the
+result. The confirmation prompt shows only what changes:
+
+.. code-block:: text
+
+   $ galaxy users update 8821 --data '{"user_notes": "Prefers mornings."}'
+   About to write to the API: PUT /users/8821 (merged over the current record)
+   field        current   new
+   user_notes   (none)    Prefers mornings.
+   Proceed? [y/N]:
+
+Long values are folded across as many lines as they take, never cut
+short: you are approving exactly what will be sent.
+
+If the merged body still lacks a field the API marks required -- because
+the record did not carry it and you did not name it -- a warning naming
+those fields is printed to stderr before the prompt, and under ``--yes``
+too. The write is not blocked: the API is the authority, and its answer
+is shown as usual.
+
+If nothing you named differs from what the record already holds, nothing
+is written: the command says so on stderr and exits 0. Naming no fields
+at all does the same, without even fetching. Under ``--format json``
+both cases print ``{"changes": []}`` on stdout, so a pipe still gets
+parseable output.
+
+``--replace`` skips the fetch and the merge and sends exactly the fields
+you gave as the whole body. It still warns about required fields that
+body lacks, and the API rejects a body missing any. Use it when you
+already hold a complete body, or when the merge gets in your way.
+
+``--data`` may not set ``id``: the record is chosen by the ID argument.
+
+What the merge cannot do
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The API's read and write shapes disagree in a few places, so some fields
+cannot be carried from the fetched record into the body. Each is
+documented on the resource class in the :doc:`API reference <api>`; in
+brief:
+
+* ``groups update`` still needs ``ug_type`` (``gc`` or ``slm``) in
+  ``--data``: the API requires it on every write and never returns it,
+  so a merged update without it is answered with a 422.
+* ``needs update`` never carries the record's shifts -- the read shape
+  does not match the write shape, and resending them risks duplicating
+  rows that ``needs add-shift`` / ``needs remove-shift`` manage.
+  ``virtual_need``, ``need_hours_description``, ``event_id``,
+  ``interests`` and ``attributes`` exist only on the write side and are
+  sent absent unless you name them. ``agency_id`` is derived from the
+  fetched need's ``agency``; if the record has none, name it yourself.
+* ``agencies update`` never carries ``agency_contacts`` (a list of
+  strings on read, a single string on write, with no documented
+  relationship between the two), so a merged update may clear it. Pass
+  ``agency_contacts`` explicitly to set or preserve it.
+* ``events update`` sends ``event_capacity``, ``event_contact``,
+  ``event_country`` and ``event_phone`` absent unless you name them:
+  they exist only on the write side. ``event_area`` and
+  ``event_area_id`` are carried from the record when it has them, and
+  must be named when it does not.
+* ``hours update`` cannot carry ``response_id``, which ``GET`` never
+  returns, so a merged update on an hour logged against a need may
+  detach it from its response. Find the id among that need's responses
+  (``galaxy needs responses <need-id>``, matched on the volunteer) and
+  pass it with ``--response-id``.
+* ``responses update`` derives ``schedule_ids`` from the record's single
+  ``shift``. A response to a need with no shifts therefore cannot be
+  merged -- there is no id to supply and the API answers 422 -- and a
+  response covering several shifts must name ``schedule_ids`` itself.
+  Answers to custom questions cannot be preserved either: the record's
+  ``answers`` are a different shape from the write side's
+  ``questions``, so pass ``questions`` if the response has any.
+  ``response_phone`` and ``response_address`` are returned by ``GET``
+  but appear nowhere in the request schema, so the API offers no way to
+  update them at all. ``response_date_added`` is re-sent when the record
+  carries it, since omitting it resets the sign-up date to now.

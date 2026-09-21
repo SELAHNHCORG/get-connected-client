@@ -226,3 +226,25 @@ to stdout so scripts can detect it.
   so a need can be linked to an event on write only. Nothing to do here, but
   it corrects the earlier finding that needs and events are unrelated.
 - A per-key `set_extras` / typed patch for sub-resources.
+
+## Amendments (2026-09-21, from implementation review)
+
+- **Required-field diagnostics, not validation.** The non-goal above ruled out
+  client-side *validation*. What shipped is an informational
+  `Resource.required_fields` (each PUT schema's `required` list, checked
+  against `doc/api.yml` by `tests/test_request_fields.py`) and
+  `PatchPlan.missing_required` (fields the merged body lacks). Nothing refuses
+  a write: `prepare_patch`/`patch` always send, and the CLI prints a yellow
+  stderr warning naming the fields (also under `--yes` and `--replace`) and
+  still asks to proceed. The API remains the authority and its 422 is
+  surfaced unchanged.
+- **Prompt values are folded, never truncated.** The CLI section said long
+  values are truncated; `confirm_patch` uses `overflow="fold"` on every
+  column so the operator approves exactly what is sent.
+- **Also added during review:** shared `_id_str`/`_id_strs`/`_names` helpers
+  and a top-level int→str `_wire` pass in `Resource.to_request` (every scalar
+  request property in the spec is `type: string`; guarded by a test);
+  `run_update` rejects an `id` key in `--data` and exits early with "Nothing
+  to update" when no field is named; fully-qualified Sphinx xrefs to mixin
+  members; class-level `.. note::` hazards on `Hours`, `Responses`,
+  `Agencies`, `Groups`, `Needs` for anything a merge cannot carry.

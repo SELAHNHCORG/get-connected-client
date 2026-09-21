@@ -4,13 +4,13 @@
     {
       "id": 1,
       "subject": "Task 1: Base mechanism \u2014 request_fields, to_request, PatchPlan, prepare_patch, patch",
-      "status": "pending",
+      "status": "completed",
       "description": "**Goal:** Generic read-translate-overlay machinery on Resource/UpdateMixin, exported; update docstring corrected.\n\n**Files:** src/get_connected_client/resources/base.py, src/get_connected_client/__init__.py, tests/test_resources_base.py\n\n**Verify:** just test tests/test_resources_base.py\n\n```json:metadata\n{\"files\": [\"src/get_connected_client/resources/base.py\", \"src/get_connected_client/__init__.py\", \"tests/test_resources_base.py\"], \"verifyCommand\": \"just test tests/test_resources_base.py\", \"acceptanceCriteria\": [\"to_request filters to request_fields and drops None\", \"prepare_patch returns PatchPlan with changes; int vs numeric string is not a change\", \"patch PUTs plan.body\", \"Change and PatchPlan importable from package root\"]}\n```"
     },
     {
       "id": 2,
       "subject": "Task 2: request_fields on all nine updatable resources + spec conformance test",
-      "status": "pending",
+      "status": "completed",
       "description": "**Goal:** Every UpdateMixin resource declares its PUT schema property names; tests/test_request_fields.py proves each matches doc/api.yml.\n\n**Files:** src/get_connected_client/resources/users.py, src/get_connected_client/resources/needs.py, src/get_connected_client/resources/events.py, src/get_connected_client/resources/groups.py, src/get_connected_client/resources/hours.py, src/get_connected_client/resources/responses.py, src/get_connected_client/resources/agencies.py, src/get_connected_client/resources/qualifications.py, src/get_connected_client/resources/benchmarks.py, tests/test_request_fields.py\n\n**Verify:** just test tests/test_request_fields.py\n\n```json:metadata\n{\"files\": [\"src/get_connected_client/resources/users.py\", \"src/get_connected_client/resources/needs.py\", \"src/get_connected_client/resources/events.py\", \"src/get_connected_client/resources/groups.py\", \"src/get_connected_client/resources/hours.py\", \"src/get_connected_client/resources/responses.py\", \"src/get_connected_client/resources/agencies.py\", \"src/get_connected_client/resources/qualifications.py\", \"src/get_connected_client/resources/benchmarks.py\", \"tests/test_request_fields.py\"], \"verifyCommand\": \"just test tests/test_request_fields.py\", \"acceptanceCriteria\": [\"nine request_fields sets equal the spec's *RequestSchema properties\", \"every UpdateMixin subclass is covered by the test\"]}\n```",
       "blockedBy": [
         1
@@ -19,7 +19,7 @@
     {
       "id": 3,
       "subject": "Task 3: Needs translation",
-      "status": "pending",
+      "status": "completed",
       "description": "**Goal:** Needs.to_request flattens agency/initiative/tags/groups and leaves shifts out.\n\n**Files:** src/get_connected_client/resources/needs.py, tests/test_needs.py\n\n**Verify:** just test tests/test_needs.py -k to_request\n\n```json:metadata\n{\"files\": [\"src/get_connected_client/resources/needs.py\", \"tests/test_needs.py\"], \"verifyCommand\": \"just test tests/test_needs.py -k to_request\", \"acceptanceCriteria\": [\"agency_id/initiative_id strings\", \"tags names, groups id strings\", \"shifts and read-only keys absent\"]}\n```",
       "blockedBy": [
         2
@@ -28,7 +28,7 @@
     {
       "id": 4,
       "subject": "Task 4: Events and Groups translation",
-      "status": "pending",
+      "status": "completed",
       "description": "**Goal:** Events.to_request emits event_tags; Groups documents the ug_type gap.\n\n**Files:** src/get_connected_client/resources/events.py, src/get_connected_client/resources/groups.py, tests/test_events_hours.py, tests/test_responses_teams_groups.py\n\n**Verify:** just test tests/test_events_hours.py tests/test_responses_teams_groups.py -k to_request\n\n```json:metadata\n{\"files\": [\"src/get_connected_client/resources/events.py\", \"src/get_connected_client/resources/groups.py\", \"tests/test_events_hours.py\", \"tests/test_responses_teams_groups.py\"], \"verifyCommand\": \"just test tests/test_events_hours.py tests/test_responses_teams_groups.py -k to_request\", \"acceptanceCriteria\": [\"event tags -> event_tags names\", \"group membership lists dropped, ug_type not invented\", \"Groups docstring notes ug_type\"]}\n```",
       "blockedBy": [
         2
@@ -37,7 +37,7 @@
     {
       "id": 5,
       "subject": "Task 5: Hours and Responses translation",
-      "status": "pending",
+      "status": "completed",
       "description": "**Goal:** Hours/Responses.to_request derive user/need/shift/team/group ids and hour_start.\n\n**Files:** src/get_connected_client/resources/hours.py, src/get_connected_client/resources/responses.py, tests/test_events_hours.py, tests/test_responses_teams_groups.py\n\n**Verify:** just test tests/test_events_hours.py tests/test_responses_teams_groups.py -k to_request\n\n```json:metadata\n{\"files\": [\"src/get_connected_client/resources/hours.py\", \"src/get_connected_client/resources/responses.py\", \"tests/test_events_hours.py\", \"tests/test_responses_teams_groups.py\"], \"verifyCommand\": \"just test tests/test_events_hours.py tests/test_responses_teams_groups.py -k to_request\", \"acceptanceCriteria\": [\"hour: user_id, group_ids, hour_start derived\", \"response: need_id, user_id, schedule_ids, team_id derived\"]}\n```",
       "blockedBy": [
         2
@@ -46,7 +46,7 @@
     {
       "id": 6,
       "subject": "Task 6: Agencies translation",
-      "status": "pending",
+      "status": "completed",
       "description": "**Goal:** Agencies.to_request leaves agency_contacts out of the merge base.\n\n**Files:** src/get_connected_client/resources/agencies.py, tests/test_agencies.py\n\n**Verify:** just test tests/test_agencies.py -k to_request\n\n```json:metadata\n{\"files\": [\"src/get_connected_client/resources/agencies.py\", \"tests/test_agencies.py\"], \"verifyCommand\": \"just test tests/test_agencies.py -k to_request\", \"acceptanceCriteria\": [\"agency_contacts and read-only keys absent\", \"plain agency_* fields carried\"]}\n```",
       "blockedBy": [
         2
@@ -55,7 +55,7 @@
     {
       "id": 7,
       "subject": "Task 7: CLI helper (run_update, confirm_patch) and users update",
-      "status": "pending",
+      "status": "completed",
       "description": "**Goal:** Shared merged-update flow for the CLI wired into galaxy users update with prompt/no-change/--replace/decline tests.\n\n**Files:** src/get_connected_client/cli/_update.py, src/get_connected_client/cli/_confirm.py, src/get_connected_client/cli/users.py, tests/test_users.py\n\n**Verify:** just test tests/test_users.py -k cli_update\n\n```json:metadata\n{\"files\": [\"src/get_connected_client/cli/_update.py\", \"src/get_connected_client/cli/_confirm.py\", \"src/get_connected_client/cli/users.py\", \"tests/test_users.py\"], \"verifyCommand\": \"just test tests/test_users.py -k cli_update\", \"acceptanceCriteria\": [\"merged body sent after GET\", \"prompt lists only changed fields\", \"no changes -> exit 0, no PUT, JSON form {\\\"changes\\\": []}\", \"--replace sends raw body with no GET\", \"decline makes no PUT\"]}\n```",
       "blockedBy": [
         1
@@ -64,7 +64,7 @@
     {
       "id": 8,
       "subject": "Task 8: Wire the other eight update commands",
-      "status": "pending",
+      "status": "completed",
       "description": "**Goal:** All remaining update commands use run_update; existing CLI tests updated; needs translation covered end to end.\n\n**Files:** src/get_connected_client/cli/agencies.py, src/get_connected_client/cli/needs.py, src/get_connected_client/cli/events.py, src/get_connected_client/cli/hours.py, src/get_connected_client/cli/responses.py, src/get_connected_client/cli/groups.py, src/get_connected_client/cli/qualifications.py, src/get_connected_client/cli/benchmarks.py, tests/test_agencies.py, tests/test_needs.py, tests/test_events_hours.py, tests/test_responses_teams_groups.py, tests/test_quals_benchmarks_misc.py\n\n**Verify:** just test\n\n```json:metadata\n{\"files\": [\"src/get_connected_client/cli/agencies.py\", \"src/get_connected_client/cli/needs.py\", \"src/get_connected_client/cli/events.py\", \"src/get_connected_client/cli/hours.py\", \"src/get_connected_client/cli/responses.py\", \"src/get_connected_client/cli/groups.py\", \"src/get_connected_client/cli/qualifications.py\", \"src/get_connected_client/cli/benchmarks.py\", \"tests/test_agencies.py\", \"tests/test_needs.py\", \"tests/test_events_hours.py\", \"tests/test_responses_teams_groups.py\", \"tests/test_quals_benchmarks_misc.py\"], \"verifyCommand\": \"just test\", \"acceptanceCriteria\": [\"every update accepts --replace and calls run_update\", \"eight rewritten tests assert merged bodies\", \"needs nested translation CLI test passes\", \"full suite green\"]}\n```",
       "blockedBy": [
         3,
@@ -77,12 +77,12 @@
     {
       "id": 9,
       "subject": "Task 9: Documentation",
-      "status": "pending",
+      "status": "completed",
       "description": "**Goal:** cli.rst 'Updates are merged' section; quickstart patch example; docs build clean.\n\n**Files:** doc/source/cli.rst, doc/source/quickstart.rst\n\n**Verify:** just check-docs\n\n```json:metadata\n{\"files\": [\"doc/source/cli.rst\", \"doc/source/quickstart.rst\"], \"verifyCommand\": \"just check-docs\", \"acceptanceCriteria\": [\"section covers merge, --replace, no-change exit, three caveats\", \"patch example in quickstart\", \"doc8 clean, sphinx builds\"]}\n```",
       "blockedBy": [
         8
       ]
     }
   ],
-  "lastUpdated": "2026-09-21T06:20:11.033521+00:00"
+  "lastUpdated": "2026-09-21T09:18:20.648404+00:00"
 }
