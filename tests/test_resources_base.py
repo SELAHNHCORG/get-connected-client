@@ -1,5 +1,8 @@
 import json
 
+import pytest
+
+from get_connected_client.exceptions import NotFoundError
 from get_connected_client.models.common import Tag
 from get_connected_client.resources.base import (
     Change,
@@ -83,10 +86,15 @@ def test_sublist_404_empty(client, api):
 
 
 class RequestWidgets(Widgets):
-    """Widgets with a request allowlist: `name` is writable, `id` is not."""
+    """Widgets with a request allowlist: `name`/`tags` are writable, `id` is not.
+
+    `tags` is not a declared field of `Tag`; `GalaxyModel`'s `extra="allow"`
+    lets it round-trip through `to_request` untouched, which is what lets
+    the tests below exercise `_same`'s list handling.
+    """
 
     path = "/rwidgets"
-    request_fields = frozenset({"name"})
+    request_fields = frozenset({"name", "tags"})
 
 
 def test_to_request_default_keeps_nothing(client):
@@ -127,10 +135,49 @@ def test_prepare_patch_int_and_numeric_string_are_same(client, api):
     assert plan.changes == []
 
 
+def test_prepare_patch_float_and_numeric_string_are_same(client, api):
+    api.get("/rwidgets/5").respond(json={"data": {"id": 5, "name": "1"}})
+    plan = RequestWidgets(client).prepare_patch(5, name=1.0)
+    assert plan.changes == []
+
+
+def test_prepare_patch_bool_and_string_true_is_a_change(client, api):
+    """Booleans must not fall into the numeric/string equivalence."""
+    api.get("/rwidgets/5").respond(json={"data": {"id": 5, "name": "True"}})
+    plan = RequestWidgets(client).prepare_patch(5, name=True)
+    assert plan.changes == [Change(field="name", old="True", new=True)]
+
+
+def test_prepare_patch_list_of_numeric_strings_is_not_a_change(client, api):
+    """A list of ids as strings must match the same ids supplied as ints."""
+    api.get("/rwidgets/5").respond(json={"data": {"id": 5, "tags": ["1", "2"]}})
+    plan = RequestWidgets(client).prepare_patch(5, tags=[1, 2])
+    assert plan.changes == []
+
+
+def test_prepare_patch_list_with_different_values_is_a_change(client, api):
+    api.get("/rwidgets/5").respond(json={"data": {"id": 5, "tags": ["1", "3"]}})
+    plan = RequestWidgets(client).prepare_patch(5, tags=["1", "2"])
+    assert plan.changes == [Change(field="tags", old=["1", "3"], new=["1", "2"])]
+
+
+def test_prepare_patch_requires_request_fields(client, api):
+    """A resource with no allowlist has no base for prepare_patch to merge over."""
+    with pytest.raises(NotImplementedError):
+        Widgets(client).prepare_patch(5, name="x")
+    assert not api.calls
+
+
+def test_prepare_patch_propagates_not_found(client, api):
+    api.get("/rwidgets/5").respond(status_code=404)
+    with pytest.raises(NotFoundError):
+        RequestWidgets(client).prepare_patch(5, name="new")
+
+
 def test_prepare_patch_makes_no_write(client, api):
     api.get("/rwidgets/5").respond(json={"data": {"id": 5, "name": "old"}})
     RequestWidgets(client).prepare_patch(5, name="new")
-    assert all(c.request.method == "GET" for c in api.calls)
+    assert [c.request.method for c in api.calls] == ["GET"]
 
 
 def test_patch_puts_merged_body(client, api):

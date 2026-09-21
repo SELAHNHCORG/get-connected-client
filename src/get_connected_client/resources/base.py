@@ -38,6 +38,9 @@ class PatchPlan:
     fields laid over it -- the exact JSON a following PUT sends; ``changes``
     lists the supplied fields whose value differs from ``current``, in the
     order they were supplied.
+
+    The plan is deliberately mutable: a caller may adjust ``body`` before
+    handing it to :meth:`UpdateMixin.update`.
     """
 
     current: dict[str, Any]
@@ -49,9 +52,12 @@ def _same(a: Any, b: Any) -> bool:
     """True when *a* and *b* mean the same thing on the wire.
 
     The API sends numeric ids as strings, so a caller's ``42`` must not read
-    as a change against a stored ``"42"``. Booleans are excluded from the
-    string comparison so ``True`` never equals ``"True"``.
+    as a change against a stored ``"42"``, nor ``[1, 2]`` against
+    ``["1", "2"]``. Numerics compare numerically (``1.0`` equals ``"1"``);
+    booleans are excluded so ``True`` never equals ``"True"``.
     """
+    if isinstance(a, (list, tuple)) and isinstance(b, (list, tuple)):
+        return len(a) == len(b) and all(_same(x, y) for x, y in zip(a, b))
     if a == b:
         return True
     scalar = (str, int, float)
@@ -61,7 +67,10 @@ def _same(a: Any, b: Any) -> bool:
         and not isinstance(a, bool)
         and not isinstance(b, bool)
     ):
-        return str(a) == str(b)
+        try:
+            return float(a) == float(b)
+        except (TypeError, ValueError):
+            return str(a) == str(b)
     return False
 
 
@@ -90,7 +99,7 @@ class Resource(Generic[M]):
     path: ClassVar[str]
     model: type[M]
 
-    #: Property names of this endpoint's PUT/POST request schema (the
+    #: Property names of this endpoint's PUT request schema (the
     #: ``*RequestSchema`` in ``doc/api.yml``). :meth:`to_request` keeps only
     #: these keys, so a fetched row can be sent back without the read-only
     #: fields -- ``id``, timestamps, nested objects -- the PUT would reject.
@@ -128,8 +137,11 @@ class Resource(Generic[M]):
 
         This is the read half of :meth:`UpdateMixin.prepare_patch`; it never
         touches the network.
+
+        :param obj: a parsed row, as returned by :meth:`GetMixin.get`.
+        :return: the subset of *obj* the PUT request schema accepts.
         """
-        data = obj.model_dump(mode="json", exclude_none=True)
+        data = obj.model_dump(mode="json", exclude_none=True, by_alias=True)
         return {k: v for k, v in data.items() if k in self.request_fields}
 
     def _parse(self, payload: Any, model: type[GalaxyModel] | None = None) -> Any:
@@ -256,8 +268,20 @@ class CreateMixin(Resource[M]):
 
 
 class UpdateMixin(Resource[M]):
-    """Adds :meth:`update`, :meth:`prepare_patch` and :meth:`patch` to a
-    namespace whose endpoint accepts PUTs."""
+    """Adds :meth:`update`, :meth:`prepare_patch` and :meth:`patch` (PUT
+    operations) to a namespace whose endpoint accepts PUTs.
+
+    ``update`` sends a caller-supplied body verbatim; ``prepare_patch`` and
+    ``patch`` fetch the row first and merge, since the API's PUT is a full
+    replacement.
+    """
+
+    def _put(self, id: int, body: dict[str, Any]) -> M | dict[str, Any] | None:
+        payload = self._client.request("PUT", self._url(id), json=body)
+        data = payload.get("data") if isinstance(payload, dict) else None
+        if isinstance(data, dict):
+            return self._parse(data)
+        return payload
 
     def update(self, id: int, **fields: Any) -> M | dict[str, Any] | None:
         """PUT *fields* to the row with this *id*, verbatim.
@@ -275,11 +299,7 @@ class UpdateMixin(Resource[M]):
             otherwise the raw response payload, since some endpoints return
             nothing or a bare message.
         """
-        payload = self._client.request("PUT", self._url(id), json=fields)
-        data = payload.get("data") if isinstance(payload, dict) else None
-        if isinstance(data, dict):
-            return self._parse(data)
-        return payload
+        return self._put(id, fields)
 
     def prepare_patch(self, id: int, **fields: Any) -> PatchPlan:
         """Fetch the row, translate it and lay *fields* over it -- no write.
@@ -294,9 +314,17 @@ class UpdateMixin(Resource[M]):
 
         :param id: the row to modify.
         :param fields: the attributes to change.
+        :raises NotImplementedError: this resource declares no
+            :attr:`Resource.request_fields` and does not override
+            :meth:`Resource.to_request`, so there is no base to merge over.
         :raises NotFoundError: no such row.
         :return: the :class:`PatchPlan`.
         """
+        if not self.request_fields and type(self).to_request is Resource.to_request:
+            raise NotImplementedError(
+                f"{type(self).__name__} declares no request_fields, so a merged "
+                "update has no base to merge over; use update() with a full body"
+            )
         current = self.to_request(self._get_one(self._url(id)))
         body = {**current, **fields}
         changes = [
@@ -319,7 +347,7 @@ class UpdateMixin(Resource[M]):
         :raises NotFoundError: no such row.
         :return: whatever :meth:`update` returns.
         """
-        return self.update(id, **self.prepare_patch(id, **fields).body)
+        return self._put(id, self.prepare_patch(id, **fields).body)
 
 
 class DeleteMixin(Resource[M]):
