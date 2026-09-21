@@ -147,6 +147,31 @@ def test_to_request_without_nested_objects(client):
     }
 
 
+def test_patch_sends_flattened_body(client, api):
+    api.get("/needs/42").respond(
+        json={
+            "data": {
+                **NEED_ROW,
+                "agency": {"id": "3", "agency_name": "Helping Hands"},
+                "tags": [{"id": "1", "name": "Outdoors"}],
+                "groups": [{"id": "7", "group_title": "Rotary"}],
+                "shifts": [{"id": "99", "start": "2024-03-01 08:00:00", "slots": 5}],
+            }
+        }
+    )
+    route = api.put("/needs/42").respond(json={"data": NEED_ROW})
+    Needs(client).patch(42, need_body="Bring gloves")
+    assert json.loads(route.calls.last.request.content) == {
+        "need_title": "Park Cleanup",
+        "need_status": "active",
+        "need_date": "2024-03-01",
+        "need_body": "Bring gloves",
+        "agency_id": "3",
+        "tags": ["Outdoors"],
+        "groups": ["7"],
+    }
+
+
 def test_response_model_fields():
     response = Response.model_validate(RESPONSE_ROW)
     assert response.id == 7

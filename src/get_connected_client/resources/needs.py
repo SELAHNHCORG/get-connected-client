@@ -118,6 +118,18 @@ class Needs(
         :meth:`add_shift`/:meth:`remove_shift` already manage. Pass
         ``shifts=[...]`` explicitly to :meth:`patch` if you mean to.
 
+        ``needRequestSchema`` also has write-only fields with no counterpart
+        on the read object -- ``virtual_need``, ``need_hours_description``,
+        ``event_id``, ``interests`` and ``attributes`` -- so a merged update
+        always sends them absent; pass any of these explicitly to
+        :meth:`patch` if you rely on them. ``agency_id`` is required by the
+        PUT, but a fetched need with no ``agency`` object yields a body
+        without it, so the caller must supply ``agency_id=`` explicitly in
+        that case too.
+
+        Tag names are filtered by truthiness (an empty name is not a tag);
+        ids are filtered by ``is not None`` (``0`` is a valid id).
+
         :param obj: the fetched need.
         :return: the request body.
         """
