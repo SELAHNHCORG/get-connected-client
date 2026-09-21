@@ -13,6 +13,9 @@ from get_connected_client.resources.base import (
     PatchPlan,
     Resource,
     UpdateMixin,
+    _id_str,
+    _id_strs,
+    _names,
 )
 
 
@@ -95,6 +98,7 @@ class RequestWidgets(Widgets):
 
     path = "/rwidgets"
     request_fields = frozenset({"name", "tags"})
+    required_fields = frozenset({"name"})
 
 
 def test_to_request_default_keeps_nothing(client):
@@ -193,3 +197,28 @@ def test_patch_plan_exported():
 
     assert get_connected_client.PatchPlan is PatchPlan
     assert get_connected_client.Change is Change
+
+
+def test_id_helpers():
+    """The wire convention, in one place: ids go over as strings."""
+    assert _id_str(None) is None
+    assert _id_str(Tag(id=None, name="a")) is None
+    assert _id_str(Tag(id=0, name="a")) == "0"  # 0 is a valid id
+    assert _id_strs(None) == []
+    assert _id_strs([]) == []
+    assert _id_strs([Tag(id=1), Tag(id=None), Tag(id=2)]) == ["1", "2"]
+    assert _names(None) == []
+    assert _names([Tag(name="a"), Tag(name=""), Tag(name=None)]) == ["a"]
+
+
+def test_prepare_patch_reports_missing_required_without_refusing(client, api):
+    """Advisory only: the body is still built and would still be sent."""
+    api.get("/rwidgets/5").respond(json={"data": {"id": 5}})
+    plan = RequestWidgets(client).prepare_patch(5)
+    assert plan.missing_required == ["name"]
+    assert plan.body == {}
+
+
+def test_prepare_patch_reports_no_missing_required_when_present(client, api):
+    api.get("/rwidgets/5").respond(json={"data": {"id": 5, "name": "a"}})
+    assert RequestWidgets(client).prepare_patch(5).missing_required == []

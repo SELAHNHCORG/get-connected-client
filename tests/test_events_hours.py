@@ -113,6 +113,16 @@ def test_event_to_request_without_tags(client):
     assert "tags" not in body
 
 
+def test_event_to_request_stringifies_event_area_id(client):
+    """event_area_id is int on the model but `type: string` on the PUT."""
+    body = Events(client).to_request(
+        Event.model_validate(
+            {**EVENT_ROW, "event_area": "agency", "event_area_id": "9"}
+        )
+    )
+    assert body["event_area_id"] == "9"
+
+
 def test_event_patch_sends_event_tags(client, api):
     api.get("/events/42").respond(
         json={"data": {**EVENT_ROW, "tags": [{"id": "1", "name": "Fair"}]}}

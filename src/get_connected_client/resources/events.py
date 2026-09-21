@@ -12,6 +12,7 @@ from .base import (
     ListMixin,
     Resource,
     UpdateMixin,
+    _names,
 )
 
 
@@ -69,6 +70,15 @@ class Events(
         }
     )
 
+    required_fields = frozenset(
+        {
+            "event_area",
+            "event_area_id",
+            "event_date_start",
+            "event_title",
+        }
+    )
+
     def to_request(self, obj: Event) -> dict[str, Any]:
         """Flatten a fetched event into the shape ``PUT /events/{id}`` wants.
 
@@ -92,5 +102,5 @@ class Events(
         """
         body = super().to_request(obj)
         if obj.tags is not None:
-            body["event_tags"] = [t.name for t in obj.tags if t.name]
+            body["event_tags"] = _names(obj.tags)
         return body

@@ -108,6 +108,15 @@ class Users(
         }
     )
 
+    required_fields = frozenset(
+        {
+            "user_email",
+            "user_fname",
+            "user_lname",
+            "user_status",
+        }
+    )
+
     # -- agencies ---------------------------------------------------------
 
     def agencies(self, id: int) -> list[AgencyMini]:

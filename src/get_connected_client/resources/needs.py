@@ -14,6 +14,9 @@ from .base import (
     ListMixin,
     Resource,
     UpdateMixin,
+    _id_str,
+    _id_strs,
+    _names,
 )
 
 
@@ -104,6 +107,19 @@ class Needs(
         }
     )
 
+    required_fields = frozenset(
+        {
+            "agency_id",
+            "need_body",
+            "need_date_type",
+            "need_hours",
+            "need_postal",
+            "need_public",
+            "need_status",
+            "need_title",
+        }
+    )
+
     def to_request(self, obj: Need) -> dict[str, Any]:
         """Flatten a fetched need into the shape ``PUT /needs/{id}`` wants.
 
@@ -127,22 +143,19 @@ class Needs(
         without it, so the caller must supply ``agency_id=`` explicitly in
         that case too.
 
-        Tag names are filtered by truthiness (an empty name is not a tag);
-        ids are filtered by ``is not None`` (``0`` is a valid id).
-
         :param obj: the fetched need.
         :return: the request body.
         """
         body = super().to_request(obj)
         body.pop("shifts", None)
-        if obj.agency is not None and obj.agency.id is not None:
-            body["agency_id"] = str(obj.agency.id)
-        if obj.initiative is not None and obj.initiative.id is not None:
-            body["initiative_id"] = str(obj.initiative.id)
+        if (agency_id := _id_str(obj.agency)) is not None:
+            body["agency_id"] = agency_id
+        if (initiative_id := _id_str(obj.initiative)) is not None:
+            body["initiative_id"] = initiative_id
         if obj.tags is not None:
-            body["tags"] = [t.name for t in obj.tags if t.name]
+            body["tags"] = _names(obj.tags)
         if obj.groups is not None:
-            body["groups"] = [str(g.id) for g in obj.groups if g.id is not None]
+            body["groups"] = _id_strs(obj.groups)
         return body
 
     # -- responses ----------------------------------------------------

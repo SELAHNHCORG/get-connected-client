@@ -84,6 +84,14 @@ class Agencies(
         }
     )
 
+    required_fields = frozenset(
+        {
+            "agency_name",
+            "agency_postal",
+            "agency_status",
+        }
+    )
+
     def to_request(self, obj: Agency) -> dict[str, Any]:
         """Filter a fetched agency to the shape ``PUT /agencies/{id}`` wants.
 

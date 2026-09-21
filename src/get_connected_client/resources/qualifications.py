@@ -47,6 +47,17 @@ class Qualifications(
         }
     )
 
+    required_fields = frozenset(
+        {
+            "qualification_duration",
+            "qualification_level",
+            "qualification_question",
+            "qualification_status",
+            "qualification_title",
+            "qualification_type",
+        }
+    )
+
     def users(self, id: int) -> list[QualificationUser]:
         """The users who hold this qualification."""
         return self._get_list(self._url(id, "users"), QualificationUser)

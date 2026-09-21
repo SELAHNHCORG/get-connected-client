@@ -59,6 +59,31 @@ def test_request_fields_match_spec(schemas, cls, schema):
     )
 
 
+@pytest.mark.parametrize(("cls", "schema"), PAIRS, ids=[c.__name__ for c, _ in PAIRS])
+def test_required_fields_match_spec(schemas, cls, schema):
+    expected = frozenset(schemas[schema].get("required", ()))
+    assert cls.required_fields == expected, (
+        f"{cls.__name__}.required_fields drifted from {schema}: "
+        f"missing={sorted(expected - cls.required_fields)} "
+        f"extra={sorted(cls.required_fields - expected)}"
+    )
+
+
+@pytest.mark.parametrize(("cls", "schema"), PAIRS, ids=[c.__name__ for c, _ in PAIRS])
+def test_every_scalar_request_property_is_a_string(schemas, cls, schema):
+    """``Resource.to_request`` stringifies ints on the strength of this.
+
+    If this ever fails, the blanket int->str pass in ``_wire`` has to become
+    a per-field decision driven by the spec.
+    """
+    offenders = {
+        name: prop.get("type")
+        for name, prop in schemas[schema]["properties"].items()
+        if prop.get("type") not in ("string", "array", "object")
+    }
+    assert offenders == {}, f"{schema} has non-string scalar properties: {offenders}"
+
+
 def test_every_updatable_resource_is_covered():
     """A new UpdateMixin subclass must be added to PAIRS (and get an allowlist)."""
     covered = {cls for cls, _ in PAIRS}

@@ -12,6 +12,8 @@ from .base import (
     ListMixin,
     Resource,
     UpdateMixin,
+    _id_str,
+    _id_strs,
 )
 
 
@@ -64,13 +66,21 @@ class Hours(
         }
     )
 
+    required_fields = frozenset(
+        {
+            "hour_hours",
+            "hour_start",
+            "hour_status",
+        }
+    )
+
     def to_request(self, obj: Hour) -> dict[str, Any]:
         """Flatten a fetched hour record into the shape ``PUT /hours/{id}`` wants.
 
         The request schema names the volunteer as ``user_id``, the groups as
         ``group_ids`` and the start as ``hour_start``; the read object nests
         the first two and calls the third ``hour_date_start``. Ids are sent
-        as strings; a group with no id is skipped.
+        as strings.
 
         ``response_id`` has no counterpart on the read object at all -- see
         the class docstring's note. ``hour_start`` is required by the PUT,
@@ -83,8 +93,8 @@ class Hours(
         body = super().to_request(obj)
         if obj.hour_date_start is not None:
             body["hour_start"] = obj.hour_date_start
-        if obj.user is not None and obj.user.id is not None:
-            body["user_id"] = str(obj.user.id)
+        if (user_id := _id_str(obj.user)) is not None:
+            body["user_id"] = user_id
         if obj.groups is not None:
-            body["group_ids"] = [str(g.id) for g in obj.groups if g.id is not None]
+            body["group_ids"] = _id_strs(obj.groups)
         return body

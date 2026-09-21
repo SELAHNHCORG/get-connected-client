@@ -12,6 +12,7 @@ from .base import (
     ListMixin,
     Resource,
     UpdateMixin,
+    _id_str,
 )
 
 
@@ -47,6 +48,14 @@ class Responses(
             "response_note",
             "schedule_ids",
             "team_id",
+            "user_id",
+        }
+    )
+
+    required_fields = frozenset(
+        {
+            "need_id",
+            "schedule_ids",
             "user_id",
         }
     )
@@ -93,12 +102,12 @@ class Responses(
         :return: the request body.
         """
         body = super().to_request(obj)
-        if obj.need is not None and obj.need.id is not None:
-            body["need_id"] = str(obj.need.id)
-        if obj.user is not None and obj.user.id is not None:
-            body["user_id"] = str(obj.user.id)
-        if obj.shift is not None and obj.shift.id is not None:
-            body["schedule_ids"] = [str(obj.shift.id)]
-        if obj.team is not None and obj.team.id is not None:
-            body["team_id"] = str(obj.team.id)
+        if (need_id := _id_str(obj.need)) is not None:
+            body["need_id"] = need_id
+        if (user_id := _id_str(obj.user)) is not None:
+            body["user_id"] = user_id
+        if (shift_id := _id_str(obj.shift)) is not None:
+            body["schedule_ids"] = [shift_id]
+        if (team_id := _id_str(obj.team)) is not None:
+            body["team_id"] = team_id
         return body

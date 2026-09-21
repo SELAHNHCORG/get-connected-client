@@ -44,6 +44,17 @@ class Benchmarks(
         }
     )
 
+    required_fields = frozenset(
+        {
+            "benchmark_approval_required",
+            "benchmark_date_end",
+            "benchmark_date_start",
+            "benchmark_icon",
+            "benchmark_status",
+            "benchmark_title",
+        }
+    )
+
     def users(self, id: int) -> list[UserMini]:
         """The users who have earned this benchmark."""
         return self._get_list(self._url(id, "users"), UserMini)

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator
-from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar
+from collections.abc import Iterable, Iterator
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, Protocol, TypeVar
 
 from ..client import MAX_PER_PAGE
 from ..exceptions import NotFoundError
@@ -39,6 +39,10 @@ class PatchPlan:
     lists the supplied fields whose value differs from ``current``, in the
     order they were supplied.
 
+    ``missing_required`` names the fields this endpoint's request schema
+    marks required that ``body`` does not carry. It is advisory only:
+    :meth:`UpdateMixin.patch` still sends the body and lets the API answer.
+
     The plan is deliberately mutable: a caller may adjust ``body`` before
     handing it to :meth:`UpdateMixin.update`.
     """
@@ -46,6 +50,9 @@ class PatchPlan:
     current: dict[str, Any]
     body: dict[str, Any]
     changes: list[Change]
+    #: Fields in :attr:`Resource.required_fields` that ``body`` lacks. A
+    #: non-empty list means the API will almost certainly answer 422.
+    missing_required: list[str] = field(default_factory=list)
 
 
 def _same(a: Any, b: Any) -> bool:
@@ -72,6 +79,90 @@ def _same(a: Any, b: Any) -> bool:
         except (TypeError, ValueError):
             return str(a) == str(b)
     return False
+
+
+class _HasId(Protocol):
+    """Structural type for a nested read object carrying an id.
+
+    Every ``*MiniObject`` model satisfies it -- ``agencyMiniObject``,
+    ``groupMiniObject``, ``shiftObject`` and the rest all declare
+    ``id: int | None``.
+    """
+
+    id: int | None
+
+
+class _HasName(Protocol):
+    """Structural type for a nested read object carrying a name.
+
+    Satisfied by :class:`~get_connected_client.models.common.Tag`, the only
+    read shape a request schema wants as bare names.
+    """
+
+    name: str | None
+
+
+def _id_str(obj: _HasId | None) -> str | None:
+    """The id of a nested read object, as the wire wants it.
+
+    The API's request schemas type every id as ``type: string,
+    format: number``, so a translated body sends ``"42"``, never ``42``.
+
+    :param obj: a nested read object, or ``None`` when ``GET`` omitted it.
+    :return: the id as a string, or ``None`` when there is no object or the
+        object carries no id -- in both cases the caller leaves the derived
+        key out of the body entirely.
+    """
+    if obj is None or obj.id is None:
+        return None
+    return str(obj.id)
+
+
+def _id_strs(items: Iterable[_HasId] | None) -> list[str]:
+    """The ids of a nested read list, as the wire wants them.
+
+    Items with no id are skipped; ``0`` is a valid id and is kept, so the
+    filter is ``is not None``, not truthiness.
+
+    :param items: the nested read list, or ``None``.
+    :return: the ids as strings. An empty list in, or ``None`` in, both give
+        an empty list out -- callers that must distinguish "no groups" from
+        "key absent" guard on the attribute themselves.
+    """
+    if items is None:
+        return []
+    return [str(item.id) for item in items if item.id is not None]
+
+
+def _names(items: Iterable[_HasName] | None) -> list[str]:
+    """The non-empty names of a nested read list.
+
+    Filtered by truthiness: an empty or missing name is not a tag.
+
+    :param items: the nested read list, or ``None``.
+    :return: the names.
+    """
+    if items is None:
+        return []
+    return [item.name for item in items if item.name]
+
+
+def _wire(value: Any) -> Any:
+    """Coerce one translated value to the type the request schemas use.
+
+    Every scalar property of every ``*RequestSchema`` in ``doc/api.yml`` is
+    ``type: string`` -- there is no integer-typed request property in the
+    spec -- but a handful of read fields are typed ``int`` on the model
+    (``Event.event_area_id``, ``Benchmark.benchmark_group_id``), so
+    ``model_dump(mode="json")`` hands back a JSON int where the PUT wants a
+    string. Booleans are excluded so ``True`` never becomes ``"True"``.
+
+    :param value: one value from the filtered dump.
+    :return: *value*, stringified if it is an int.
+    """
+    if isinstance(value, int) and not isinstance(value, bool):
+        return str(value)
+    return value
 
 
 class Resource(Generic[M]):
@@ -106,6 +197,13 @@ class Resource(Generic[M]):
     #: ``tests/test_request_fields.py`` asserts each set matches the spec.
     request_fields: ClassVar[frozenset[str]] = frozenset()
 
+    #: Property names this endpoint's PUT request schema marks ``required``.
+    #: Informational only: ``prepare_patch`` reports which are missing from
+    #: the body it built, but never refuses to send it -- the API is the
+    #: authority, and ``doc/api.yml`` is known to be imperfect.
+    #: ``tests/test_request_fields.py`` asserts each set matches the spec.
+    required_fields: ClassVar[frozenset[str]] = frozenset()
+
     def __init__(self, client: GalaxyClient):
         """Bind this namespace to *client*, which performs all I/O."""
         self._client = client
@@ -131,9 +229,11 @@ class Resource(Generic[M]):
         """Turn a fetched *obj* into a body the endpoint's PUT accepts.
 
         Keeps every non-``None`` field named in :attr:`request_fields` and
-        drops the rest. Resources whose read object nests what the request
-        schema wants flat -- an ``agency`` object where the PUT takes
-        ``agency_id`` -- override this, call it first, then reshape.
+        drops the rest; ints become strings, since every scalar property of
+        every request schema is ``type: string``. Resources whose read
+        object nests what the request schema wants flat -- an ``agency``
+        object where the PUT takes ``agency_id`` -- override this, call it
+        first, then reshape.
 
         This is the read half of :meth:`UpdateMixin.prepare_patch`; it never
         touches the network.
@@ -142,7 +242,7 @@ class Resource(Generic[M]):
         :return: the subset of *obj* the PUT request schema accepts.
         """
         data = obj.model_dump(mode="json", exclude_none=True, by_alias=True)
-        return {k: v for k, v in data.items() if k in self.request_fields}
+        return {k: _wire(v) for k, v in data.items() if k in self.request_fields}
 
     def _parse(self, payload: Any, model: type[GalaxyModel] | None = None) -> Any:
         """Validate *payload* into *model*, defaulting to ``self.model``.
@@ -333,7 +433,12 @@ class UpdateMixin(Resource[M]):
             for name, value in fields.items()
             if name not in current or not _same(current[name], value)
         ]
-        return PatchPlan(current=current, body=body, changes=changes)
+        return PatchPlan(
+            current=current,
+            body=body,
+            changes=changes,
+            missing_required=sorted(self.required_fields - body.keys()),
+        )
 
     def patch(self, id: int, **fields: Any) -> M | dict[str, Any] | None:
         """Change only *fields* on the row with this *id*.

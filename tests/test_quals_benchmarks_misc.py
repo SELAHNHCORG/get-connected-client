@@ -255,6 +255,14 @@ def test_benchmarks_crud(client, api):
     assert removed.called
 
 
+def test_benchmark_to_request_stringifies_group_id(client):
+    """benchmark_group_id is int on the model but `type: string` on the PUT."""
+    body = Benchmarks(client).to_request(
+        Benchmark.model_validate({**BENCHMARK_ROW, "benchmark_group_id": "3"})
+    )
+    assert body["benchmark_group_id"] == "3"
+
+
 def test_benchmarks_list_show_inactive_is_sent(client, api):
     route = api.get("/benchmarks").respond(json={"data": [BENCHMARK_ROW]})
     rows = list(Benchmarks(client).list(show_inactive=True))

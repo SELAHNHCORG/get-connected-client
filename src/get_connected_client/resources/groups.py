@@ -73,6 +73,14 @@ class Groups(
         }
     )
 
+    required_fields = frozenset(
+        {
+            "ug_status",
+            "ug_title",
+            "ug_type",
+        }
+    )
+
     # -- needs ----------------------------------------------------------
 
     def add_need(self, id: int, need_id: int) -> Any:
